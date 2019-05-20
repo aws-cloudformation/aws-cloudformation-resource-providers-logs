@@ -1,0 +1,53 @@
+{
+    "typeName": "AWS::Logs::MetricFilter",
+    "description": "Resource schema For AWS::Logs::MetricFilter",
+    "sourceUrl": "git@github.com:awslabs/aws-cloudformation-rpdk.git",
+    "definitions":{
+        "MetricTransformationProperty": {
+            "type": "object",
+            "properties": {
+                "DefaultValue": {
+                    "type": "number"
+                },
+                "MetricName": {
+                    "type": "string"
+                },
+                "MetricNamespace": {
+                    "type": "string"
+                },
+                "MetricValue": {
+                    "type": "string"
+                }
+            },
+            "required": ["MetricName", "MetricNamespace", "MetricValue"]
+        }
+    },
+    "properties": {
+        "FilterPattern": {
+            "description": "Pattern that Logs follows to interpret each entry in a log.",
+            "type": "string"
+        },
+        "LogGroupName": {
+            "description": "Existing log group that you want to associate with this filter",
+            "type": "string"
+        },
+        "MetricTransformations": {
+            "description": "MetricTransformation",
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/MetricTransformationProperty"
+            }
+        },
+        "FilterName": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "FilterPattern",
+        "LogGroupName",
+        "MetricTransformations"
+    ],
+    "identifiers": [
+        ["/properties/FilterName"]
+    ]
+}
