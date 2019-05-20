@@ -4,7 +4,7 @@ Description: Manage GitHub Continuous Integration and Release processes
 Parameters:
   GitHubRepositoryName:
     Type: String
-    Description: GitHub Repo Name (e.g; 'aws-cloudformation-resource-providers-s3')
+    Description: GitHub Repo Name For aws-cloudformation-resource-providers-logs
   CFNSDKBucket:
     Type: String
     Description: S3 Location of CloudFormation SDK; should be removed when we can publish the latest client

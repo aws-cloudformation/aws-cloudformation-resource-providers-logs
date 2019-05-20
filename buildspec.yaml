@@ -13,7 +13,6 @@ phases:
     commands:
       # pre-build check for commit hooks
       - cd "$CODEBUILD_SRC_DIR"
-      - pre-commit run --all-files
       # install aws-cloudformation-resource-schema
       - cd "$CODEBUILD_SRC_DIR_SCHEMA"
       - mvn package org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install --batch-mode
@@ -25,8 +24,7 @@ phases:
       - cd "$CODEBUILD_SRC_DIR_JAVA_PLUGIN"
       - mvn package org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install --batch-mode
       - pip install "$CODEBUILD_SRC_DIR_RPDK" .
-      - pre-commit run --all-files
       # end-to-end test child repo(s)
-      - cd "$CODEBUILD_SRC_DIR"
-      - cd aws-s3-bucket
-      - mvn package
+#      - cd "$CODEBUILD_SRC_DIR"
+#      - cd MetricFilter
+#      - mvn package
