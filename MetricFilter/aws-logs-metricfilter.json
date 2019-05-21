@@ -1,0 +1,72 @@
+{
+    "typeName": "AWS::Logs::MetricFilter",
+    "description": "Resource schema for AWS::Logs::MetricFilter",
+    "sourceUrl": "git@github.com:aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
+    "definitions": {
+        "MetricTransformationProperty": {
+            "type": "object",
+            "properties": {
+                "DefaultValue": {
+                    "type": "number"
+                },
+                "MetricName": {
+                    "type": "string"
+                },
+                "MetricNamespace": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "pattern": "[^:*$]*"
+                },
+                "MetricValue": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "MetricName",
+                "MetricNamespace",
+                "MetricValue"
+            ]
+        }
+    },
+    "properties": {
+        "FilterPattern": {
+            "description": "Pattern that Logs follows to interpret each entry in a log.",
+            "type": "string"
+        },
+        "LogGroupName": {
+            "description": "Existing log group that you want to associate with this filter",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "[\\.\\-_/#A-Za-z0-9]+"
+        },
+        "MetricTransformations": {
+            "description": "MetricTransformation",
+            "type": "array",
+            "maxItems": 1,
+            "items": {
+                "$ref": "#/definitions/MetricTransformationProperty"
+            }
+        },
+        "FilterName": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "FilterPattern",
+        "LogGroupName",
+        "MetricTransformations"
+    ],
+    "createOnlyProperties": [
+        "/properties/LogGroupName"
+    ],
+    "readOnlyProperties": [
+        "/properties/FilterName"
+    ],
+    "identifiers": [
+        [
+            "#/properties/FilterName"
+        ]
+    ],
+    "additionalProperties": false
+}
