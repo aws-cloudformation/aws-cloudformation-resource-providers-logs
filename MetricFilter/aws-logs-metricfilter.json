@@ -15,7 +15,7 @@
                 "MetricNamespace": {
                     "type": "string",
                     "maxLength": 512,
-                    "patten": "[^:*$]*"
+                    "pattern": "[^:*$]*"
                 },
                 "MetricValue": {
                     "type": "string"
@@ -38,7 +38,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 512,
-            "patten": "[\\.\\-_/#A-Za-z0-9]+"
+            "pattern": "[\\.\\-_/#A-Za-z0-9]+"
         },
         "MetricTransformations": {
             "description": "MetricTransformation",
@@ -61,11 +61,12 @@
         "/properties/LogGroupName"
     ],
     "readOnlyProperties": [
-        "#/properties/FilterName"
+        "/properties/FilterName"
     ],
     "identifiers": [
         [
             "#/properties/FilterName"
         ]
-    ]
+    ],
+    "additionalProperties": false
 }

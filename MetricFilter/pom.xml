@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
-        xmlns="http://maven.apache.org/POM/4.0.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.aws.logs.metricfilter</groupId>
@@ -33,19 +33,21 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/junit/junit -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-
+        <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest-junit -->
         <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>cloudwatchlogs</artifactId>
-            <version>2.5.28-SNAPSHOT</version>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-junit</artifactId>
+            <version>2.0.0.0</version>
+            <scope>test</scope>
         </dependency>
-
+        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
@@ -54,21 +56,25 @@
         </dependency>
 
         <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-junit</artifactId>
-            <version>2.0.0.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-cloudformation</artifactId>
-            <version>1.11.519</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>cloudwatchlogs</artifactId>
+            <version>2.5.28-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:all,-options,-processing</arg>
+                        <arg>-Werror</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -97,7 +103,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>uluru-cli</executable>
+                            <executable>cfn-cli</executable>
                             <commandlineArgs>generate</commandlineArgs>
                             <workingDirectory>${project.basedir}</workingDirectory>
                         </configuration>
@@ -126,7 +132,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.3</version>
+                <version>2.4</version>
             </plugin>
         </plugins>
         <resources>

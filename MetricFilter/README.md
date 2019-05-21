@@ -5,7 +5,7 @@ Congratulations on starting development! Next steps:
 1. Write the JSON schema describing your resource, `aws-logs-metricfilter.json`
 2. The RPDK will automatically generate the correct resource model from the
    schema whenever the project is built via Maven. You can also do this manually
-   with the following command: `uluru-cli generate`
+   with the following command: `cfn-cli generate`
 3. Implement your resource handlers
 
 
