@@ -13,6 +13,7 @@ phases:
     commands:
       # pre-build check for commit hooks
       - cd "$CODEBUILD_SRC_DIR"
+      - pre-commit run --all-files
       # install aws-cloudformation-resource-schema
       - cd "$CODEBUILD_SRC_DIR_SCHEMA"
       - mvn package org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install --batch-mode
