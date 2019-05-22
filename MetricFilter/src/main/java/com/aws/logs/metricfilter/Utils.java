@@ -20,7 +20,7 @@ public class Utils {
                 .collect(Collectors.toList());
     }
 
-    public static ProgressEvent defaultFailureHandler(final Exception e, final HandlerErrorCode handlerErrorCode) {
+    public static ProgressEvent<ResourceModel, CallbackContext> defaultFailureHandler(final Exception e, final HandlerErrorCode handlerErrorCode) {
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
                 .errorCode(handlerErrorCode)
                 .message(e.getMessage())
@@ -28,7 +28,7 @@ public class Utils {
                 .build();
     }
 
-    public static ProgressEvent defaultSuccessHandler(final ResourceModel resourceModel) {
+    public static ProgressEvent<ResourceModel, CallbackContext> defaultSuccessHandler(final ResourceModel resourceModel) {
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
                 .resourceModel(resourceModel)
                 .status(OperationStatus.SUCCESS)

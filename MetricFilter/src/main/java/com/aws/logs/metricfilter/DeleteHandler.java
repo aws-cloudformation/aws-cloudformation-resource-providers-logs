@@ -26,10 +26,10 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
                     .logGroupName(model.getLogGroupName())
                     .build();
             final DeleteMetricFilterResponse response = proxy.injectCredentialsAndInvokeV2(deleteMetricFilterRequest, getCloudWatchLogsClient()::deleteMetricFilter);
-            logger.log(String.format("Successfully delete AWS::Logs::MetricFilter of {%s} with Request Id %s and Client Token %s", model, response.responseMetadata().requestId(), request.getClientRequestToken()));
-            return Utils.defaultSuccessHandler(model);
+            logger.log(String.format("Successfully delete AWS::Logs::MetricFilter of {%s} with Request Id %s and Client Token %s", model.getFilterName(), response.responseMetadata().requestId(), request.getClientRequestToken()));
+            return Utils.defaultSuccessHandler(null);
         } catch (Exception e) {
-            logger.log(String.format("Failed to delete AWS::Logs::MetricFilter of {%s}, caused by Exception {%s} with Client Token %s", model, e.toString(), request.getClientRequestToken()));
+            logger.log(String.format("Failed to delete AWS::Logs::MetricFilter of {%s}, caused by Exception {%s} with Client Token %s", model.getFilterName(), e.toString(), request.getClientRequestToken()));
             return Utils.defaultFailureHandler(e, null);
         }
     }

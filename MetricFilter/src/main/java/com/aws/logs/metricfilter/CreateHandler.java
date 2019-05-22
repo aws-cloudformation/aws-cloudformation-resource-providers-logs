@@ -34,10 +34,10 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                     .metricTransformations(Utils.translateMetricTransformations(model))
                     .build();
             final PutMetricFilterResponse response = proxy.injectCredentialsAndInvokeV2(putMetricFilterRequest, getCloudWatchLogsClient()::putMetricFilter);
-            logger.log(String.format("Successfully create AWS::Logs::MetricFilter of {%s} with Request Id %s and Client Token %s", model, response.responseMetadata().requestId(), request.getClientRequestToken()));
+            logger.log(String.format("Successfully create AWS::Logs::MetricFilter of {%s} with Request Id %s and Client Token %s", model.getFilterName(), response.responseMetadata().requestId(), request.getClientRequestToken()));
             return Utils.defaultSuccessHandler(model);
         } catch (Exception e) {
-            logger.log(String.format("Failed to create AWS::Logs::MetricFilter of {%s}, caused by Exception {%s} with Client Token %s", model, e.toString(), request.getClientRequestToken()));
+            logger.log(String.format("Failed to create AWS::Logs::MetricFilter of {%s}, caused by Exception {%s} with Client Token %s", model.getFilterName(), e.toString(), request.getClientRequestToken()));
             return Utils.defaultFailureHandler(e, null);
         }
     }

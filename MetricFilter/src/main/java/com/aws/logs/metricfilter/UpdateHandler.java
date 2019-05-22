@@ -33,10 +33,10 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                     .metricTransformations(Utils.translateMetricTransformations(currentModel))
                     .build();
             PutMetricFilterResponse response = proxy.injectCredentialsAndInvokeV2(putMetricFilterRequest, getCloudWatchLogsClient()::putMetricFilter);
-            logger.log(String.format("Successfully update AWS::Logs::MetricFilter of {%s} with Request Id %s and ClientToken %s", currentModel, response.responseMetadata().requestId(), request.getClientRequestToken()));
+            logger.log(String.format("Successfully update AWS::Logs::MetricFilter of {%s} with Request Id %s and ClientToken %s", currentModel.getFilterName(), response.responseMetadata().requestId(), request.getClientRequestToken()));
             return Utils.defaultSuccessHandler(currentModel);
         } catch (Exception e) {
-            logger.log(String.format("Failed to update AWS::Logs::MetricFilter to model {%s} from model {%s}, caused by Exception {%s} with ClientToken %s", currentModel, previousModel, e.toString(), request.getClientRequestToken()));
+            logger.log(String.format("Failed to update AWS::Logs::MetricFilter to model {%s} from model {%s}, caused by Exception {%s} with ClientToken %s", currentModel.getFilterName(), previousModel, e.toString(), request.getClientRequestToken()));
             return Utils.defaultFailureHandler(e, null);
         }
     }
