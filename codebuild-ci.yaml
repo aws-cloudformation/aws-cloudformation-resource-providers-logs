@@ -8,9 +8,7 @@ Parameters:
   CFNSDKBucket:
     Type: String
     Description: S3 Location of CloudFormation SDK; should be removed when we can publish the latest client
-  CIRoleName:
-    Type: String
-    Description: Role Name For CodeBuild CI Role
+
 Resources:
   AWSCloudFormationResourceProviderCIPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -42,7 +40,7 @@ Resources:
   AWSCloudFormationResourceProviderCIRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref CIRoleName
+      RoleName: !Sub "codebuild-${GitHubRepositoryName}-ci-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
