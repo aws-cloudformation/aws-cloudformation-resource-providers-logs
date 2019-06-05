@@ -1,10 +1,13 @@
 package com.aws.logs.metricfilter;
 
-import com.aws.cfn.proxy.AmazonWebServicesClientProxy;
-import com.aws.cfn.proxy.Logger;
-import com.aws.cfn.proxy.ProgressEvent;
-import com.aws.cfn.proxy.OperationStatus;
-import com.aws.cfn.proxy.ResourceHandlerRequest;
+import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
+import com.amazonaws.cloudformation.proxy.Logger;
+import com.amazonaws.cloudformation.proxy.ProgressEvent;
+import com.amazonaws.cloudformation.proxy.OperationStatus;
+import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ListHandler extends BaseHandler<CallbackContext> {
 
@@ -15,12 +18,12 @@ public class ListHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        final ResourceModel model = request.getDesiredResourceState();
+        final List<ResourceModel> models = new ArrayList<>();
 
         // TODO : put your code here
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
-            .resourceModel(model)
+            .resourceModels(models)
             .status(OperationStatus.SUCCESS)
             .build();
     }

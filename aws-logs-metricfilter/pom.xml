@@ -18,11 +18,18 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>http://central.maven.org/maven2</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- https://github.com/awslabs/aws-cloudformation-rpdk-java-plugin/ -->
         <dependency>
-            <groupId>com.aws.cfn</groupId>
-            <artifactId>ResourceProviderRuntime</artifactId>
+            <groupId>com.amazonaws.cloudformation</groupId>
+            <artifactId>aws-cloudformation-rpdk-java-plugin</artifactId>
             <version>1.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
