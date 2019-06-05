@@ -65,7 +65,7 @@
     ],
     "identifiers": [
         [
-            "#/properties/FilterName"
+            "/properties/FilterName"
         ]
     ],
     "additionalProperties": false
