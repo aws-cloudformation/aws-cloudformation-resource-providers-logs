@@ -48,7 +48,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                 .metricTransformations(translateToSDK(model.getMetricTransformations()))
                 .build();
         proxy.injectCredentialsAndInvokeV2(putMetricFilterRequest, this.client::putMetricFilter);
-        this.logger.log(String.format("%s [%s] created successfully",
+        this.logger.log(String.format("%s [%s] updated successfully",
             ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
 
         return ProgressEvent.defaultSuccessHandler(model);

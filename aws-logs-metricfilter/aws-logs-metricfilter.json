@@ -78,9 +78,6 @@
         "/properties/FilterName",
         "/properties/LogGroupName"
     ],
-    "readOnlyProperties": [
-        "/properties/FilterName"
-    ],
     "identifiers": [
         [
             "/properties/LogGroupName",
