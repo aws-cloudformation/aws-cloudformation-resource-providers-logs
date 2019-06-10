@@ -81,9 +81,11 @@
     "readOnlyProperties": [
         "/properties/FilterName"
     ],
-    "primaryIdentifier": [
-        "/properties/LogGroupName",
-        "/properties/FilterName"
+    "identifiers": [
+        [
+            "/properties/LogGroupName",
+            "/properties/FilterName"
+        ]
     ],
     "additionalProperties": false
 }
