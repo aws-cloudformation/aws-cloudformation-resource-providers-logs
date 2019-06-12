@@ -1,21 +1,33 @@
 package com.aws.logs.metricfilter;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
+import java.util.Arrays;
+import java.util.Collections;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
+@ExtendWith(MockitoExtension.class)
 public class UpdateHandlerTest {
 
     @Mock
@@ -24,31 +36,279 @@ public class UpdateHandlerTest {
     @Mock
     private Logger logger;
 
-    @Before
+    @BeforeEach
     public void setup() {
         proxy = mock(AmazonWebServicesClientProxy.class);
         logger = mock(Logger.class);
     }
 
     @Test
-    public void test_HandleRequest_SimpleSuccess() {
+    public void handleRequest_SimpleSuccess() {
         final UpdateHandler handler = new UpdateHandler();
 
-        final ResourceModel model = ResourceModel.builder().build();
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
+        final MetricFilter filter = MetricFilter.builder()
+            .filterName("test-filter")
+            .logGroupName("test-lg")
+            .filterPattern("[test]")
+            .metricTransformations(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder().metricName("metric").metricValue("value").build())
+            .build();
+        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
+            .metricFilters(filter)
             .build();
 
-        final ProgressEvent response = handler.handleRequest(proxy, request, null, logger);
+        final PutMetricDataResponse createResponse = PutMetricDataResponse.builder().build();
 
-        assertThat(response, is(not(nullValue())));
-        assertThat(response.getStatus(), is(equalTo(OperationStatus.SUCCESS)));
-        assertThat(response.getCallbackContext(), is(nullValue()));
-        assertThat(response.getCallbackDelaySeconds(), is(equalTo(0)));
-        assertThat(response.getResourceModel(), is(equalTo(request.getDesiredResourceState())));
-        assertThat(response.getResourceModels(), is(nullValue()));
-        assertThat(response.getMessage(), is(nullValue()));
-        assertThat(response.getErrorCode(), is(nullValue()));
+        // return existing metrics for pre-update check and then success response
+        doReturn(describeResponse)
+            .doReturn(createResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.any(),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel previous = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-lg")
+            .filterPattern("some pattern")
+            .build();
+        final ResourceModel desired = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-lg")
+            .filterPattern("some new pattern")
+            .metricTransformations(Arrays.asList(
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric").metricValue("value").build(),
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric2").metricValue("value2").build()
+            ))
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(desired)
+            .previousResourceState(previous)
+            .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isEqualTo(desired);
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_FailedCreate_UnknownError() {
+        final UpdateHandler handler = new UpdateHandler();
+
+        // throw arbitrary error which should propagate to be handled by wrapper
+        doThrow(SdkException.builder().message("test error").build())
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.any(),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel previous = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-log-group")
+            .filterPattern("some pattern")
+            .build();
+        final ResourceModel desired = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-log-group")
+            .filterPattern("some new pattern")
+            .metricTransformations(Arrays.asList(
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric").metricValue("value").build(),
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric2").metricValue("value2").build()
+            ))
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(desired)
+            .desiredResourceState(previous)
+            .build();
+
+        assertThrows(SdkException.class, () -> {
+            handler.handleRequest(proxy, request, null, logger);
+        });
+    }
+
+    @Test
+    public void handleRequest_FailedCreate_AmazonServiceException() {
+        final UpdateHandler handler = new UpdateHandler();
+
+        // AmazonServiceExceptions should be thrown so they can be handled by wrapper
+        doThrow(new AmazonServiceException("test error"))
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.any(),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel previous = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-log-group")
+            .filterPattern("some pattern")
+            .build();
+        final ResourceModel desired = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-log-group")
+            .filterPattern("some new pattern")
+            .metricTransformations(Arrays.asList(
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric").metricValue("value").build(),
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric2").metricValue("value2").build()
+            ))
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(desired)
+            .desiredResourceState(previous)
+            .build();
+
+        assertThrows(AmazonServiceException.class, () -> {
+            handler.handleRequest(proxy, request, null, logger);
+        });
+    }
+
+    @Test
+    public void handleRequest_NonExistingLogGroup_Failed() {
+        final UpdateHandler handler = new UpdateHandler();
+
+        // no matching log group throws exception
+        doThrow(ResourceNotFoundException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.any(),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel previous = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-log-group")
+            .filterPattern("some pattern")
+            .build();
+        final ResourceModel desired = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-log-group")
+            .filterPattern("some new pattern")
+            .metricTransformations(Arrays.asList(
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric").metricValue("value").build(),
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric2").metricValue("value2").build()
+            ))
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(desired)
+            .desiredResourceState(previous)
+            .build();
+
+        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class, () -> {
+            handler.handleRequest(proxy, request, null, logger);
+        });
+    }
+
+    @Test
+    public void handleRequest_NonExistingMetricFilter_Failed() {
+        final UpdateHandler handler = new UpdateHandler();
+
+        final DescribeMetricFiltersResponse describeResponse = software.amazon.awssdk.services.cloudwatchlogs.model
+            .DescribeMetricFiltersResponse.builder()
+            .metricFilters(Collections.emptyList())
+            .build();
+
+        // no matching metric filter returns as empty list
+        doReturn(describeResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.any(),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel previous = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-log-group")
+            .filterPattern("some pattern")
+            .build();
+        final ResourceModel desired = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-log-group")
+            .filterPattern("some new pattern")
+            .metricTransformations(Arrays.asList(
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric").metricValue("value").build(),
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                .metricName("metric2").metricValue("value2").build()
+            ))
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(desired)
+            .desiredResourceState(previous)
+            .build();
+
+        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class, () -> {
+            handler.handleRequest(proxy, request, null, logger);
+        });
+    }
+
+    @Test
+    public void handleRequest_SimilarExistingMetricFilter_Failed() {
+        final UpdateHandler handler = new UpdateHandler();
+
+        // the underlying API uses a prefix match search, so the handler needs to disambiguate 'similar' describes
+        final MetricFilter filter = MetricFilter.builder()
+            .filterName("test-filter-with-longer-name")
+            .logGroupName("test-lg")
+            .filterPattern("[test]")
+            .metricTransformations(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder().metricName("metric").metricValue("value").build())
+            .build();
+        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
+            .metricFilters(filter)
+            .build();
+
+        // return existing metrics for pre-update check and then success response
+        doReturn(describeResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.any(),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel previous = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-lg")
+            .filterPattern("some pattern")
+            .build();
+        final ResourceModel desired = ResourceModel.builder()
+            .filterName("test-filter")
+            .logGroupName("test-lg")
+            .filterPattern("some new pattern")
+            .metricTransformations(Arrays.asList(
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric").metricValue("value").build(),
+                com.aws.logs.metricfilter.MetricTransformation.builder()
+                    .metricName("metric2").metricValue("value2").build()
+            ))
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(desired)
+            .desiredResourceState(previous)
+            .build();
+
+        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class, () -> {
+            handler.handleRequest(proxy, request, null, logger);
+        });
     }
 }

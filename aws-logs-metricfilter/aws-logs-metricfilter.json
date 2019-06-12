@@ -3,35 +3,55 @@
     "description": "Resource schema for AWS::Logs::MetricFilter",
     "sourceUrl": "git@github.com:aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
     "definitions": {
-        "MetricTransformationProperty": {
+        "MetricTransformation": {
             "type": "object",
             "properties": {
                 "DefaultValue": {
+                    "description": "The value to emit when a filter pattern does not match a log event. This value can be null.",
                     "type": "number"
                 },
                 "MetricName": {
-                    "type": "string"
+                    "description": "The name of the CloudWatch metric.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512,
+                    "pattern": "[^:*$]*"
                 },
                 "MetricNamespace": {
+                    "description": "The namespace of the CloudWatch metric.",
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 512,
                     "pattern": "[^:*$]*"
                 },
                 "MetricValue": {
-                    "type": "string"
+                    "description": "The value to publish to the CloudWatch metric when a filter pattern matches a log event.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
                 }
             },
             "required": [
                 "MetricName",
                 "MetricNamespace",
                 "MetricValue"
-            ]
+            ],
+            "additionalProperties": false
         }
     },
     "properties": {
+        "FilterName": {
+            "description": "A name for the metric filter.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "[^:*]*"
+        },
         "FilterPattern": {
             "description": "Pattern that Logs follows to interpret each entry in a log.",
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
         },
         "LogGroupName": {
             "description": "Existing log group that you want to associate with this filter",
@@ -41,15 +61,12 @@
             "pattern": "[\\.\\-_/#A-Za-z0-9]+"
         },
         "MetricTransformations": {
-            "description": "MetricTransformation",
+            "description": "A collection of information that defines how metric data gets emitted.",
             "type": "array",
             "maxItems": 1,
             "items": {
-                "$ref": "#/definitions/MetricTransformationProperty"
+                "$ref": "#/definitions/MetricTransformation"
             }
-        },
-        "FilterName": {
-            "type": "string"
         }
     },
     "required": [
@@ -58,13 +75,12 @@
         "MetricTransformations"
     ],
     "createOnlyProperties": [
+        "/properties/FilterName",
         "/properties/LogGroupName"
-    ],
-    "readOnlyProperties": [
-        "/properties/FilterName"
     ],
     "identifiers": [
         [
+            "/properties/LogGroupName",
             "/properties/FilterName"
         ]
     ],
