@@ -37,8 +37,14 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         ResourceModel model = request.getDesiredResourceState();
 
         // pre-creation read to ensure resource exists (the underlying API is UPSERT style, but we want consistent
-        // behaviour for the CloudFormation control plane; READ will throw if can't find the resource
-        new ReadHandler().handleRequest(proxy, request, null, this.logger);
+        // behaviour for the CloudFormation control plane; READ will return a FAILED state with NotFound if
+        // it can't find the resource
+        final ProgressEvent<ResourceModel, CallbackContext> readResult =
+                new ReadHandler().handleRequest(proxy, request, null, this.logger);
+
+        if (readResult.isFailed()) {
+            return readResult;
+        }
 
         final PutMetricFilterRequest putMetricFilterRequest =
             PutMetricFilterRequest.builder()

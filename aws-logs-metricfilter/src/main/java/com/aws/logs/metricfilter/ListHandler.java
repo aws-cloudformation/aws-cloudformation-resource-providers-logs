@@ -9,8 +9,8 @@ import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.aws.logs.metricfilter.Translator.translateFromSDK;
 
@@ -28,35 +28,34 @@ public class ListHandler extends BaseHandler<CallbackContext> {
         this.proxy = proxy;
         this.client = ClientBuilder.getClient();
 
-        final List<ResourceModel> models = listMetricFilters(request.getNextToken());
+        final DescribeMetricFiltersResponse response = describeMetricFiltersResponse(request.getNextToken());
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
-            .resourceModels(models)
-            .status(OperationStatus.SUCCESS)
-            .build();
+                .resourceModels(extractMetricFilters(response))
+                .nextToken(response.nextToken())
+                .status(OperationStatus.SUCCESS)
+                .build();
     }
 
-    private List<ResourceModel> listMetricFilters(final String nextToken) {
+    private DescribeMetricFiltersResponse describeMetricFiltersResponse(final String nextToken) {
         final DescribeMetricFiltersRequest request = DescribeMetricFiltersRequest.builder()
-            .limit(50)
-            .nextToken(nextToken)
-            .build();
-
-        DescribeMetricFiltersResponse response =
-            this.proxy.injectCredentialsAndInvokeV2(request, this.client::describeMetricFilters);
-
-        List<ResourceModel> models = new ArrayList<>();
-        response.metricFilters().forEach(f -> {
-            ResourceModel model = ResourceModel.builder()
-                .filterName(f.filterName())
-                .filterPattern(f.filterPattern())
-                .logGroupName(f.logGroupName())
-                .metricTransformations(translateFromSDK(f.metricTransformations()))
+                .limit(50)
+                .nextToken(nextToken)
                 .build();
-            models.add(model);
-        });
 
-        return models;
+        return this.proxy.injectCredentialsAndInvokeV2(request, this.client::describeMetricFilters);
+    }
+
+    private List<ResourceModel> extractMetricFilters(final DescribeMetricFiltersResponse response) {
+        return response.metricFilters()
+                .stream()
+                .map(f -> ResourceModel.builder()
+                        .filterName(f.filterName())
+                        .filterPattern(f.filterPattern())
+                        .logGroupName(f.logGroupName())
+                        .metricTransformations(translateFromSDK(f.metricTransformations()))
+                        .build())
+                .collect(Collectors.toList());
     }
 
 }

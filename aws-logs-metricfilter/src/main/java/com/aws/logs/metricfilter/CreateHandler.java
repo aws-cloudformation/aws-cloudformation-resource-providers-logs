@@ -1,8 +1,8 @@
 package com.aws.logs.metricfilter;
 
 import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
-import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
+import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
@@ -56,16 +56,15 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         }
 
         // pre-creation read to ensure no existing resource exists
-        try {
-            final ProgressEvent<ResourceModel, CallbackContext> readResult =
+        final ProgressEvent<ResourceModel, CallbackContext> readResult =
                 new ReadHandler().handleRequest(proxy, request, null, this.logger);
-            if (getPrimaryIdentifier(readResult.getResourceModel()).similar(getPrimaryIdentifier(model))) {
-                this.logger.log(String.format("%s [%s] already exists",
+        final Boolean primaryIdentifiersAlreadyExist = readResult.isSuccess() &&
+                getPrimaryIdentifier(readResult.getResourceModel()).similar(getPrimaryIdentifier(model));
+        if (primaryIdentifiersAlreadyExist) {
+            this.logger.log(String.format("%s [%s] already exists",
                     ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
-                throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME, model.getFilterName());
-            }
-        } catch (final ResourceNotFoundException e) {
-            // this is what we want to see
+            return ProgressEvent.defaultFailureHandler(new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME, model.getFilterName()),
+                    HandlerErrorCode.AlreadyExists);
         }
 
         final PutMetricFilterRequest putMetricFilterRequest =

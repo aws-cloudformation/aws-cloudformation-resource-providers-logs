@@ -1,6 +1,7 @@
 package com.aws.logs.metricfilter;
 
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
+import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
@@ -21,10 +22,7 @@ import java.util.Collections;
 
 import static com.aws.logs.metricfilter.Matchers.assertThatModelsAreEqual;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ReadHandlerTest {
@@ -157,9 +155,15 @@ public class ReadHandlerTest {
             .desiredResourceState(model)
             .build();
 
-        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class, () -> {
-            handler.handleRequest(proxy, request, null, logger);
-        });
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 
     @Test
@@ -186,9 +190,15 @@ public class ReadHandlerTest {
             .desiredResourceState(model)
             .build();
 
-        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class, () -> {
-            handler.handleRequest(proxy, request, null, logger);
-        });
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 
     @Test
@@ -238,8 +248,14 @@ public class ReadHandlerTest {
             .desiredResourceState(previous)
             .build();
 
-        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class, () -> {
-            handler.handleRequest(proxy, request, null, logger);
-        });
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 }

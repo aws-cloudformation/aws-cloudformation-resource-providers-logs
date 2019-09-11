@@ -69,6 +69,33 @@
             }
         }
     },
+    "handlers": {
+      "create": {
+        "permissions": [
+          "logs:PutMetricFilter"
+        ]
+      },
+      "read": {
+        "permissions": [
+          "logs:DescribeMetricFilters"
+        ]
+      },
+      "update": {
+        "permissions": [
+          "logs:PutMetricFilter"
+        ]
+      },
+      "delete": {
+        "permissions": [
+          "logs:DeleteMetricFilter"
+        ]
+      },
+      "list": {
+        "permissions": [
+          "logs:DescribeMetricFilters"
+        ]
+      }
+    },
     "required": [
         "FilterPattern",
         "LogGroupName",
@@ -78,11 +105,9 @@
         "/properties/FilterName",
         "/properties/LogGroupName"
     ],
-    "identifiers": [
-        [
-            "/properties/LogGroupName",
-            "/properties/FilterName"
-        ]
+    "primaryIdentifier": [
+        "/properties/LogGroupName",
+        "/properties/FilterName"
     ],
     "additionalProperties": false
 }
