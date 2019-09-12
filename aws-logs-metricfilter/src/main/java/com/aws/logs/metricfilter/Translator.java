@@ -58,9 +58,17 @@ public class Translator {
     }
 
     public static ResourceModel translate(final MetricFilter metricFilter) {
+        // When a filter pattern is "" the API sets it to null, but this is a meaningful pattern and the
+        // contract should be identical to what our caller provided
+        // per https://w.amazon.com/index.php/AWS21/Design/Uluru/HandlerContract
+        //
+        // MetricFilter is also a required property, so we assume that if it is null, it is because the
+        // pattern is actually an empty string. An empty string indicates that the filter should include
+        // everything, so it is akin to having no filter:
+        // - https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
         return ResourceModel.builder()
                 .filterName(metricFilter.filterName())
-                .filterPattern(metricFilter.filterPattern())
+                .filterPattern(metricFilter.filterPattern() == null ? "" : metricFilter.filterPattern())
                 .logGroupName(metricFilter.logGroupName())
                 .metricTransformations(translateFromSDK(metricFilter.metricTransformations()))
                 .build();

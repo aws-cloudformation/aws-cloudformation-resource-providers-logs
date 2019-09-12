@@ -72,6 +72,41 @@ public class TranslatorTest {
     }
 
     @Test
+    public void extractMetricFilters_API_removesEmptyFilterPattern() {
+        final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> metricTransformations =
+                Arrays.asList(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
+                        .defaultValue(1.0)
+                        .metricName("MetricName")
+                        .metricNamespace("MyNamespace")
+                        .metricValue("Value")
+                        .build());
+        final List<MetricFilter> metricFilters = Arrays.asList(MetricFilter.builder()
+                .filterName("Filter")
+                .logGroupName("LogGroup")
+                .metricTransformations(metricTransformations)
+                .build());
+        final DescribeMetricFiltersResponse response = DescribeMetricFiltersResponse.builder()
+                .metricFilters(metricFilters)
+                .build();
+
+        final List<MetricTransformation> rpdkMetricTransformations =
+                Arrays.asList(MetricTransformation.builder()
+                        .defaultValue(1.0)
+                        .metricName("MetricName")
+                        .metricNamespace("MyNamespace")
+                        .metricValue("Value")
+                        .build());
+        final List<ResourceModel> expectedModels = Arrays.asList(ResourceModel.builder()
+                .filterName("Filter")
+                .logGroupName("LogGroup")
+                .filterPattern("")
+                .metricTransformations(rpdkMetricTransformations)
+                .build());
+
+        assertThat(Translator.translateFromSDK(response)).isEqualTo(expectedModels);
+    }
+
+    @Test
     public void extractMetricFilters_noFilters() {
         final DescribeMetricFiltersResponse response = DescribeMetricFiltersResponse.builder()
                 .metricFilters(Collections.emptyList())

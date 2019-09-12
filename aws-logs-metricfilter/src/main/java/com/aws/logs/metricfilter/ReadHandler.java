@@ -9,7 +9,6 @@ import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter;
 
 import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
 
@@ -53,18 +52,11 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                 .stream()
                 .filter(f -> getPrimaryIdentifier(Translator.translate(f)).similar(getPrimaryIdentifier(model)))
                 .findFirst()
-                .map(f -> {
-                    // The API returns null when a filter pattern is "", but this is a meaningful pattern and the
-                    // contract should be identical to what our caller provided
-                    // per https://w.amazon.com/index.php/AWS21/Design/Uluru/HandlerContract
-                    final Boolean filterPatternErased = f.filterPattern() == null && model.getFilterPattern() != null;
-                    final String filterPattern = filterPatternErased ? model.getFilterPattern() : f.filterPattern();
-                    final MetricFilter updatedFilter = f.toBuilder().filterPattern(filterPattern).build();
-                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
-                            .status(OperationStatus.SUCCESS)
-                            .resourceModel(Translator.translate(updatedFilter))
-                            .build();
-                }).orElseGet(() -> {
+                .map(f -> ProgressEvent.<ResourceModel, CallbackContext>builder()
+                        .status(OperationStatus.SUCCESS)
+                        .resourceModel(Translator.translate(f))
+                        .build())
+                .orElseGet(() -> {
                     this.logger.log(String.format("%s [%s] not found",
                             ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
                     return ProgressEvent.defaultFailureHandler(new ResourceNotFoundException(ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()),
