@@ -5,6 +5,9 @@ Parameters:
   GitHubRepositoryName:
     Type: String
     Description: GitHub Repo Name For aws-cloudformation-resource-providers-logs
+  GitHubRepositoryShortName:
+    Type: String
+    Description: Short Name for this provider to avoid exceeding the 64char limit on IAM Resources
   CFNSDKBucket:
     Type: String
     Description: S3 Location of CloudFormation SDK; should be removed when we can publish the latest client
@@ -40,7 +43,7 @@ Resources:
   AWSCloudFormationResourceProviderCIRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "codebuild-${GitHubRepositoryName}-ci-role"
+      RoleName: !Sub "codebuild-${GitHubRepositoryShortName}-ci"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -98,7 +101,7 @@ Resources:
             GitCloneDepth: 1
             SourceIdentifier: JAVA_PLUGIN
           - Type: S3
-            Location: !Sub "${CFNSDKBucket}/jar/"
+            Location: !Sub "${CFNSDKBucket}/"
             SourceIdentifier: SDK
       ServiceRole: !GetAtt AWSCloudFormationResourceProviderCIRole.Arn
       Triggers:

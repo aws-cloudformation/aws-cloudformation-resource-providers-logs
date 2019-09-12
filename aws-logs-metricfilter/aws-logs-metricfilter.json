@@ -72,6 +72,7 @@
     "handlers": {
       "create": {
         "permissions": [
+          "logs:DescribeMetricFilters",
           "logs:PutMetricFilter"
         ]
       },
@@ -82,6 +83,7 @@
       },
       "update": {
         "permissions": [
+          "logs:DescribeMetricFilters",
           "logs:PutMetricFilter"
         ]
       },

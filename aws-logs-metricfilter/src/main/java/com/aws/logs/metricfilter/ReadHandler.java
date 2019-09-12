@@ -8,11 +8,10 @@ import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter;
 
 import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
-import static com.aws.logs.metricfilter.Translator.translateFromSDK;
 
 public class ReadHandler extends BaseHandler<CallbackContext> {
 
@@ -35,15 +34,10 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
     }
 
     private ProgressEvent<ResourceModel, CallbackContext> describeMetricFilter(final ResourceModel model) {
-        final DescribeMetricFiltersRequest request = DescribeMetricFiltersRequest.builder()
-            .filterNamePrefix(model.getFilterName())
-            .logGroupName(model.getLogGroupName())
-            .limit(1)
-            .build();
-
         final DescribeMetricFiltersResponse response;
         try {
-            response = this.proxy.injectCredentialsAndInvokeV2(request, this.client::describeMetricFilters);
+            response = this.proxy.injectCredentialsAndInvokeV2(Translator.translateToDescribeRequest(model, 1),
+                    this.client::describeMetricFilters);
         } catch (final software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException e) {
             this.logger.log(String.format("%s [%s] doesn't exist (%s)",
                 ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString(), e.getMessage()));
@@ -57,15 +51,7 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
 
         return response.metricFilters()
                 .stream()
-                .filter(f -> {
-                    ResourceModel translated = ResourceModel.builder()
-                            .filterName(f.filterName())
-                            .filterPattern(f.filterPattern())
-                            .logGroupName(f.logGroupName())
-                            .metricTransformations(translateFromSDK(f.metricTransformations()))
-                            .build();
-                    return getPrimaryIdentifier(translated).similar(getPrimaryIdentifier(model));
-                })
+                .filter(f -> getPrimaryIdentifier(Translator.translate(f)).similar(getPrimaryIdentifier(model)))
                 .findFirst()
                 .map(f -> {
                     // The API returns null when a filter pattern is "", but this is a meaningful pattern and the
@@ -73,14 +59,10 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                     // per https://w.amazon.com/index.php/AWS21/Design/Uluru/HandlerContract
                     final Boolean filterPatternErased = f.filterPattern() == null && model.getFilterPattern() != null;
                     final String filterPattern = filterPatternErased ? model.getFilterPattern() : f.filterPattern();
+                    final MetricFilter updatedFilter = f.toBuilder().filterPattern(filterPattern).build();
                     return ProgressEvent.<ResourceModel, CallbackContext>builder()
                             .status(OperationStatus.SUCCESS)
-                            .resourceModel(ResourceModel.builder()
-                                    .filterName(f.filterName())
-                                    .filterPattern(filterPattern)
-                                    .logGroupName(f.logGroupName())
-                                    .metricTransformations(translateFromSDK(f.metricTransformations()))
-                                    .build())
+                            .resourceModel(Translator.translate(updatedFilter))
                             .build();
                 }).orElseGet(() -> {
                     this.logger.log(String.format("%s [%s] not found",

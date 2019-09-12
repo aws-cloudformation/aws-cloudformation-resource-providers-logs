@@ -5,10 +5,8 @@ import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
 
 import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
-import static com.aws.logs.metricfilter.Translator.translateToSDK;
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
 
@@ -36,9 +34,6 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
         ResourceModel model = request.getDesiredResourceState();
 
-        // pre-creation read to ensure resource exists (the underlying API is UPSERT style, but we want consistent
-        // behaviour for the CloudFormation control plane; READ will return a FAILED state with NotFound if
-        // it can't find the resource
         final ProgressEvent<ResourceModel, CallbackContext> readResult =
                 new ReadHandler().handleRequest(proxy, request, null, this.logger);
 
@@ -46,14 +41,8 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             return readResult;
         }
 
-        final PutMetricFilterRequest putMetricFilterRequest =
-            PutMetricFilterRequest.builder()
-                .filterName(model.getFilterName())
-                .filterPattern(model.getFilterPattern())
-                .logGroupName(model.getLogGroupName())
-                .metricTransformations(translateToSDK(model.getMetricTransformations()))
-                .build();
-        proxy.injectCredentialsAndInvokeV2(putMetricFilterRequest, this.client::putMetricFilter);
+        proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
+                this.client::putMetricFilter);
         this.logger.log(String.format("%s [%s] updated successfully",
             ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
 

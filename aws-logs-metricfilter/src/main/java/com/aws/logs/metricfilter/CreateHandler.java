@@ -9,10 +9,8 @@ import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import com.amazonaws.cloudformation.resource.IdentifierUtils;
 import com.amazonaws.util.StringUtils;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
 
 import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
-import static com.aws.logs.metricfilter.Translator.translateToSDK;
 
 public class CreateHandler extends BaseHandler<CallbackContext> {
 
@@ -67,14 +65,8 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                     HandlerErrorCode.AlreadyExists);
         }
 
-        final PutMetricFilterRequest putMetricFilterRequest =
-            PutMetricFilterRequest.builder()
-                .filterName(model.getFilterName())
-                .filterPattern(model.getFilterPattern())
-                .logGroupName(model.getLogGroupName())
-                .metricTransformations(translateToSDK(model.getMetricTransformations()))
-                .build();
-        proxy.injectCredentialsAndInvokeV2(putMetricFilterRequest, this.client::putMetricFilter);
+        proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
+                this.client::putMetricFilter);
         this.logger.log(String.format("%s [%s] created successfully",
             ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
 

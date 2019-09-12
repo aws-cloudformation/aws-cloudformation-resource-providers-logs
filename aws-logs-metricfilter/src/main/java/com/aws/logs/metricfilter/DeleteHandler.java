@@ -6,7 +6,6 @@ import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 
 import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
@@ -38,11 +37,8 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
         ResourceModel model = request.getDesiredResourceState();
 
         try {
-            final DeleteMetricFilterRequest deleteMetricFilterRequest = DeleteMetricFilterRequest.builder()
-                .filterName(model.getFilterName())
-                .logGroupName(model.getLogGroupName())
-                .build();
-            proxy.injectCredentialsAndInvokeV2(deleteMetricFilterRequest, this.client::deleteMetricFilter);
+            proxy.injectCredentialsAndInvokeV2(Translator.translateToDeleteRequest(model),
+                    this.client::deleteMetricFilter);
             logger.log(String.format("%s [%s] deleted successfully",
                 ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
         } catch (ResourceNotFoundException e) {
