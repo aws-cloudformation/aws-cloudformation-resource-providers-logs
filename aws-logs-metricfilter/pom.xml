@@ -164,8 +164,13 @@
                 <configuration>
                     <excludes>
                         <exclude>**/BaseConfiguration*</exclude>
+                        <exclude>**/Configuration*</exclude>
                         <exclude>**/BaseHandler*</exclude>
                         <exclude>**/HandlerWrapper*</exclude>
+                        <exclude>**/ResourceModel*</exclude>
+                        <exclude>**/ResourceModelExtensions*</exclude>
+                        <exclude>**/ClientBuilder*</exclude>
+                        <exclude>**/CallbackContext*</exclude>
                     </excludes>
                 </configuration>
                 <executions>

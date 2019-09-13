@@ -18,7 +18,7 @@ public class ListHandler extends BaseHandler<CallbackContext> {
 
         final String pagToken = request.getNextToken();
         final DescribeMetricFiltersResponse response =
-                proxy.injectCredentialsAndInvokeV2(Translator.translateToDescribeRequest(50, pagToken),
+                proxy.injectCredentialsAndInvokeV2(Translator.translateToListRequest(50, pagToken),
                         ClientBuilder.getClient()::describeMetricFilters);
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()

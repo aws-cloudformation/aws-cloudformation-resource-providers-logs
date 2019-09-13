@@ -35,7 +35,7 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
     private ProgressEvent<ResourceModel, CallbackContext> describeMetricFilter(final ResourceModel model) {
         final DescribeMetricFiltersResponse response;
         try {
-            response = this.proxy.injectCredentialsAndInvokeV2(Translator.translateToDescribeRequest(model, 1),
+            response = this.proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
                     this.client::describeMetricFilters);
         } catch (final software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException e) {
             this.logger.log(String.format("%s [%s] doesn't exist (%s)",

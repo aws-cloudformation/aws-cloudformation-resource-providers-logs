@@ -81,16 +81,15 @@ public class Translator {
                 .build();
     }
 
-    public static DescribeMetricFiltersRequest translateToDescribeRequest(final ResourceModel model,
-                                                                          final int limit) {
+    public static DescribeMetricFiltersRequest translateToReadRequest(final ResourceModel model) {
         return DescribeMetricFiltersRequest.builder()
                 .filterNamePrefix(model.getFilterName())
                 .logGroupName(model.getLogGroupName())
-                .limit(limit)
+                .limit(1)
                 .build();
     }
 
-    public static DescribeMetricFiltersRequest translateToDescribeRequest(final int limit, final String nextToken) {
+    public static DescribeMetricFiltersRequest translateToListRequest(final int limit, final String nextToken) {
         return DescribeMetricFiltersRequest.builder()
                 .nextToken(nextToken)
                 .limit(limit)
