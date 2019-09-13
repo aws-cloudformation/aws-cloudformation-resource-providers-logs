@@ -70,33 +70,33 @@
         }
     },
     "handlers": {
-      "create": {
-        "permissions": [
-          "logs:DescribeMetricFilters",
-          "logs:PutMetricFilter"
-        ]
-      },
-      "read": {
-        "permissions": [
-          "logs:DescribeMetricFilters"
-        ]
-      },
-      "update": {
-        "permissions": [
-          "logs:DescribeMetricFilters",
-          "logs:PutMetricFilter"
-        ]
-      },
-      "delete": {
-        "permissions": [
-          "logs:DeleteMetricFilter"
-        ]
-      },
-      "list": {
-        "permissions": [
-          "logs:DescribeMetricFilters"
-        ]
-      }
+        "create": {
+            "permissions": [
+                "logs:DescribeMetricFilters",
+                "logs:PutMetricFilter"
+            ]
+        },
+        "read": {
+            "permissions": [
+                "logs:DescribeMetricFilters"
+            ]
+        },
+        "update": {
+            "permissions": [
+                "logs:DescribeMetricFilters",
+                "logs:PutMetricFilter"
+            ]
+        },
+        "delete": {
+            "permissions": [
+                "logs:DeleteMetricFilter"
+            ]
+        },
+        "list": {
+            "permissions": [
+                "logs:DescribeMetricFilters"
+            ]
+        }
     },
     "required": [
         "FilterPattern",
