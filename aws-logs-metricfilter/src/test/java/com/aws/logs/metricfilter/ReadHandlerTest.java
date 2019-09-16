@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ReadHandlerTest {
-    private static final String PRIMARY_ID = "{\"LogGroupName\":[\"test-lg\"],\"FilterName\":[\"test-filter\"]}";
+    private static final String PRIMARY_ID = "{\"/properties/LogGroupName\":[\"test-lg\"],\"/properties/FilterName\":[\"test-filter\"]}";
 
     @Mock
     private AmazonWebServicesClientProxy proxy;

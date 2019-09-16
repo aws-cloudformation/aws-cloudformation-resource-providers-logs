@@ -1,6 +1,5 @@
 package com.aws.logs.metricfilter;
 
-import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
 import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
@@ -10,7 +9,7 @@ import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
 
-import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
+import java.util.Objects;
 
 public class ReadHandler extends BaseHandler<CallbackContext> {
 
@@ -39,31 +38,33 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
         final DescribeMetricFiltersResponse response;
         try {
             response = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
-                    client::describeMetricFilters);
+                client::describeMetricFilters);
         } catch (final software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException e) {
             logger.log(String.format("%s [%s] doesn't exist (%s)",
-                ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString(), e.getMessage()));
+                ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier()), e.getMessage()));
             return ProgressEvent.defaultFailureHandler(e, HandlerErrorCode.NotFound);
         }
 
         if (response.metricFilters().isEmpty()) {
-            return ProgressEvent.defaultFailureHandler(new ResourceNotFoundException(ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()),
-                    HandlerErrorCode.NotFound);
+            return ProgressEvent.failed(null,
+                null,
+                HandlerErrorCode.NotFound,
+                Translator.buildResourceDoesNotExistErrorMessage(Objects.toString(model.getPrimaryIdentifier())));
         }
 
         return response.metricFilters()
-                .stream()
-                .filter(f -> getPrimaryIdentifier(Translator.translate(f)).similar(getPrimaryIdentifier(model)))
-                .findFirst()
-                .map(f -> ProgressEvent.<ResourceModel, CallbackContext>builder()
-                        .status(OperationStatus.SUCCESS)
-                        .resourceModel(Translator.translate(f))
-                        .build())
-                .orElseGet(() -> {
-                    final String primaryId = getPrimaryIdentifier(model).toString();
-                    final String errorMessage = Translator.buildResourceDoesNotExistErrorMessage(primaryId);
-                    logger.log(errorMessage);
-                    return ProgressEvent.failed(null, null, HandlerErrorCode.NotFound, errorMessage);
-                });
+            .stream()
+            .filter(f -> Translator.translate(f).getPrimaryIdentifier().similar(model.getPrimaryIdentifier()))
+            .findFirst()
+            .map(f -> ProgressEvent.<ResourceModel, CallbackContext>builder()
+                .status(OperationStatus.SUCCESS)
+                .resourceModel(Translator.translate(f))
+                .build())
+            .orElseGet(() -> {
+                final String primaryId = Objects.toString(model.getPrimaryIdentifier());
+                final String errorMessage = Translator.buildResourceDoesNotExistErrorMessage(primaryId);
+                logger.log(errorMessage);
+                return ProgressEvent.failed(null, null, HandlerErrorCode.NotFound, errorMessage);
+            });
     }
 }

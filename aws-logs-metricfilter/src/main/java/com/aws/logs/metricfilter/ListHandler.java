@@ -18,13 +18,13 @@ public class ListHandler extends BaseHandler<CallbackContext> {
 
         final String nextToken = request.getNextToken();
         final DescribeMetricFiltersResponse response =
-                proxy.injectCredentialsAndInvokeV2(Translator.translateToListRequest(50, nextToken),
-                        ClientBuilder.getClient()::describeMetricFilters);
+            proxy.injectCredentialsAndInvokeV2(Translator.translateToListRequest(50, nextToken),
+                ClientBuilder.getClient()::describeMetricFilters);
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
-                .resourceModels(Translator.translateFromSDK(response))
-                .nextToken(response.nextToken())
-                .status(OperationStatus.SUCCESS)
-                .build();
+            .resourceModels(Translator.translateFromSDK(response))
+            .nextToken(response.nextToken())
+            .status(OperationStatus.SUCCESS)
+            .build();
     }
 }

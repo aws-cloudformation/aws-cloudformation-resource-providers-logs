@@ -9,7 +9,7 @@ import com.amazonaws.cloudformation.resource.IdentifierUtils;
 import com.amazonaws.util.StringUtils;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 
-import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
+import java.util.Objects;
 
 public class CreateHandler extends BaseHandler<CallbackContext> {
 
@@ -54,18 +54,18 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
         // pre-creation read to ensure no existing resource exists
         final ProgressEvent<ResourceModel, CallbackContext> readResult =
-                new ReadHandler().handleRequest(proxy, request, null, logger);
+            new ReadHandler().handleRequest(proxy, request, null, logger);
+        final String primaryId = Objects.toString(model.getPrimaryIdentifier());
         if (readResult.isSuccess()) {
-            final String primaryId = getPrimaryIdentifier(model).toString();
             final String errorMessage = Translator.buildResourceAlreadyExistsErrorMessage(primaryId);
             logger.log(errorMessage);
             return ProgressEvent.failed(null, null, HandlerErrorCode.AlreadyExists, errorMessage);
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
-                client::putMetricFilter);
+            client::putMetricFilter);
         logger.log(String.format("%s [%s] created successfully",
-            ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
+            ResourceModel.TYPE_NAME, primaryId));
 
         return ProgressEvent.defaultSuccessHandler(model);
     }

@@ -35,7 +35,7 @@ final class Translator {
     }
 
     static List<com.aws.logs.metricfilter.MetricTransformation> translateFromSDK(
-            final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> in) {
+        final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> in) {
         if (CollectionUtils.isEmpty(in)) return null;
 
         return in.stream().map(Translator::translate).collect(Collectors.toList());
@@ -55,9 +55,9 @@ final class Translator {
 
     static List<ResourceModel> translateFromSDK(final DescribeMetricFiltersResponse describeMetricFiltersResponse) {
         return describeMetricFiltersResponse.metricFilters()
-                .stream()
-                .map(Translator::translate)
-                .collect(Collectors.toList());
+            .stream()
+            .map(Translator::translate)
+            .collect(Collectors.toList());
     }
 
     static ResourceModel translate(final MetricFilter metricFilter) {
@@ -70,53 +70,53 @@ final class Translator {
         // everything, so it is akin to having no filter:
         // - https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
         return ResourceModel.builder()
-                .filterName(metricFilter.filterName())
-                .filterPattern(metricFilter.filterPattern() == null ? "" : metricFilter.filterPattern())
-                .logGroupName(metricFilter.logGroupName())
-                .metricTransformations(translateFromSDK(metricFilter.metricTransformations()))
-                .build();
+            .filterName(metricFilter.filterName())
+            .filterPattern(metricFilter.filterPattern() == null ? "" : metricFilter.filterPattern())
+            .logGroupName(metricFilter.logGroupName())
+            .metricTransformations(translateFromSDK(metricFilter.metricTransformations()))
+            .build();
     }
 
     static DeleteMetricFilterRequest translateToDeleteRequest(final ResourceModel model) {
         return DeleteMetricFilterRequest.builder()
-                .filterName(model.getFilterName())
-                .logGroupName(model.getLogGroupName())
-                .build();
+            .filterName(model.getFilterName())
+            .logGroupName(model.getLogGroupName())
+            .build();
     }
 
     static DescribeMetricFiltersRequest translateToReadRequest(final ResourceModel model) {
         return DescribeMetricFiltersRequest.builder()
-                .filterNamePrefix(model.getFilterName())
-                .logGroupName(model.getLogGroupName())
-                .limit(1)
-                .build();
+            .filterNamePrefix(model.getFilterName())
+            .logGroupName(model.getLogGroupName())
+            .limit(1)
+            .build();
     }
 
     static DescribeMetricFiltersRequest translateToListRequest(final int limit, final String nextToken) {
         return DescribeMetricFiltersRequest.builder()
-                .nextToken(nextToken)
-                .limit(limit)
-                .build();
+            .nextToken(nextToken)
+            .limit(limit)
+            .build();
     }
 
     static PutMetricFilterRequest translateToPutRequest(final ResourceModel model) {
         return PutMetricFilterRequest.builder()
-                .filterName(model.getFilterName())
-                .filterPattern(model.getFilterPattern())
-                .logGroupName(model.getLogGroupName())
-                .metricTransformations(translateToSDK(model.getMetricTransformations()))
-                .build();
+            .filterName(model.getFilterName())
+            .filterPattern(model.getFilterPattern())
+            .logGroupName(model.getLogGroupName())
+            .metricTransformations(translateToSDK(model.getMetricTransformations()))
+            .build();
     }
 
     static String buildResourceAlreadyExistsErrorMessage(final String resourceIdentifier) {
         return String.format("Resource of type '%s' with identifier '%s' already exists.",
-                ResourceModel.TYPE_NAME,
-                resourceIdentifier);
+            ResourceModel.TYPE_NAME,
+            resourceIdentifier);
     }
 
     static String buildResourceDoesNotExistErrorMessage(final String resourceIdentifier) {
         return String.format("Resource of type '%s' with identifier '%s' was not found.",
-                ResourceModel.TYPE_NAME,
-                resourceIdentifier);
+            ResourceModel.TYPE_NAME,
+            resourceIdentifier);
     }
 }

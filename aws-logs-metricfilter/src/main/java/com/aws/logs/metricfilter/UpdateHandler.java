@@ -6,7 +6,7 @@ import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 
-import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
+import java.util.Objects;
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
 
@@ -35,16 +35,16 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         ResourceModel model = request.getDesiredResourceState();
 
         final ProgressEvent<ResourceModel, CallbackContext> readResult =
-                new ReadHandler().handleRequest(proxy, request, null, logger);
+            new ReadHandler().handleRequest(proxy, request, null, logger);
 
         if (readResult.isFailed()) {
             return readResult;
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
-                client::putMetricFilter);
+            client::putMetricFilter);
         logger.log(String.format("%s [%s] updated successfully",
-            ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
+            ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier())));
 
         return ProgressEvent.defaultSuccessHandler(model);
     }
