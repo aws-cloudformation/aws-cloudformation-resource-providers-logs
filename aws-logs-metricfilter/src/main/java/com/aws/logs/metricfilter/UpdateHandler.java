@@ -5,14 +5,13 @@ import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
 
-import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdentifier;
-import static com.aws.logs.metricfilter.Translator.translateToSDK;
+import java.util.Objects;
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
 
     private AmazonWebServicesClientProxy proxy;
+    private ResourceHandlerRequest<ResourceModel> request;
     private CloudWatchLogsClient client;
     private Logger logger;
 
@@ -24,32 +23,28 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final Logger logger) {
 
         this.proxy = proxy;
+        this.request = request;
         this.client = ClientBuilder.getClient();
         this.logger = logger;
 
-        return updateMetricFilter(proxy, request);
+        return updateMetricFilter();
     }
 
-    private ProgressEvent<ResourceModel, CallbackContext> updateMetricFilter(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request) {
+    private ProgressEvent<ResourceModel, CallbackContext> updateMetricFilter() {
 
         ResourceModel model = request.getDesiredResourceState();
 
-        // pre-creation read to ensure resource exists (the underlying API is UPSERT style, but we want consistent
-        // behaviour for the CloudFormation control plane; READ will throw if can't find the resource
-        new ReadHandler().handleRequest(proxy, request, null, this.logger);
+        final ProgressEvent<ResourceModel, CallbackContext> readResult =
+            new ReadHandler().handleRequest(proxy, request, null, logger);
 
-        final PutMetricFilterRequest putMetricFilterRequest =
-            PutMetricFilterRequest.builder()
-                .filterName(model.getFilterName())
-                .filterPattern(model.getFilterPattern())
-                .logGroupName(model.getLogGroupName())
-                .metricTransformations(translateToSDK(model.getMetricTransformations()))
-                .build();
-        proxy.injectCredentialsAndInvokeV2(putMetricFilterRequest, this.client::putMetricFilter);
-        this.logger.log(String.format("%s [%s] updated successfully",
-            ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
+        if (readResult.isFailed()) {
+            return readResult;
+        }
+
+        proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
+            client::putMetricFilter);
+        logger.log(String.format("%s [%s] updated successfully",
+            ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier())));
 
         return ProgressEvent.defaultSuccessHandler(model);
     }

@@ -74,6 +74,11 @@
             <version>2.26.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-logs</artifactId>
+            <version>1.11.592</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -159,8 +164,14 @@
                 <configuration>
                     <excludes>
                         <exclude>**/BaseConfiguration*</exclude>
+                        <exclude>**/Configuration*</exclude>
                         <exclude>**/BaseHandler*</exclude>
                         <exclude>**/HandlerWrapper*</exclude>
+                        <exclude>**/ResourceModel*</exclude>
+                        <exclude>**/ResourceModelExtensions*</exclude>
+                        <exclude>**/ClientBuilder*</exclude>
+                        <exclude>**/CallbackContext*</exclude>
+                        <exclude>**/MetricTransformation*</exclude>
                     </excludes>
                 </configuration>
                 <executions>

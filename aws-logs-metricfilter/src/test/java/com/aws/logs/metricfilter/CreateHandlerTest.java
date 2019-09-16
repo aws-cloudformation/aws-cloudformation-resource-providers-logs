@@ -1,7 +1,6 @@
 package com.aws.logs.metricfilter;
 
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
 import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
@@ -25,12 +24,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CreateHandlerTest {
+    private static final String PRIMARY_ID = "{\"/properties/LogGroupName\":[\"test-log-group\"],\"/properties/FilterName\":[\"test-filter\"]}";
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
@@ -171,9 +169,16 @@ public class CreateHandlerTest {
             .desiredResourceState(model)
             .build();
 
-        assertThrows(ResourceAlreadyExistsException.class, () -> {
-            handler.handleRequest(proxy, request, null, logger);
-        });
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isNull();
+        assertThat(response.getMessage()).isEqualTo(Translator.buildResourceAlreadyExistsErrorMessage(PRIMARY_ID));
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AlreadyExists);
     }
 
     @Test

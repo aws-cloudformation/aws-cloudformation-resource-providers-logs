@@ -7,7 +7,7 @@ phases:
     commands:
       # make sure pip/setuptools/wheel is up to date, awscli for SDK patching
       - cd "$CODEBUILD_SRC_DIR_JAVA_PLUGIN"
-      - pip install --upgrade pip setuptools wheel awscli -r requirements.txt
+      - pip install --upgrade pip setuptools wheel awscli -r "$CODEBUILD_SRC_DIR_RPDK/requirements.txt"
       - mkdir "$CODEBUILD_SRC_DIR_JAVA_PLUGIN/artifacts"
   build:
     commands:
@@ -16,16 +16,24 @@ phases:
       - pre-commit run --all-files
       # install aws-cloudformation-resource-schema
       - cd "$CODEBUILD_SRC_DIR_SCHEMA"
-      - mvn package org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install --batch-mode
+      - >
+        mvn package org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install
+        --batch-mode
+        --no-transfer-progress
       # install internal SDK
       - >
-        mvn org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install-file --batch-mode
-        -Dfile="$CODEBUILD_SRC_DIR_SDK/cloudformation-2.5.11.jar"
+        mvn org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install-file
+        --batch-mode
+        --no-transfer-progress
+        -Dfile="$CODEBUILD_SRC_DIR_SDK/cloudformation-2.5.69.jar"
       # install aws-cloudformation-rpdk
       - cd "$CODEBUILD_SRC_DIR_JAVA_PLUGIN"
-      - mvn package org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install --batch-mode
+      - >
+        mvn package org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install
+        --batch-mode
+        --no-transfer-progress
       - pip install "$CODEBUILD_SRC_DIR_RPDK" .
       # end-to-end test child repo(s)
       - cd "$CODEBUILD_SRC_DIR"
       - cd aws-logs-metricfilter
-      - mvn clean verify
+      - mvn clean verify --no-transfer-progress

@@ -3,5 +3,12 @@
     "language": "java",
     "runtime": "java8",
     "entrypoint": "com.aws.logs.metricfilter.HandlerWrapper::handleRequest",
-    "settings": {}
+    "settings": {
+        "namespace": [
+            "com",
+            "aws",
+            "logs",
+            "metricfilter"
+        ]
+    }
 }
