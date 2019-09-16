@@ -1,7 +1,7 @@
 {
     "typeName": "AWS::Logs::MetricFilter",
     "description": "Resource schema for AWS::Logs::MetricFilter",
-    "sourceUrl": "git@github.com:aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
+    "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs",
     "definitions": {
         "MetricTransformation": {
             "type": "object",
