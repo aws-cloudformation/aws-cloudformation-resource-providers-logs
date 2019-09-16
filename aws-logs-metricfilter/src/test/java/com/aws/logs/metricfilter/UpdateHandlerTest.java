@@ -28,6 +28,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UpdateHandlerTest {
+    private static final String PRIMARY_ID = "{\"LogGroupName\":[\"test-log-group\"],\"FilterName\":[\"test-filter\"]}";
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
@@ -47,7 +48,7 @@ public class UpdateHandlerTest {
 
         final MetricFilter filter = MetricFilter.builder()
             .filterName("test-filter")
-            .logGroupName("test-lg")
+            .logGroupName("test-log-group")
             .filterPattern("[test]")
             .metricTransformations(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder().metricName("metric").metricValue("value").build())
             .build();
@@ -68,12 +69,12 @@ public class UpdateHandlerTest {
 
         final ResourceModel previous = ResourceModel.builder()
             .filterName("test-filter")
-            .logGroupName("test-lg")
+            .logGroupName("test-log-group")
             .filterPattern("some pattern")
             .build();
         final ResourceModel desired = ResourceModel.builder()
             .filterName("test-filter")
-            .logGroupName("test-lg")
+            .logGroupName("test-log-group")
             .filterPattern("some new pattern")
             .metricTransformations(Arrays.asList(
                 com.aws.logs.metricfilter.MetricTransformation.builder()
@@ -219,7 +220,9 @@ public class UpdateHandlerTest {
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isNull();
         assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 
@@ -268,64 +271,9 @@ public class UpdateHandlerTest {
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isNull();
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isNotNull();
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
-    }
-
-    @Test
-    public void handleRequest_SimilarExistingMetricFilter_Failed() {
-        final UpdateHandler handler = new UpdateHandler();
-
-        // the underlying API uses a prefix match search, so the handler needs to disambiguate 'similar' describes
-        final MetricFilter filter = MetricFilter.builder()
-            .filterName("test-filter-with-longer-name")
-            .logGroupName("test-lg")
-            .filterPattern("[test]")
-            .metricTransformations(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder().metricName("metric").metricValue("value").build())
-            .build();
-        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
-            .metricFilters(filter)
-            .build();
-
-        // return existing metrics for pre-update check and then success response
-        doReturn(describeResponse)
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
-
-        final ResourceModel previous = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-lg")
-            .filterPattern("some pattern")
-            .build();
-        final ResourceModel desired = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-lg")
-            .filterPattern("some new pattern")
-            .metricTransformations(Arrays.asList(
-                com.aws.logs.metricfilter.MetricTransformation.builder()
-                    .metricName("metric").metricValue("value").build(),
-                com.aws.logs.metricfilter.MetricTransformation.builder()
-                    .metricName("metric2").metricValue("value2").build()
-            ))
-            .build();
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(desired)
-            .desiredResourceState(previous)
-            .build();
-
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getCallbackContext()).isNull();
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(Translator.buildResourceDoesNotExistErrorMessage(PRIMARY_ID));
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 }

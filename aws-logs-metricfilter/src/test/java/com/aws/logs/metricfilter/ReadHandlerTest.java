@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ReadHandlerTest {
+    private static final String PRIMARY_ID = "{\"LogGroupName\":[\"test-lg\"],\"FilterName\":[\"test-filter\"]}";
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
@@ -161,8 +162,9 @@ public class ReadHandlerTest {
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isNull();
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getMessage()).isEqualTo("The specified log group does not exist.");
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 
@@ -196,8 +198,9 @@ public class ReadHandlerTest {
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isNull();
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(Translator.buildResourceDoesNotExistErrorMessage(PRIMARY_ID));
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 
@@ -207,46 +210,46 @@ public class ReadHandlerTest {
 
         // the underlying API uses a prefix match search, so the handler needs to disambiguate 'similar' describes
         final MetricFilter filter1 = MetricFilter.builder()
-            .filterName("test-filter-with-longer-name")
-            .logGroupName("test-lg")
-            .build();
+                .filterName("test-filter-with-longer-name")
+                .logGroupName("test-lg")
+                .build();
         final MetricFilter filter2 = MetricFilter.builder()
-            .filterName("test-filter-with-longer-name-2")
-            .logGroupName("test-lg")
-            .build();
+                .filterName("test-filter-with-longer-name-2")
+                .logGroupName("test-lg")
+                .build();
         final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
-            .metricFilters(filter1, filter2)
-            .build();
+                .metricFilters(filter1, filter2)
+                .build();
 
         // return existing metric which share a filter name prefix, but do not match
         doReturn(describeResponse)
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.any(),
+                        ArgumentMatchers.any()
+                );
 
         final ResourceModel previous = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-lg")
-            .filterPattern("some pattern")
-            .build();
+                .filterName("test-filter")
+                .logGroupName("test-lg")
+                .filterPattern("some pattern")
+                .build();
         final ResourceModel desired = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-lg")
-            .filterPattern("some new pattern")
-            .metricTransformations(Arrays.asList(
-                com.aws.logs.metricfilter.MetricTransformation.builder()
-                    .metricName("metric").metricValue("value").build(),
-                com.aws.logs.metricfilter.MetricTransformation.builder()
-                    .metricName("metric2").metricValue("value2").build()
-            ))
-            .build();
+                .filterName("test-filter")
+                .logGroupName("test-lg")
+                .filterPattern("some new pattern")
+                .metricTransformations(Arrays.asList(
+                        com.aws.logs.metricfilter.MetricTransformation.builder()
+                                .metricName("metric").metricValue("value").build(),
+                        com.aws.logs.metricfilter.MetricTransformation.builder()
+                                .metricName("metric2").metricValue("value2").build()
+                ))
+                .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(desired)
-            .desiredResourceState(previous)
-            .build();
+                .desiredResourceState(desired)
+                .desiredResourceState(previous)
+                .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
@@ -254,8 +257,9 @@ public class ReadHandlerTest {
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isNull();
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(Translator.buildResourceDoesNotExistErrorMessage(PRIMARY_ID));
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 }

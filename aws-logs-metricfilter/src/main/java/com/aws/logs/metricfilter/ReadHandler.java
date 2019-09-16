@@ -15,6 +15,7 @@ import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdenti
 public class ReadHandler extends BaseHandler<CallbackContext> {
 
     private AmazonWebServicesClientProxy proxy;
+    private ResourceHandlerRequest<ResourceModel> request;
     private CloudWatchLogsClient client;
     private Logger logger;
 
@@ -26,19 +27,21 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
         final Logger logger) {
 
         this.proxy = proxy;
+        this.request = request;
         this.client = CloudWatchLogsClient.builder().build();
         this.logger = logger;
 
-        return describeMetricFilter(request.getDesiredResourceState());
+        return describeMetricFilter();
     }
 
-    private ProgressEvent<ResourceModel, CallbackContext> describeMetricFilter(final ResourceModel model) {
+    private ProgressEvent<ResourceModel, CallbackContext> describeMetricFilter() {
+        final ResourceModel model = request.getDesiredResourceState();
         final DescribeMetricFiltersResponse response;
         try {
-            response = this.proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
-                    this.client::describeMetricFilters);
+            response = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
+                    client::describeMetricFilters);
         } catch (final software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException e) {
-            this.logger.log(String.format("%s [%s] doesn't exist (%s)",
+            logger.log(String.format("%s [%s] doesn't exist (%s)",
                 ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString(), e.getMessage()));
             return ProgressEvent.defaultFailureHandler(e, HandlerErrorCode.NotFound);
         }
@@ -57,10 +60,10 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                         .resourceModel(Translator.translate(f))
                         .build())
                 .orElseGet(() -> {
-                    this.logger.log(String.format("%s [%s] not found",
-                            ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
-                    return ProgressEvent.defaultFailureHandler(new ResourceNotFoundException(ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()),
-                            HandlerErrorCode.NotFound);
+                    final String primaryId = getPrimaryIdentifier(model).toString();
+                    final String errorMessage = Translator.buildResourceDoesNotExistErrorMessage(primaryId);
+                    logger.log(errorMessage);
+                    return ProgressEvent.failed(null, null, HandlerErrorCode.NotFound, errorMessage);
                 });
     }
 }

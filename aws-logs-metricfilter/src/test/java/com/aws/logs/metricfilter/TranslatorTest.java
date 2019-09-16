@@ -17,23 +17,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 public class TranslatorTest {
+    private static final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation METRIC_TRANSFORMATION =
+            software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
+                    .defaultValue(1.0)
+                    .metricName("MetricName")
+                    .metricNamespace("MyNamespace")
+                    .metricValue("Value")
+                    .build();
+
+    private static final MetricTransformation RPDK_METRIC_TRANSFORMATION =
+            MetricTransformation.builder()
+                    .defaultValue(1.0)
+                    .metricName("MetricName")
+                    .metricNamespace("MyNamespace")
+                    .metricValue("Value")
+                    .build();
+
+    private static final MetricFilter METRIC_FILTER = MetricFilter.builder()
+            .filterName("Filter")
+            .logGroupName("LogGroup")
+            .filterPattern("Pattern")
+            .metricTransformations(Collections.singletonList(METRIC_TRANSFORMATION))
+            .build();
+
+    private static final ResourceModel RESOURCE_MODEL = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .metricTransformations(Collections.singletonList(RPDK_METRIC_TRANSFORMATION))
+            .filterPattern("Pattern")
+            .filterName("FilterName")
+            .build();
 
     @Test
     public void translate_packageModel() {
-        final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation metricTransformation =
-                software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build();
-        final MetricTransformation rpdkMetricTransformation = MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build();
-        assertThat(Translator.translate(rpdkMetricTransformation)).isEqualToComparingFieldByField(metricTransformation);
+        assertThat(Translator.translate(RPDK_METRIC_TRANSFORMATION))
+                .isEqualToComparingFieldByField(METRIC_TRANSFORMATION);
     }
 
     @Test
@@ -48,39 +65,14 @@ public class TranslatorTest {
 
     @Test
     public void translate_SDKModel() {
-        final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation metricTransformation =
-                software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build();
-        final MetricTransformation rpdkMetricTransformation = MetricTransformation.builder()
-                .defaultValue(1.0)
-                .metricName("MetricName")
-                .metricNamespace("MyNamespace")
-                .metricValue("Value")
-                .build();
-        assertThat(Translator.translate(metricTransformation)).isEqualToComparingFieldByField(rpdkMetricTransformation);
+        assertThat(Translator.translate(METRIC_TRANSFORMATION))
+                .isEqualToComparingFieldByField(RPDK_METRIC_TRANSFORMATION);
     }
 
     @Test
     public void translateToSDK() {
-        final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> metricTransformations =
-                Arrays.asList(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        final List<MetricTransformation> rpdkMetricTransformations =
-                Arrays.asList(MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        assertThat(Translator.translateToSDK(rpdkMetricTransformations)).containsAll(metricTransformations);
+        assertThat(Translator.translateToSDK(Collections.singletonList(RPDK_METRIC_TRANSFORMATION)))
+                .containsExactly(METRIC_TRANSFORMATION);
     }
 
     @Test
@@ -90,21 +82,8 @@ public class TranslatorTest {
 
     @Test
     public void translatefromSDK() {
-        final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> metricTransformations =
-                Arrays.asList(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        final List<MetricTransformation> rpdkMetricTransformations =
-                Arrays.asList(MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        assertThat(Translator.translateFromSDK(metricTransformations)).containsAll(rpdkMetricTransformations);
+        assertThat(Translator.translateFromSDK(Collections.singletonList(METRIC_TRANSFORMATION)))
+                .containsExactly(RPDK_METRIC_TRANSFORMATION);
     }
 
     @Test
@@ -114,35 +93,15 @@ public class TranslatorTest {
 
     @Test
     public void extractMetricFilters_success() {
-        final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> metricTransformations =
-                Arrays.asList(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        final List<MetricFilter> metricFilters = Arrays.asList(MetricFilter.builder()
-                .filterName("Filter")
-                .logGroupName("LogGroup")
-                .filterPattern("Pattern")
-                .metricTransformations(metricTransformations)
-                .build());
         final DescribeMetricFiltersResponse response = DescribeMetricFiltersResponse.builder()
-                .metricFilters(metricFilters)
+                .metricFilters(Collections.singletonList(METRIC_FILTER))
                 .build();
 
-        final List<MetricTransformation> rpdkMetricTransformations =
-                Arrays.asList(MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
         final List<ResourceModel> expectedModels = Arrays.asList(ResourceModel.builder()
                 .filterName("Filter")
                 .logGroupName("LogGroup")
                 .filterPattern("Pattern")
-                .metricTransformations(rpdkMetricTransformations)
+                .metricTransformations(Collections.singletonList(RPDK_METRIC_TRANSFORMATION))
                 .build());
 
         assertThat(Translator.translateFromSDK(response)).isEqualTo(expectedModels);
@@ -150,34 +109,14 @@ public class TranslatorTest {
 
     @Test
     public void extractMetricFilters_API_removesEmptyFilterPattern() {
-        final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> metricTransformations =
-                Arrays.asList(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        final List<MetricFilter> metricFilters = Arrays.asList(MetricFilter.builder()
-                .filterName("Filter")
-                .logGroupName("LogGroup")
-                .metricTransformations(metricTransformations)
-                .build());
         final DescribeMetricFiltersResponse response = DescribeMetricFiltersResponse.builder()
-                .metricFilters(metricFilters)
+                .metricFilters(Collections.singletonList(METRIC_FILTER.toBuilder().filterPattern(null).build()))
                 .build();
-
-        final List<MetricTransformation> rpdkMetricTransformations =
-                Arrays.asList(MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
         final List<ResourceModel> expectedModels = Arrays.asList(ResourceModel.builder()
                 .filterName("Filter")
                 .logGroupName("LogGroup")
                 .filterPattern("")
-                .metricTransformations(rpdkMetricTransformations)
+                .metricTransformations(Collections.singletonList(RPDK_METRIC_TRANSFORMATION))
                 .build());
 
         assertThat(Translator.translateFromSDK(response)).isEqualTo(expectedModels);
@@ -196,89 +135,39 @@ public class TranslatorTest {
 
     @Test
     public void translateToDeleteRequest() {
-        final List<MetricTransformation> rpdkMetricTransformations =
-                Arrays.asList(MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        final ResourceModel model = ResourceModel.builder()
-                .logGroupName("LogGroup")
-                .metricTransformations(rpdkMetricTransformations)
-                .filterPattern("Pattern")
-                .filterName("FilterName")
-                .build();
-
         final DeleteMetricFilterRequest expectedRequest = DeleteMetricFilterRequest.builder()
                 .filterName("FilterName")
                 .logGroupName("LogGroup")
                 .build();
 
-        final DeleteMetricFilterRequest actualRequest = Translator.translateToDeleteRequest(model);
+        final DeleteMetricFilterRequest actualRequest = Translator.translateToDeleteRequest(RESOURCE_MODEL);
 
         assertThat(actualRequest).isEqualToComparingFieldByField(expectedRequest);
     }
 
     @Test
     public void translateToPutRequest() {
-        final List<MetricTransformation> rpdkMetricTransformations =
-                Arrays.asList(MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> metricTransformations =
-                Arrays.asList(software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-
-        final ResourceModel model = ResourceModel.builder()
-                .logGroupName("LogGroup")
-                .metricTransformations(rpdkMetricTransformations)
-                .filterPattern("Pattern")
-                .filterName("FilterName")
-                .build();
-
         final PutMetricFilterRequest expectedRequest = PutMetricFilterRequest.builder()
                 .logGroupName("LogGroup")
-                .metricTransformations(metricTransformations)
+                .metricTransformations(Collections.singletonList(METRIC_TRANSFORMATION))
                 .filterPattern("Pattern")
                 .filterName("FilterName")
                 .build();
 
-        final DeleteMetricFilterRequest actualRequest = Translator.translateToDeleteRequest(model);
+        final DeleteMetricFilterRequest actualRequest = Translator.translateToDeleteRequest(RESOURCE_MODEL);
 
         assertThat(actualRequest).isEqualToComparingFieldByField(expectedRequest);
     }
 
     @Test
     public void translateToReadRequest() {
-        final List<MetricTransformation> rpdkMetricTransformations =
-                Arrays.asList(MetricTransformation.builder()
-                        .defaultValue(1.0)
-                        .metricName("MetricName")
-                        .metricNamespace("MyNamespace")
-                        .metricValue("Value")
-                        .build());
-        final ResourceModel model = ResourceModel.builder()
-                .logGroupName("LogGroup")
-                .metricTransformations(rpdkMetricTransformations)
-                .filterPattern("Pattern")
-                .filterName("FilterName")
-                .build();
-
         final DescribeMetricFiltersRequest expectedRequest = DescribeMetricFiltersRequest.builder()
                 .logGroupName("LogGroup")
                 .filterNamePrefix("FilterName")
                 .limit(1)
                 .build();
 
-        final DescribeMetricFiltersRequest actualRequest = Translator.translateToReadRequest(model);
+        final DescribeMetricFiltersRequest actualRequest = Translator.translateToReadRequest(RESOURCE_MODEL);
 
         assertThat(actualRequest).isEqualToComparingFieldByField(expectedRequest);
     }
@@ -293,5 +182,17 @@ public class TranslatorTest {
         final DescribeMetricFiltersRequest actualRequest = Translator.translateToListRequest(50, "token");
 
         assertThat(actualRequest).isEqualToComparingFieldByField(expectedRequest);
+    }
+
+    @Test
+    public void buildResourceAlreadyExistsErrorMessage() {
+        final String expected = "Resource of type 'AWS::Logs::MetricFilter' with identifier 'ID' already exists.";
+        assertThat(Translator.buildResourceAlreadyExistsErrorMessage("ID")).isEqualTo(expected);
+    }
+
+    @Test
+    public void buildResourceDoesNotExistErrorMessage() {
+        final String expected = "Resource of type 'AWS::Logs::MetricFilter' with identifier 'ID' was not found.";
+        assertThat(Translator.buildResourceDoesNotExistErrorMessage("ID")).isEqualTo(expected);
     }
 }

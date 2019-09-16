@@ -13,6 +13,7 @@ import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdenti
 public class DeleteHandler extends BaseHandler<CallbackContext> {
 
     private AmazonWebServicesClientProxy proxy;
+    private ResourceHandlerRequest<ResourceModel> request;
     private CloudWatchLogsClient client;
     private Logger logger;
 
@@ -24,21 +25,20 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
         final Logger logger) {
 
         this.proxy = proxy;
+        this.request = request;
         this.client = ClientBuilder.getClient();
         this.logger = logger;
 
-        return deleteMetricFilter(proxy, request);
+        return deleteMetricFilter();
     }
 
-    private ProgressEvent<ResourceModel, CallbackContext> deleteMetricFilter(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request) {
+    private ProgressEvent<ResourceModel, CallbackContext> deleteMetricFilter() {
 
         ResourceModel model = request.getDesiredResourceState();
 
         try {
             proxy.injectCredentialsAndInvokeV2(Translator.translateToDeleteRequest(model),
-                    this.client::deleteMetricFilter);
+                    client::deleteMetricFilter);
             logger.log(String.format("%s [%s] deleted successfully",
                 ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
         } catch (ResourceNotFoundException e) {

@@ -28,6 +28,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CreateHandlerTest {
+    private static final String PRIMARY_ID = "{\"LogGroupName\":[\"test-log-group\"],\"FilterName\":[\"test-filter\"]}";
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
@@ -176,7 +177,7 @@ public class CreateHandlerTest {
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getResourceModel()).isNull();
-        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(Translator.buildResourceAlreadyExistsErrorMessage(PRIMARY_ID));
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AlreadyExists);
     }
 

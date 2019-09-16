@@ -11,6 +11,7 @@ import static com.aws.logs.metricfilter.ResourceModelExtensions.getPrimaryIdenti
 public class UpdateHandler extends BaseHandler<CallbackContext> {
 
     private AmazonWebServicesClientProxy proxy;
+    private ResourceHandlerRequest<ResourceModel> request;
     private CloudWatchLogsClient client;
     private Logger logger;
 
@@ -22,28 +23,27 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final Logger logger) {
 
         this.proxy = proxy;
+        this.request = request;
         this.client = ClientBuilder.getClient();
         this.logger = logger;
 
-        return updateMetricFilter(proxy, request);
+        return updateMetricFilter();
     }
 
-    private ProgressEvent<ResourceModel, CallbackContext> updateMetricFilter(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request) {
+    private ProgressEvent<ResourceModel, CallbackContext> updateMetricFilter() {
 
         ResourceModel model = request.getDesiredResourceState();
 
         final ProgressEvent<ResourceModel, CallbackContext> readResult =
-                new ReadHandler().handleRequest(proxy, request, null, this.logger);
+                new ReadHandler().handleRequest(proxy, request, null, logger);
 
         if (readResult.isFailed()) {
             return readResult;
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
-                this.client::putMetricFilter);
-        this.logger.log(String.format("%s [%s] updated successfully",
+                client::putMetricFilter);
+        logger.log(String.format("%s [%s] updated successfully",
             ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
 
         return ProgressEvent.defaultSuccessHandler(model);

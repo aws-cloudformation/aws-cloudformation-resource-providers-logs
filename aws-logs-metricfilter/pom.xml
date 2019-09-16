@@ -171,6 +171,7 @@
                         <exclude>**/ResourceModelExtensions*</exclude>
                         <exclude>**/ClientBuilder*</exclude>
                         <exclude>**/CallbackContext*</exclude>
+                        <exclude>**/MetricTransformation*</exclude>
                     </excludes>
                 </configuration>
                 <executions>

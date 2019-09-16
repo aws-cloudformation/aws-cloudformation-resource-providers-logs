@@ -1,6 +1,5 @@
 package com.aws.logs.metricfilter;
 
-import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
 import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
@@ -17,6 +16,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
     private static final int MAX_LENGTH_METRIC_FILTER_NAME = 512;
 
     private AmazonWebServicesClientProxy proxy;
+    private ResourceHandlerRequest<ResourceModel> request;
     private CloudWatchLogsClient client;
     private Logger logger;
 
@@ -28,15 +28,14 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         final Logger logger) {
 
         this.proxy = proxy;
+        this.request = request;
         this.client = ClientBuilder.getClient();
         this.logger = logger;
 
-        return createMetricFilter(proxy, request);
+        return createMetricFilter();
     }
 
-    private ProgressEvent<ResourceModel, CallbackContext> createMetricFilter(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request) {
+    private ProgressEvent<ResourceModel, CallbackContext> createMetricFilter() {
 
         ResourceModel model = request.getDesiredResourceState();
 
@@ -55,19 +54,17 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
         // pre-creation read to ensure no existing resource exists
         final ProgressEvent<ResourceModel, CallbackContext> readResult =
-                new ReadHandler().handleRequest(proxy, request, null, this.logger);
-        final Boolean primaryIdentifiersAlreadyExist = readResult.isSuccess() &&
-                getPrimaryIdentifier(readResult.getResourceModel()).similar(getPrimaryIdentifier(model));
-        if (primaryIdentifiersAlreadyExist) {
-            this.logger.log(String.format("%s [%s] already exists",
-                    ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
-            return ProgressEvent.defaultFailureHandler(new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME, model.getFilterName()),
-                    HandlerErrorCode.AlreadyExists);
+                new ReadHandler().handleRequest(proxy, request, null, logger);
+        if (readResult.isSuccess()) {
+            final String primaryId = getPrimaryIdentifier(model).toString();
+            final String errorMessage = Translator.buildResourceAlreadyExistsErrorMessage(primaryId);
+            logger.log(errorMessage);
+            return ProgressEvent.failed(null, null, HandlerErrorCode.AlreadyExists, errorMessage);
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
-                this.client::putMetricFilter);
-        this.logger.log(String.format("%s [%s] created successfully",
+                client::putMetricFilter);
+        logger.log(String.format("%s [%s] created successfully",
             ResourceModel.TYPE_NAME, getPrimaryIdentifier(model).toString()));
 
         return ProgressEvent.defaultSuccessHandler(model);
