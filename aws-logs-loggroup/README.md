@@ -1,8 +1,8 @@
-# AWS::Logs::MetricFilter
+# AWS::Logs::LogGroup
 
 Congratulations on starting development! Next steps:
 
-1. Write the JSON schema describing your resource, `aws-logs-metricfilter.json`
+1. Write the JSON schema describing your resource, `aws-logs-loggroup.json`
 2. The RPDK will automatically generate the correct resource model from the
    schema whenever the project is built via Maven. You can also do this manually
    with the following command: `cfn-cli generate`
