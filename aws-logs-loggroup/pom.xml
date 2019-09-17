@@ -5,9 +5,9 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.aws.logs.metricfilter</groupId>
-    <artifactId>aws-logs-metricfilter-handler</artifactId>
-    <name>aws-logs-metricfilter-handler</name>
+    <groupId>com.aws.logs.loggroup</groupId>
+    <artifactId>aws-logs-loggroup-handler</artifactId>
+    <name>aws-logs-loggroup-handler</name>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -224,7 +224,7 @@
             <resource>
                 <directory>${project.basedir}</directory>
                 <includes>
-                    <include>aws-logs-metricfilter.json</include>
+                    <include>aws-logs-loggroup.json</include>
                 </includes>
             </resource>
         </resources>
