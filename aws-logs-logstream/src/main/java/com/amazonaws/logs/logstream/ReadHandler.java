@@ -6,6 +6,7 @@ import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 
 import java.util.Objects;
 
@@ -32,10 +33,16 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
 
     private ProgressEvent<ResourceModel, CallbackContext> readLogStream() {
         final ResourceModel model = request.getDesiredResourceState();
-        final DescribeLogStreamsResponse result =
-            proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
+        DescribeLogStreamsResponse result;
+        ResourceModel readModel;
+        try {
+            result = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
                 ClientBuilder.getClient()::describeLogStreams);
-        final ResourceModel readModel = Translator.translateForRead(result, model.getLogGroupName());
+            readModel = Translator.translateForRead(result, model.getLogGroupName());
+        } catch (final ResourceNotFoundException e) {
+            return notFoundProgressEvent();
+        }
+
         if (readModel.getLogStreamName() == null) {
             return notFoundProgressEvent();
         }
