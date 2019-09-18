@@ -20,4 +20,3 @@ Resources:
       Handler: com.amazonaws.logs.destination.HandlerWrapper::testEntrypoint
       Runtime: java8
       CodeUri: ./target/aws-logs-destination-handler-1.0-SNAPSHOT.jar
-
