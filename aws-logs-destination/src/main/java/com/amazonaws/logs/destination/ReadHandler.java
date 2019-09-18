@@ -11,9 +11,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundExce
 import java.util.Objects;
 
 public class ReadHandler extends BaseHandler<CallbackContext> {
-    private AmazonWebServicesClientProxy proxy;
     private ResourceHandlerRequest<ResourceModel> request;
-    private CallbackContext callbackContext;
     private Logger logger;
 
     @Override
@@ -23,9 +21,7 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        this.proxy = proxy;
         this.request = request;
-        this.callbackContext = callbackContext;
         this.logger = logger;
 
         final ResourceModel model = request.getDesiredResourceState();

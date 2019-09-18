@@ -7,10 +7,6 @@ import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 
 public class DeleteHandler extends BaseHandler<CallbackContext> {
-    private AmazonWebServicesClientProxy proxy;
-    private ResourceHandlerRequest<ResourceModel> request;
-    private CallbackContext callbackContext;
-    private Logger logger;
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -18,11 +14,6 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
         final ResourceHandlerRequest<ResourceModel> request,
         final CallbackContext callbackContext,
         final Logger logger) {
-
-        this.proxy = proxy;
-        this.request = request;
-        this.callbackContext = callbackContext;
-        this.logger = logger;
 
         final ProgressEvent<ResourceModel, CallbackContext> readResult =
             new ReadHandler().handleRequest(proxy, request, callbackContext, logger);

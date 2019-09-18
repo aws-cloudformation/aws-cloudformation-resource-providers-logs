@@ -30,7 +30,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
     }
 
     private ProgressEvent<ResourceModel, CallbackContext> createDestination() {
-        final ResourceModel model = request.getDesiredResourceState();
 
         final ReadHandler readHandler = new ReadHandler();
         final ProgressEvent<ResourceModel, CallbackContext> readResult =
