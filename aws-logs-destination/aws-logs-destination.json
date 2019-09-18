@@ -1,6 +1,6 @@
 {
     "typeName": "AWS::Logs::Destination",
-    "description": "An example resource schema demonstrating some basic constructs and validation rules.",
+    "description": "Schema for AWS Logs Destination resource.",
     "sourceUrl": "git@github.com:aws-cloudformation/aws-cloudformation-rpdk.git",
     "properties": {
         "DestinationName": {
@@ -37,27 +37,31 @@
     "handlers": {
         "create": {
             "permissions": [
-                "initech:CreateReport"
+                "PutDestination",
+                "PutDestinationPolicy",
+                "DescribeDestinations"
             ]
         },
         "read": {
             "permissions": [
-                "initech:DescribeReport"
+                "DescribeDestinations"
             ]
         },
         "update": {
             "permissions": [
-                "initech:UpdateReport"
+                "PutDestination",
+                "PutDestinationPolicy",
+                "DescribeDestinations"
             ]
         },
         "delete": {
             "permissions": [
-                "initech:DeleteReport"
+                "DeleteDestination"
             ]
         },
         "list": {
             "permissions": [
-                "initech:ListReports"
+                "DescribeDestinations"
             ]
         }
     }
