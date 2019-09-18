@@ -1,0 +1,14 @@
+{
+    "typeName": "AWS::Logs::Destination",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "com.amazonaws.logs.destination.HandlerWrapper::handleRequest",
+    "settings": {
+        "namespace": [
+            "com",
+            "amazonaws",
+            "logs",
+            "destination"
+        ]
+    }
+}

@@ -1,0 +1,64 @@
+{
+    "typeName": "AWS::Logs::Destination",
+    "description": "An example resource schema demonstrating some basic constructs and validation rules.",
+    "sourceUrl": "git@github.com:aws-cloudformation/aws-cloudformation-rpdk.git",
+    "properties": {
+        "DestinationName": {
+            "type": "string",
+            "pattern": "^[^:*]*\\Z",
+            "minLength": 1,
+            "maxLength": 512
+        },
+        "DestinationPolicy": {
+            "type": "string",
+            "minLength": 1
+        },
+        "RoleArn": {
+            "type": "string",
+            "minLength": 1
+        },
+        "TargetArn": {
+            "type": "string",
+            "minLength": 1
+        }
+    },
+    "required": [
+        "DestinationName",
+        "DestinationPolicy",
+        "RoleArn",
+        "TargetArn"
+    ],
+    "createOnlyProperties": [
+        "/properties/DestinationName"
+    ],
+    "primaryIdentifier": [
+        "/properties/DestinationName"
+    ],
+    "handlers": {
+        "create": {
+            "permissions": [
+                "initech:CreateReport"
+            ]
+        },
+        "read": {
+            "permissions": [
+                "initech:DescribeReport"
+            ]
+        },
+        "update": {
+            "permissions": [
+                "initech:UpdateReport"
+            ]
+        },
+        "delete": {
+            "permissions": [
+                "initech:DeleteReport"
+            ]
+        },
+        "list": {
+            "permissions": [
+                "initech:ListReports"
+            ]
+        }
+    }
+}
