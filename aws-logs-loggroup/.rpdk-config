@@ -1,0 +1,14 @@
+{
+    "typeName": "AWS::Logs::LogGroup",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "com.aws.logs.loggroup.HandlerWrapper::handleRequest",
+    "settings": {
+        "namespace": [
+            "com",
+            "aws",
+            "logs",
+            "loggroup"
+        ]
+    }
+}
