@@ -1,0 +1,14 @@
+{
+    "typeName": "AWS::Logs::LogStream",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "com.amazonaws.logs.logstream.HandlerWrapper::handleRequest",
+    "settings": {
+        "namespace": [
+            "com",
+            "amazonaws",
+            "logs",
+            "logstream"
+        ]
+    }
+}
