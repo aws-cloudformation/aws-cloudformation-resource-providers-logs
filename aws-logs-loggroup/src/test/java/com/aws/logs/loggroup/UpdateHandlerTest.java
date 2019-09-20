@@ -1,7 +1,6 @@
 package com.aws.logs.loggroup;
 
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
@@ -20,12 +19,14 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRe
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 public class UpdateHandlerTest {
-    private static final String PRIMARY_ID = "{\"/properties/LogGroupName\":[\"LogGroup\"]}";
+    UpdateHandler handler;
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
@@ -35,21 +36,13 @@ public class UpdateHandlerTest {
 
     @BeforeEach
     public void setup() {
+        handler = new UpdateHandler();
         proxy = mock(AmazonWebServicesClientProxy.class);
         logger = mock(Logger.class);
     }
 
     @Test
     public void handleRequest_Success() {
-        final UpdateHandler handler = new UpdateHandler();
-
-        final LogGroup initialLogGroup = LogGroup.builder()
-                .logGroupName("LogGroup")
-                .retentionInDays(2)
-                .build();
-        final DescribeLogGroupsResponse initialDescribeResponse = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList(initialLogGroup))
-                .build();
         final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
@@ -59,7 +52,7 @@ public class UpdateHandlerTest {
                 .logGroups(Arrays.asList(logGroup))
                 .build();
 
-        doReturn(initialDescribeResponse, putRetentionPolicyResponse, describeResponse)
+        doReturn(putRetentionPolicyResponse, describeResponse)
             .when(proxy)
             .injectCredentialsAndInvokeV2(
                 ArgumentMatchers.any(),
@@ -89,15 +82,6 @@ public class UpdateHandlerTest {
 
     @Test
     public void handleRequest_Success_RetentionPolicyDeleted() {
-        final UpdateHandler handler = new UpdateHandler();
-
-        final LogGroup initialLogGroup = LogGroup.builder()
-            .logGroupName("LogGroup")
-            .retentionInDays(2)
-            .build();
-        final DescribeLogGroupsResponse initialDescribeResponse = DescribeLogGroupsResponse.builder()
-            .logGroups(Arrays.asList(initialLogGroup))
-            .build();
         final DeleteRetentionPolicyResponse deleteRetentionPolicyResponse = DeleteRetentionPolicyResponse.builder().build();
         final LogGroup logGroup = LogGroup.builder()
             .logGroupName("LogGroup")
@@ -106,7 +90,7 @@ public class UpdateHandlerTest {
             .logGroups(Arrays.asList(logGroup))
             .build();
 
-        doReturn(initialDescribeResponse, deleteRetentionPolicyResponse, describeResponse)
+        doReturn(deleteRetentionPolicyResponse, describeResponse)
             .when(proxy)
             .injectCredentialsAndInvokeV2(
                 ArgumentMatchers.any(),
@@ -135,8 +119,6 @@ public class UpdateHandlerTest {
 
     @Test
     public void handleRequest_SuccessNoChange() {
-        final UpdateHandler handler = new UpdateHandler();
-
         final LogGroup initialLogGroup = LogGroup.builder()
             .logGroupName("LogGroup")
             .retentionInDays(1)
@@ -182,8 +164,6 @@ public class UpdateHandlerTest {
 
     @Test
     public void handleRequest_FailureNotFound() {
-        final UpdateHandler handler = new UpdateHandler();
-
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
                 .logGroups(Arrays.asList())
                 .build();
@@ -204,15 +184,29 @@ public class UpdateHandlerTest {
                 .desiredResourceState(model)
                 .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
 
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getCallbackContext()).isNull();
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel()).isNull();
-        assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).contains(PRIMARY_ID, "not found");
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
+    @Test
+    public void handleRequest_FailureNotFound_ServiceException() {
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.any(),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
     }
 }

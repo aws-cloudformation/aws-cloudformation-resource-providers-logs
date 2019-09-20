@@ -8,7 +8,6 @@ import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 
 public class ListHandler extends BaseHandler<CallbackContext> {
-    private AmazonWebServicesClientProxy proxy;
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -17,14 +16,8 @@ public class ListHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        this.proxy = proxy;
-
-        return fetchLogGroups(request.getNextToken());
-    }
-
-    private ProgressEvent<ResourceModel, CallbackContext> fetchLogGroups(final String nextToken) {
         final DescribeLogGroupsResponse response =
-                proxy.injectCredentialsAndInvokeV2(Translator.translateToListRequest(nextToken),
+                proxy.injectCredentialsAndInvokeV2(Translator.translateToListRequest(request.getNextToken()),
                     ClientBuilder.getClient()::describeLogGroups);
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
                 .status(OperationStatus.SUCCESS)

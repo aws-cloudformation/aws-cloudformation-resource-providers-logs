@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 public class ListHandlerTest {
+    ListHandler handler;
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
@@ -31,14 +32,13 @@ public class ListHandlerTest {
 
     @BeforeEach
     public void setup() {
+        handler = new ListHandler();
         proxy = mock(AmazonWebServicesClientProxy.class);
         logger = mock(Logger.class);
     }
 
     @Test
     public void handleRequest_Success() {
-        final ListHandler handler = new ListHandler();
-
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
                 .retentionInDays(1)

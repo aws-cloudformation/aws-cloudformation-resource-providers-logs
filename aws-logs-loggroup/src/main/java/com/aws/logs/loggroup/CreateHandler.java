@@ -1,7 +1,8 @@
 package com.aws.logs.loggroup;
 
+import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
+import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
@@ -15,7 +16,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
     private AmazonWebServicesClientProxy proxy;
     private ResourceHandlerRequest<ResourceModel> request;
-    private CallbackContext callbackContext;
     private Logger logger;
 
     @Override
@@ -27,24 +27,20 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
         this.proxy = proxy;
         this.request = request;
-        this.callbackContext = callbackContext;
         this.logger = logger;
 
-        return createLogGroup();
-    }
-
-    private ProgressEvent<ResourceModel, CallbackContext> createLogGroup() {
         prepareResourceModel();
 
         final ResourceModel model = request.getDesiredResourceState();
 
-        final ProgressEvent<ResourceModel, CallbackContext> readResult =
-                new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
-        if (readResult.isSuccess()) {
-            final String errorMessage =
-                Translator.buildResourceAlreadyExistsErrorMessage(Objects.toString(model.getPrimaryIdentifier()));
-            logger.log(errorMessage);
-            return ProgressEvent.failed(null, null, HandlerErrorCode.AlreadyExists, errorMessage);
+        try {
+            new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
+            final ResourceAlreadyExistsException e = new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
+            logger.log(e.getMessage());
+            throw e;
+        } catch (final ResourceNotFoundException e) {
+            // We want a ResourceNotFoundException because it means the log group doesn't already exist.
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model),

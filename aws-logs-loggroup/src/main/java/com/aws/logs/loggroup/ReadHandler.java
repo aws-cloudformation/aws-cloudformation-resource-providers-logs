@@ -1,11 +1,11 @@
 package com.aws.logs.loggroup;
 
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 
 import java.util.Objects;
 
@@ -33,27 +33,32 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
         final ResourceModel model = request.getDesiredResourceState();
 
         if (model == null || model.getLogGroupName() == null) {
-            return notFoundProgressEvent();
+            throwNotFoundException(model);
         }
 
-        final DescribeLogGroupsResponse response =
-                proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
-                        ClientBuilder.getClient()::describeLogGroups);
-        final ResourceModel modelFromReadResult = Translator.translateForRead(response);
 
+        DescribeLogGroupsResponse response = null;
+        try {
+            response = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
+                ClientBuilder.getClient()::describeLogGroups);
+        } catch (final ResourceNotFoundException e) {
+            throwNotFoundException(model);
+        }
+
+        final ResourceModel modelFromReadResult = Translator.translateForRead(response);
         if (modelFromReadResult.getLogGroupName() == null) {
-            return notFoundProgressEvent();
+            throwNotFoundException(model);
         }
 
         return ProgressEvent.defaultSuccessHandler(modelFromReadResult);
     }
 
-    private ProgressEvent<ResourceModel, CallbackContext> notFoundProgressEvent() {
-        final ResourceModel model = request.getDesiredResourceState();
-        final String primaryId = model == null ? null : Objects.toString(model.getPrimaryIdentifier());
-        final String errorMessage =
-            Translator.buildResourceDoesNotExistErrorMessage(primaryId);
-        logger.log(errorMessage);
-        return ProgressEvent.failed(null, null, HandlerErrorCode.NotFound, errorMessage);
+    private void throwNotFoundException(final ResourceModel model) {
+        final ResourceModel nullSafeModel = model == null ? ResourceModel.builder().build() : model;
+        final com.amazonaws.cloudformation.exceptions.ResourceNotFoundException rpdkException =
+            new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                Objects.toString(nullSafeModel.getPrimaryIdentifier()));
+        logger.log(rpdkException.getMessage());
+        throw rpdkException;
     }
 }

@@ -6,8 +6,9 @@ import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 
-import java.util.Optional;
+import java.util.Objects;
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
 
@@ -33,25 +34,12 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
     }
 
     private ProgressEvent<ResourceModel, CallbackContext> updateRetentionPolicy() {
-        final ProgressEvent<ResourceModel, CallbackContext> readResult =
-                new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
-        if (readResult.isFailed()) {
-            return readResult;
-        }
-
         final ResourceModel model = request.getDesiredResourceState();
 
-        final boolean retentionInDaysShouldBeUpdated =
-            Optional.ofNullable(model.getRetentionInDays())
-                .map(requestedRetention -> !requestedRetention.equals(readResult.getResourceModel().getRetentionInDays()))
-                .orElseGet(() -> readResult.getResourceModel().getRetentionInDays() != null);
-
-        if (retentionInDaysShouldBeUpdated) {
-            if (model.getRetentionInDays() == null) {
-                deleteRetentionPolicy();
-            } else {
-                putRetentionPolicy();
-            }
+        if (model.getRetentionInDays() == null) {
+            deleteRetentionPolicy();
+        } else {
+            putRetentionPolicy();
         }
 
         return new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
@@ -61,8 +49,12 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final ResourceModel model = request.getDesiredResourceState();
         final DeleteRetentionPolicyRequest deleteRetentionPolicyRequest =
             Translator.translateToDeleteRetentionPolicyRequest(model);
-        proxy.injectCredentialsAndInvokeV2(deleteRetentionPolicyRequest,
-            ClientBuilder.getClient()::deleteRetentionPolicy);
+        try {
+            proxy.injectCredentialsAndInvokeV2(deleteRetentionPolicyRequest,
+                ClientBuilder.getClient()::deleteRetentionPolicy);
+        } catch (final ResourceNotFoundException e) {
+            throwNotFoundException(model);
+        }
 
         final String retentionPolicyMessage =
             String.format("%s [%s] successfully deleted retention policy.",
@@ -74,12 +66,24 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final ResourceModel model = request.getDesiredResourceState();
         final PutRetentionPolicyRequest putRetentionPolicyRequest =
             Translator.translateToPutRetentionPolicyRequest(model);
-        proxy.injectCredentialsAndInvokeV2(putRetentionPolicyRequest,
-            ClientBuilder.getClient()::putRetentionPolicy);
+        try {
+            proxy.injectCredentialsAndInvokeV2(putRetentionPolicyRequest,
+                ClientBuilder.getClient()::putRetentionPolicy);
+        } catch (final ResourceNotFoundException e) {
+            throwNotFoundException(model);
+        }
 
         final String retentionPolicyMessage =
             String.format("%s [%s] successfully applied retention in days: [%d].",
                 ResourceModel.TYPE_NAME, model.getLogGroupName(), model.getRetentionInDays());
         logger.log(retentionPolicyMessage);
+    }
+
+    private void throwNotFoundException(final ResourceModel model) {
+        final com.amazonaws.cloudformation.exceptions.ResourceNotFoundException rpdkException =
+            new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
+        logger.log(rpdkException.getMessage());
+        throw rpdkException;
     }
 }

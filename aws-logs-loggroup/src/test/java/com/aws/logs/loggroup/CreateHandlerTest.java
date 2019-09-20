@@ -1,7 +1,7 @@
 package com.aws.logs.loggroup;
 
+import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
@@ -20,12 +20,13 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRe
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 public class CreateHandlerTest {
-    private static final String PRIMARY_ID = "{\"/properties/LogGroupName\":[\"LogGroup\"]}";
+    private CreateHandler handler;
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
@@ -35,13 +36,13 @@ public class CreateHandlerTest {
 
     @BeforeEach
     public void setup() {
+        handler = new CreateHandler();
         proxy = mock(AmazonWebServicesClientProxy.class);
         logger = mock(Logger.class);
     }
 
     @Test
     public void handleRequest_Success() {
-        final CreateHandler handler = new CreateHandler();
         final DescribeLogGroupsResponse describeResponseInitial = DescribeLogGroupsResponse.builder()
                 .logGroups(Arrays.asList())
                 .build();
@@ -85,7 +86,6 @@ public class CreateHandlerTest {
 
     @Test
     public void handleRequest_SuccessGeneratedLogGroupName_ModelIsNull() {
-        final CreateHandler handler = new CreateHandler();
         final DescribeLogGroupsResponse describeResponseInitial = DescribeLogGroupsResponse.builder()
             .logGroups(Arrays.asList())
             .build();
@@ -123,7 +123,6 @@ public class CreateHandlerTest {
 
     @Test
     public void handleRequest_SuccessGeneratedLogGroupName() {
-        final CreateHandler handler = new CreateHandler();
         final DescribeLogGroupsResponse describeResponseInitial = DescribeLogGroupsResponse.builder()
                 .logGroups(Arrays.asList())
                 .build();
@@ -168,7 +167,6 @@ public class CreateHandlerTest {
 
     @Test
     public void handleRequest_FailureAlreadyExists() {
-        final CreateHandler handler = new CreateHandler();
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
@@ -192,15 +190,7 @@ public class CreateHandlerTest {
                 .desiredResourceState(model)
                 .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getCallbackContext()).isNull();
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getResourceModel()).isNull();
-        assertThat(response.getMessage()).contains(PRIMARY_ID, "already exists");
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AlreadyExists);
+        assertThrows(ResourceAlreadyExistsException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
     }
 }
