@@ -1,21 +1,21 @@
 {
     "typeName": "AWS::Logs::LogStream",
-    "description": "Schema for the AWS CloudWatch Logs LogStream resource.",
-    "sourceUrl": "git@github.com:aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
+    "description": "Resource schema for AWS::Logs::LogStream",
+    "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
     "properties": {
         "LogStreamName": {
             "description": "The name of the log stream. The name must be unique within the log group.",
             "type": "string",
             "minLength": 1,
             "maxLength": 512,
-            "pattern": "^[^:*]*\\Z"
+            "pattern": "^[^:*]{1,512}\\Z"
         },
         "LogGroupName": {
             "description": "The name of the log group where the log stream is created.",
             "type": "string",
             "minLength": 1,
             "maxLength": 512,
-            "pattern": "^[\\.\\-_/#A-Za-z0-9]+\\Z"
+            "pattern": "^[.\\-_/#A-Za-z0-9]{1,512}\\Z"
         }
     },
     "required": [
@@ -57,5 +57,6 @@
                 "logs:DescribeLogStreams"
             ]
         }
-    }
+    },
+    "additionalProperties": false
 }
