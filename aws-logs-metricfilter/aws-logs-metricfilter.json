@@ -58,7 +58,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 512,
-            "pattern": "^[\\.\\-_/#A-Za-z0-9]{1,512}\\Z"
+            "pattern": "^[.\\-_/#A-Za-z0-9]{1,512}\\Z"
         },
         "MetricTransformations": {
             "description": "A collection of information that defines how metric data gets emitted.",
