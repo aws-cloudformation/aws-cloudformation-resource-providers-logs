@@ -15,14 +15,14 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 512,
-                    "pattern": "[^:*$]*"
+                    "pattern": "^[^:*$]{1,512}\\Z"
                 },
                 "MetricNamespace": {
                     "description": "The namespace of the CloudWatch metric.",
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 512,
-                    "pattern": "[^:*$]*"
+                    "pattern": "^[^:*$]{1,512}\\Z"
                 },
                 "MetricValue": {
                     "description": "The value to publish to the CloudWatch metric when a filter pattern matches a log event.",
@@ -45,7 +45,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 512,
-            "pattern": "[^:*]*"
+            "pattern": "^[^:*]{1,512}\\Z"
         },
         "FilterPattern": {
             "description": "Pattern that Logs follows to interpret each entry in a log.",
@@ -58,7 +58,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 512,
-            "pattern": "[\\.\\-_/#A-Za-z0-9]+"
+            "pattern": "^[\\.\\-_/#A-Za-z0-9]{1,512}\\Z"
         },
         "MetricTransformations": {
             "description": "A collection of information that defines how metric data gets emitted.",
