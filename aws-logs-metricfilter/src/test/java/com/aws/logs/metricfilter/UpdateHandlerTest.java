@@ -2,7 +2,6 @@ package com.aws.logs.metricfilter;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
@@ -28,7 +27,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UpdateHandlerTest {
-    private static final String PRIMARY_ID = "{\"/properties/LogGroupName\":[\"test-log-group\"],\"/properties/FilterName\":[\"test-filter\"]}";
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
@@ -213,17 +211,8 @@ public class UpdateHandlerTest {
             .desiredResourceState(previous)
             .build();
 
-
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getCallbackContext()).isNull();
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel()).isNull();
-        assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isNull();
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
+        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
     }
 
     @Test
@@ -265,15 +254,7 @@ public class UpdateHandlerTest {
             .desiredResourceState(previous)
             .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getCallbackContext()).isNull();
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel()).isNull();
-        assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isEqualTo(Translator.buildResourceDoesNotExistErrorMessage(PRIMARY_ID));
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
+        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
     }
 }

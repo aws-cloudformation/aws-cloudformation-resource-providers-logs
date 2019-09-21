@@ -1,7 +1,7 @@
 package com.aws.logs.metricfilter;
 
+import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
@@ -40,16 +40,13 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
             response = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
                 client::describeMetricFilters);
         } catch (final software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException e) {
-            logger.log(String.format("%s [%s] doesn't exist (%s)",
-                ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier()), e.getMessage()));
-            return ProgressEvent.defaultFailureHandler(e, HandlerErrorCode.NotFound);
+            throw new ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
         }
 
         if (response.metricFilters().isEmpty()) {
-            return ProgressEvent.failed(null,
-                null,
-                HandlerErrorCode.NotFound,
-                Translator.buildResourceDoesNotExistErrorMessage(Objects.toString(model.getPrimaryIdentifier())));
+            throw new ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
         }
 
         return response.metricFilters()
@@ -61,10 +58,8 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                 .resourceModel(Translator.translate(f))
                 .build())
             .orElseGet(() -> {
-                final String primaryId = Objects.toString(model.getPrimaryIdentifier());
-                final String errorMessage = Translator.buildResourceDoesNotExistErrorMessage(primaryId);
-                logger.log(errorMessage);
-                return ProgressEvent.failed(null, null, HandlerErrorCode.NotFound, errorMessage);
+                throw new ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                    Objects.toString(model.getPrimaryIdentifier()));
             });
     }
 }

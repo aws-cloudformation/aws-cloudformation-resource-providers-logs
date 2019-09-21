@@ -1,10 +1,11 @@
 package com.amazonaws.logs.destination;
 
+import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 
 import java.util.Objects;
 
@@ -31,23 +32,15 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
     private ProgressEvent<ResourceModel, CallbackContext> createDestination() {
 
-        final ReadHandler readHandler = new ReadHandler();
-        final ProgressEvent<ResourceModel, CallbackContext> readResult =
-            readHandler.handleRequest(proxy, request, callbackContext, logger);
-
-        if (readResult.isSuccess()) {
-            return alreadyExistsProgressEvent();
+        try {
+            new ReadHandler().handleRequest(proxy, request, null, logger);
+            throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
+                Objects.toString(request.getDesiredResourceState().getPrimaryIdentifier()));
+        } catch (final ResourceNotFoundException e) {
+            // This means a resource by this ID does not exist, which is what
+            // we expect.
         }
 
         return HandlerHelper.putDestination(proxy, request, callbackContext, logger);
-    }
-
-    private ProgressEvent<ResourceModel, CallbackContext> alreadyExistsProgressEvent() {
-        final ResourceModel model = request.getDesiredResourceState();
-        final String primaryId = Objects.toString(model.getPrimaryIdentifier());
-        final String errorMessage =
-            Translator.buildResourceAlreadyExistsErrorMessage(primaryId);
-        logger.log(errorMessage);
-        return ProgressEvent.failed(null, null, HandlerErrorCode.AlreadyExists, errorMessage);
     }
 }

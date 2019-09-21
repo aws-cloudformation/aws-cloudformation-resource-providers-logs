@@ -1,7 +1,6 @@
 package com.amazonaws.logs.logstream;
 
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
@@ -40,21 +39,14 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                 ClientBuilder.getClient()::describeLogStreams);
             readModel = Translator.translateForRead(result, model.getLogGroupName());
         } catch (final ResourceNotFoundException e) {
-            return notFoundProgressEvent();
+            throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
         }
 
         if (readModel.getLogStreamName() == null) {
-            return notFoundProgressEvent();
+            throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
         }
         return ProgressEvent.defaultSuccessHandler(Translator.translateForRead(result, model.getLogGroupName()));
-    }
-
-    private ProgressEvent<ResourceModel, CallbackContext> notFoundProgressEvent() {
-        final ResourceModel model = request.getDesiredResourceState();
-        final String primaryId = Objects.toString(model.getPrimaryIdentifier());
-        final String errorMessage =
-            Translator.buildResourceDoesNotExistErrorMessage(primaryId);
-        logger.log(errorMessage);
-        return ProgressEvent.failed(null, null, HandlerErrorCode.NotFound, errorMessage);
     }
 }

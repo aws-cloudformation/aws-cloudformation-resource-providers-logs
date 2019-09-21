@@ -35,10 +35,8 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
         try {
             new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
-            final ResourceAlreadyExistsException e = new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
+            throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
                 Objects.toString(model.getPrimaryIdentifier()));
-            logger.log(e.getMessage());
-            throw e;
         } catch (final ResourceNotFoundException e) {
             // We want a ResourceNotFoundException because it means the log group doesn't already exist.
         }
