@@ -18,12 +18,12 @@
         "RoleArn": {
             "description": "The ARN of an IAM role that permits CloudWatch Logs to send data to the specified AWS resource.",
             "type": "string",
-            "pattern": "^arn:[a-z-]:[a-z-]+:(([a-z]+-)+[0-9])?:([0-9]{12})?:[^.]+\\Z"
+            "pattern": "^arn:[a-z-]+:[a-z-]+:(([a-z]+-)+[0-9])?:([0-9]{12})?:[^.]+\\Z"
         },
         "TargetArn": {
             "description": "The Amazon Resource Name (ARN) of the physical target to where the log events are delivered (for example, a Kinesis stream).",
             "type": "string",
-            "pattern": "^arn:[a-z-]:[a-z-]+:(([a-z]+-)+[0-9])?:([0-9]{12})?:[^.]+\\Z"
+            "pattern": "^arn:[a-z-]+:[a-z-]+:(([a-z]+-)+[0-9])?:([0-9]{12})?:[^.]+\\Z"
         }
     },
     "required": [
