@@ -1,11 +1,11 @@
 package com.amazonaws.logs.destination;
 
 import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
+import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 
 import java.util.Objects;
 
@@ -37,8 +37,8 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
                 Objects.toString(request.getDesiredResourceState().getPrimaryIdentifier()));
         } catch (final ResourceNotFoundException e) {
-            // This means a resource by this ID does not exist, which is what
-            // we expect.
+            logger.log(request.getDesiredResourceState().getPrimaryIdentifier() +
+                " does not exist; creating the resource.");
         }
 
         return HandlerHelper.putDestination(proxy, request, callbackContext, logger);

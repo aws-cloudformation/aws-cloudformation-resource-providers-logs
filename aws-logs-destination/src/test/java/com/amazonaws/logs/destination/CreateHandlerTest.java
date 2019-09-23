@@ -25,7 +25,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CreateHandlerTest {
-    private static final String PRIMARY_ID = "{\"/properties/DestinationName\":[\"DestinationName\"]}";
 
     @Mock
     private AmazonWebServicesClientProxy proxy;

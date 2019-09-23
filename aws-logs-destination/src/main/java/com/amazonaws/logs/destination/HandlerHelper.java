@@ -1,11 +1,12 @@
 package com.amazonaws.logs.destination;
 
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+
+import java.util.Objects;
 
 public class HandlerHelper {
     static ProgressEvent<ResourceModel, CallbackContext> putDestination(
@@ -23,7 +24,8 @@ public class HandlerHelper {
                 ClientBuilder.getClient()::putDestinationPolicy);
             return readHandler.handleRequest(proxy, request, callbackContext, logger);
         } catch (final ResourceNotFoundException e) {
-            return ProgressEvent.defaultFailureHandler(e, HandlerErrorCode.NotFound);
+            throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
         }
     }
 }

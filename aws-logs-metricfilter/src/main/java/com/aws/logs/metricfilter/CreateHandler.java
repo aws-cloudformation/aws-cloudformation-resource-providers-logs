@@ -58,8 +58,8 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
                 Objects.toString(model.getPrimaryIdentifier()));
         } catch (final ResourceNotFoundException e) {
-            // This means a resource by this ID does not exist, which is what
-            // we expect.
+            logger.log(request.getDesiredResourceState().getPrimaryIdentifier() +
+                " does not exist; creating the resource.");
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),

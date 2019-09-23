@@ -38,7 +38,8 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
                 Objects.toString(model.getPrimaryIdentifier()));
         } catch (final ResourceNotFoundException e) {
-            // We want a ResourceNotFoundException because it means the log group doesn't already exist.
+            logger.log(request.getDesiredResourceState().getPrimaryIdentifier() +
+                " does not exist; creating the resource.");
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model),
