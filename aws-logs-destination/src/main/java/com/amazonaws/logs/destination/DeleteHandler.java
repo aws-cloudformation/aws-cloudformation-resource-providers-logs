@@ -15,12 +15,7 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        final ProgressEvent<ResourceModel, CallbackContext> readResult =
-            new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
-
-        if (readResult.isFailed()) {
-            return readResult;
-        }
+        new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToDeleteRequest(request.getDesiredResourceState()),
             ClientBuilder.getClient()::deleteDestination);

@@ -55,10 +55,7 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
 
     private void throwNotFoundException(final ResourceModel model) {
         final ResourceModel nullSafeModel = model == null ? ResourceModel.builder().build() : model;
-        final com.amazonaws.cloudformation.exceptions.ResourceNotFoundException rpdkException =
-            new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
-                Objects.toString(nullSafeModel.getPrimaryIdentifier()));
-        logger.log(rpdkException.getMessage());
-        throw rpdkException;
+        throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+            Objects.toString(nullSafeModel.getPrimaryIdentifier()));
     }
 }

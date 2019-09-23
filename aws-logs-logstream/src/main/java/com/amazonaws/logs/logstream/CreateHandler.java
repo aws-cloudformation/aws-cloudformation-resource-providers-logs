@@ -1,7 +1,8 @@
 package com.amazonaws.logs.logstream;
 
+import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
+import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
@@ -38,11 +39,13 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         prepareResourceModel();
 
         final ReadHandler readHandler = new ReadHandler();
-        final ProgressEvent<ResourceModel, CallbackContext> readResponse =
-            readHandler.handleRequest(proxy, request, callbackContext, logger);
-
-        if (readResponse.isSuccess()) {
-            return alreadyExistsProgressEvent();
+        try {
+            readHandler.handleRequest(proxy, request, null, logger);
+            throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
+        } catch (final ResourceNotFoundException e) {
+            logger.log(request.getDesiredResourceState().getPrimaryIdentifier() +
+                " does not exist; creating the resource.");
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model),
@@ -56,16 +59,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                 .getResourceModel();
 
         return ProgressEvent.defaultSuccessHandler(finalModel);
-    }
-
-
-    private ProgressEvent<ResourceModel, CallbackContext> alreadyExistsProgressEvent() {
-        final ResourceModel model = request.getDesiredResourceState();
-        final String primaryId = Objects.toString(model.getPrimaryIdentifier());
-        final String errorMessage =
-            Translator.buildResourceAlreadyExistsErrorMessage(primaryId);
-        logger.log(errorMessage);
-        return ProgressEvent.failed(null, null, HandlerErrorCode.AlreadyExists, errorMessage);
     }
 
     private void prepareResourceModel() {

@@ -22,11 +22,8 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
             proxy.injectCredentialsAndInvokeV2(Translator.translateToDeleteRequest(model),
                 ClientBuilder.getClient()::deleteLogGroup);
         } catch (final ResourceNotFoundException e) {
-            final com.amazonaws.cloudformation.exceptions.ResourceNotFoundException rpdkException =
-                new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+            throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
                 Objects.toString(model.getPrimaryIdentifier()));
-            logger.log(rpdkException.getMessage());
-            throw rpdkException;
         }
 
         final String message = String.format("%s [%s] successfully deleted.",

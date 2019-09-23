@@ -1,7 +1,6 @@
 package com.aws.logs.metricfilter;
 
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
@@ -42,9 +41,8 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
             logger.log(String.format("%s [%s] deleted successfully",
                 ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier())));
         } catch (ResourceNotFoundException e) {
-            logger.log(String.format("%s [%s] is already deleted",
-                ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier())));
-            return ProgressEvent.defaultFailureHandler(e, HandlerErrorCode.NotFound);
+            throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
         }
 
         return ProgressEvent.defaultSuccessHandler(null);

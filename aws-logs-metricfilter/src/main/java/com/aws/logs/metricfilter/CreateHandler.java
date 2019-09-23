@@ -1,7 +1,8 @@
 package com.aws.logs.metricfilter;
 
+import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
+import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
@@ -52,20 +53,19 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             );
         }
 
-        // pre-creation read to ensure no existing resource exists
-        final ProgressEvent<ResourceModel, CallbackContext> readResult =
+        try {
             new ReadHandler().handleRequest(proxy, request, null, logger);
-        final String primaryId = Objects.toString(model.getPrimaryIdentifier());
-        if (readResult.isSuccess()) {
-            final String errorMessage = Translator.buildResourceAlreadyExistsErrorMessage(primaryId);
-            logger.log(errorMessage);
-            return ProgressEvent.failed(null, null, HandlerErrorCode.AlreadyExists, errorMessage);
+            throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()));
+        } catch (final ResourceNotFoundException e) {
+            logger.log(request.getDesiredResourceState().getPrimaryIdentifier() +
+                " does not exist; creating the resource.");
         }
 
         proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
             client::putMetricFilter);
         logger.log(String.format("%s [%s] created successfully",
-            ResourceModel.TYPE_NAME, primaryId));
+            ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier())));
 
         return ProgressEvent.defaultSuccessHandler(model);
     }

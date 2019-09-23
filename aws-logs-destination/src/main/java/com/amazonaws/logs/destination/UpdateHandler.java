@@ -14,12 +14,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        final ProgressEvent<ResourceModel, CallbackContext> readResult =
-            new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
-
-        if (readResult.isFailed()) {
-            return readResult;
-        }
+        new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
 
         return HandlerHelper.putDestination(proxy, request, callbackContext, logger);
     }

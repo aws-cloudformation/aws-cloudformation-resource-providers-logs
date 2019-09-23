@@ -1,7 +1,8 @@
 package com.amazonaws.logs.destination;
 
+import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
+import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.HandlerErrorCode;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
@@ -31,23 +32,15 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
     private ProgressEvent<ResourceModel, CallbackContext> createDestination() {
 
-        final ReadHandler readHandler = new ReadHandler();
-        final ProgressEvent<ResourceModel, CallbackContext> readResult =
-            readHandler.handleRequest(proxy, request, callbackContext, logger);
-
-        if (readResult.isSuccess()) {
-            return alreadyExistsProgressEvent();
+        try {
+            new ReadHandler().handleRequest(proxy, request, null, logger);
+            throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
+                Objects.toString(request.getDesiredResourceState().getPrimaryIdentifier()));
+        } catch (final ResourceNotFoundException e) {
+            logger.log(request.getDesiredResourceState().getPrimaryIdentifier() +
+                " does not exist; creating the resource.");
         }
 
         return HandlerHelper.putDestination(proxy, request, callbackContext, logger);
-    }
-
-    private ProgressEvent<ResourceModel, CallbackContext> alreadyExistsProgressEvent() {
-        final ResourceModel model = request.getDesiredResourceState();
-        final String primaryId = Objects.toString(model.getPrimaryIdentifier());
-        final String errorMessage =
-            Translator.buildResourceAlreadyExistsErrorMessage(primaryId);
-        logger.log(errorMessage);
-        return ProgressEvent.failed(null, null, HandlerErrorCode.AlreadyExists, errorMessage);
     }
 }

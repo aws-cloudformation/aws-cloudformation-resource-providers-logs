@@ -80,10 +80,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
     }
 
     private void throwNotFoundException(final ResourceModel model) {
-        final com.amazonaws.cloudformation.exceptions.ResourceNotFoundException rpdkException =
-            new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
-                Objects.toString(model.getPrimaryIdentifier()));
-        logger.log(rpdkException.getMessage());
-        throw rpdkException;
+        throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+            Objects.toString(model.getPrimaryIdentifier()));
     }
 }
