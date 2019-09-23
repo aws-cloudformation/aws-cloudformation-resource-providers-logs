@@ -37,3 +37,5 @@ phases:
       - cd "$CODEBUILD_SRC_DIR"
       - cd aws-logs-metricfilter
       - mvn clean verify --no-transfer-progress
+    finally:
+      - cat rpdk.log
