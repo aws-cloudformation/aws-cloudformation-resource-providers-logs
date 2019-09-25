@@ -41,11 +41,6 @@
                 "logs:DescribeLogStreams"
             ]
         },
-        "update": {
-            "permissions": [
-                "logs:DescribeLogStreams"
-            ]
-        },
         "delete": {
             "permissions": [
                 "logs:DeleteLogStream",
