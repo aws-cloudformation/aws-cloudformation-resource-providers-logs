@@ -64,7 +64,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
     private void prepareResourceModel() {
         final ResourceModel model = request.getDesiredResourceState();
         final String logicalResourceId = request.getLogicalResourceIdentifier() == null ?
-            "" :
+            model.getLogGroupName() :
             request.getLogicalResourceIdentifier();
 
         if (StringUtils.isNullOrEmpty(model.getLogStreamName())) {
