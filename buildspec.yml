@@ -25,7 +25,7 @@ phases:
         mvn org.apache.maven.plugins:maven-install-plugin:3.0.0-M1:install-file
         --batch-mode
         --no-transfer-progress
-        -Dfile="$CODEBUILD_SRC_DIR_SDK/cloudformation-2.5.69.jar"
+        -Dfile="$CODEBUILD_SRC_DIR_SDK/cloudformation-2.8.1.jar"
       # install aws-cloudformation-rpdk
       - cd "$CODEBUILD_SRC_DIR_JAVA_PLUGIN"
       - >
