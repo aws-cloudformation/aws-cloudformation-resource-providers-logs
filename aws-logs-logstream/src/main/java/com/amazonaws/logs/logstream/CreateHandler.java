@@ -12,6 +12,7 @@ import com.amazonaws.util.StringUtils;
 import java.util.Objects;
 
 public class CreateHandler extends BaseHandler<CallbackContext> {
+    private static final String DEFAULT_LOG_STREAM_NAME_PREFIX = "LogStream";
     private static final int MAX_LENGTH_LOG_STREAM_NAME = 512;
 
     private AmazonWebServicesClientProxy proxy;
@@ -63,14 +64,14 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
     private void prepareResourceModel() {
         final ResourceModel model = request.getDesiredResourceState();
-        final String logicalResourceId = request.getLogicalResourceIdentifier() == null ?
-            model.getLogGroupName() :
+        final String identifierPrefix = request.getLogicalResourceIdentifier() == null ?
+            DEFAULT_LOG_STREAM_NAME_PREFIX + "-" + model.getLogGroupName() :
             request.getLogicalResourceIdentifier();
 
         if (StringUtils.isNullOrEmpty(model.getLogStreamName())) {
             model.setLogStreamName(
                 IdentifierUtils.generateResourceIdentifier(
-                    logicalResourceId,
+                    identifierPrefix,
                     request.getClientRequestToken(),
                     MAX_LENGTH_LOG_STREAM_NAME
                 )

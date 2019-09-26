@@ -77,14 +77,14 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         }
 
         final ResourceModel model = request.getDesiredResourceState();
-        final String logicalResourceId = request.getLogicalResourceIdentifier() == null ?
+        final String identifierPrefix = request.getLogicalResourceIdentifier() == null ?
             DEFAULT_LOG_GROUP_NAME_PREFIX :
             request.getLogicalResourceIdentifier();
 
         if (StringUtils.isNullOrEmpty(model.getLogGroupName())) {
             model.setLogGroupName(
                 IdentifierUtils.generateResourceIdentifier(
-                    logicalResourceId,
+                    identifierPrefix,
                     request.getClientRequestToken(),
                     MAX_LENGTH_LOG_GROUP_NAME
                 )
