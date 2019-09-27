@@ -26,7 +26,8 @@ public class ListHandler extends BaseHandler<CallbackContext> {
                 ClientBuilder.getClient()::describeSubscriptionFilters);
         } catch (final ResourceNotFoundException e) {
             throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
-                Objects.toString(model.getPrimaryIdentifier()));
+                Objects.toString(model.getPrimaryIdentifier()),
+                e);
         }
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()

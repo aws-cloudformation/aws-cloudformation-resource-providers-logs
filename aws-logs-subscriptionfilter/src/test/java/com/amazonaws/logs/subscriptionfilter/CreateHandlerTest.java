@@ -20,7 +20,6 @@ import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 public class CreateHandlerTest {
@@ -36,8 +35,6 @@ public class CreateHandlerTest {
     @BeforeEach
     public void setup() {
         handler = new CreateHandler();
-        proxy = mock(AmazonWebServicesClientProxy.class);
-        logger = mock(Logger.class);
     }
 
     @Test
@@ -54,11 +51,8 @@ public class CreateHandlerTest {
             .roleArn("RoleArn")
             .filterPattern("FilterPattern")
             .build();
-        final DescribeSubscriptionFiltersResponse postPutDescribeResponse = DescribeSubscriptionFiltersResponse.builder()
-            .subscriptionFilters(Collections.singletonList(filter))
-            .build();
 
-        doReturn(describeResponse, putResponse, postPutDescribeResponse)
+        doReturn(describeResponse, putResponse)
             .when(proxy)
             .injectCredentialsAndInvokeV2(
                 ArgumentMatchers.any(),
@@ -104,11 +98,8 @@ public class CreateHandlerTest {
             .roleArn("RoleArn")
             .filterPattern("FilterPattern")
             .build();
-        final DescribeSubscriptionFiltersResponse postPutDescribeResponse = DescribeSubscriptionFiltersResponse.builder()
-            .subscriptionFilters(Collections.singletonList(filter))
-            .build();
 
-        doReturn(describeResponse, putResponse, postPutDescribeResponse)
+        doReturn(describeResponse, putResponse)
             .when(proxy)
             .injectCredentialsAndInvokeV2(
                 ArgumentMatchers.any(),

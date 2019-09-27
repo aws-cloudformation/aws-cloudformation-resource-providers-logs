@@ -24,7 +24,10 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
             logger.log(String.format("%s [%s] deleted successfully",
                 ResourceModel.TYPE_NAME, Objects.toString(request.getDesiredResourceState().getPrimaryIdentifier())));
         } catch (final ResourceNotFoundException e) {
-            throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(e);
+            throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(
+                ResourceModel.TYPE_NAME,
+                Objects.toString(request.getDesiredResourceState().getPrimaryIdentifier()),
+                e);
         }
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()

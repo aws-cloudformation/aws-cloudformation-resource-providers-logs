@@ -34,8 +34,6 @@ public class ReadHandlerTest {
     @BeforeEach
     public void setup() {
         handler = new ReadHandler();
-        proxy = mock(AmazonWebServicesClientProxy.class);
-        logger = mock(Logger.class);
     }
 
     @Test
