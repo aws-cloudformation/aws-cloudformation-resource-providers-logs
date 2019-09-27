@@ -1,0 +1,15 @@
+{
+    "typeName": "AWS::Logs::SubscriptionFilter",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "com.amazonaws.logs.subscriptionfilter.HandlerWrapper::handleRequest",
+    "testEntrypoint": "com.amazonaws.logs.subscriptionfilter.HandlerWrapper::testEntrypoint",
+    "settings": {
+        "namespace": [
+            "com",
+            "amazonaws",
+            "logs",
+            "subscriptionfilter"
+        ]
+    }
+}
