@@ -50,4 +50,8 @@ phases:
       - cd aws-logs-subscriptionfilter
       - mvn clean verify --no-transfer-progress
     finally:
-      - cat rpdk.log
+      - cat "$CODEBUILD_SRC_DIR/aws-logs-destination/rpdk.log"
+      - cat "$CODEBUILD_SRC_DIR/aws-logs-loggroup/rpdk.log"
+      - cat "$CODEBUILD_SRC_DIR/aws-logs-logstream/rpdk.log"
+      - cat "$CODEBUILD_SRC_DIR/aws-logs-metricfilter/rpdk.log"
+      - cat "$CODEBUILD_SRC_DIR/aws-logs-subscriptionfilter/rpdk.log"
