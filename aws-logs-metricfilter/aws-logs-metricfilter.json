@@ -50,7 +50,6 @@
         "FilterPattern": {
             "description": "Pattern that Logs follows to interpret each entry in a log.",
             "type": "string",
-            "minLength": 1,
             "maxLength": 1024
         },
         "LogGroupName": {
