@@ -23,8 +23,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                - "logs:CreateLogStream"
                 - "logs:DeleteLogStream"
+                - "logs:CreateLogStream"
                 - "logs:DescribeLogStreams"
                 Resource: "*"
 Outputs:

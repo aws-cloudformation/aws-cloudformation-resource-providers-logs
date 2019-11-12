@@ -41,31 +41,31 @@
     "handlers": {
         "create": {
             "permissions": [
-                "PutDestination",
-                "PutDestinationPolicy",
-                "DescribeDestinations"
+                "logs:PutDestination",
+                "logs:PutDestinationPolicy",
+                "logs:DescribeDestinations"
             ]
         },
         "read": {
             "permissions": [
-                "DescribeDestinations"
+                "logs:DescribeDestinations"
             ]
         },
         "update": {
             "permissions": [
-                "PutDestination",
-                "PutDestinationPolicy",
-                "DescribeDestinations"
+                "logs:PutDestination",
+                "logs:PutDestinationPolicy",
+                "logs:DescribeDestinations"
             ]
         },
         "delete": {
             "permissions": [
-                "DeleteDestination"
+                "logs:DeleteDestination"
             ]
         },
         "list": {
             "permissions": [
-                "DescribeDestinations"
+                "logs:DescribeDestinations"
             ]
         }
     },

@@ -23,8 +23,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                - "logs:PutMetricFilter"
                 - "logs:DeleteMetricFilter"
+                - "logs:PutMetricFilter"
                 - "logs:DescribeMetricFilters"
                 Resource: "*"
 Outputs:

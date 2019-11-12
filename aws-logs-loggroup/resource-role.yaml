@@ -24,9 +24,9 @@ Resources:
               - Effect: Allow
                 Action:
                 - "logs:PutRetentionPolicy"
-                - "logs:DeleteRetentionPolicy"
                 - "logs:DeleteLogGroup"
                 - "logs:DescribeLogGroups"
+                - "logs:DeleteRetentionPolicy"
                 - "logs:CreateLogGroup"
                 Resource: "*"
 Outputs:
