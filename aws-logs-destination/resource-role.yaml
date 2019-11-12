@@ -23,10 +23,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                - "PutDestinationPolicy"
-                - "PutDestination"
-                - "DescribeDestinations"
                 - "DeleteDestination"
+                - "PutDestination"
+                - "PutDestinationPolicy"
+                - "DescribeDestinations"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:
