@@ -32,6 +32,10 @@
                 1827,
                 3653
             ]
+        },
+        "Arn": {
+            "description": "The CloudWatch log group ARN.",
+            "type": "string"
         }
     },
     "handlers": {
@@ -67,6 +71,9 @@
     },
     "createOnlyProperties": [
         "/properties/LogGroupName"
+    ],
+    "readOnlyProperties": [
+        "/properties/Arn"
     ],
     "primaryIdentifier": [
         "/properties/LogGroupName"

@@ -50,6 +50,7 @@ public class CreateHandlerTest {
         final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
+                .arn("arn")
                 .retentionInDays(1)
                 .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()

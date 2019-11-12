@@ -23,9 +23,9 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                - "logs:DeleteSubscriptionFilter"
-                - "logs:DescribeSubscriptionFilters"
                 - "logs:PutSubscriptionFilter"
+                - "logs:DescribeSubscriptionFilters"
+                - "logs:DeleteSubscriptionFilter"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:
