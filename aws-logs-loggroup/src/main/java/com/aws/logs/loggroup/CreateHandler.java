@@ -1,12 +1,12 @@
 package com.aws.logs.loggroup;
 
-import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
-import com.amazonaws.cloudformation.exceptions.ResourceNotFoundException;
+import com.amazonaws.cloudformation.exceptions.CfnAlreadyExistsException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import com.amazonaws.cloudformation.resource.IdentifierUtils;
+import com.amazonaws.services.logs.model.ResourceAlreadyExistsException;
 import com.amazonaws.util.StringUtils;
 
 import java.util.Objects;
@@ -35,16 +35,13 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         final ResourceModel model = request.getDesiredResourceState();
 
         try {
-            new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
-            throw new ResourceAlreadyExistsException(ResourceModel.TYPE_NAME,
+            proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model),
+                ClientBuilder.getClient()::createLogGroup);
+        } catch (final ResourceAlreadyExistsException e) {
+            throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME,
                 Objects.toString(model.getPrimaryIdentifier()));
-        } catch (final ResourceNotFoundException e) {
-            logger.log(request.getDesiredResourceState().getPrimaryIdentifier() +
-                " does not exist; creating the resource.");
         }
 
-        proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model),
-                ClientBuilder.getClient()::createLogGroup);
         final String createMessage = String.format("%s [%s] successfully created.",
                 ResourceModel.TYPE_NAME, model.getLogGroupName());
         logger.log(createMessage);
