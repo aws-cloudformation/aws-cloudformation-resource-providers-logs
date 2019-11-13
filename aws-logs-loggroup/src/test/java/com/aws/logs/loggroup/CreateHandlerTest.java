@@ -16,7 +16,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.CreateLogGroupRespon
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyResponse;
-import com.amazonaws.services.logs.model.ResourceAlreadyExistsException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 
 import java.util.Arrays;
 
