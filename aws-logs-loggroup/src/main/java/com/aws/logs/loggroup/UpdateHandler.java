@@ -42,7 +42,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             putRetentionPolicy();
         }
 
-        return new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
+        return ProgressEvent.defaultSuccessHandler(model);
     }
 
     private void deleteRetentionPolicy() {

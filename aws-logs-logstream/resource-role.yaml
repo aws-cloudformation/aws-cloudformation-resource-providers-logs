@@ -23,9 +23,9 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                - "logs:DescribeLogStreams"
                 - "logs:DeleteLogStream"
                 - "logs:CreateLogStream"
-                - "logs:DescribeLogStreams"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

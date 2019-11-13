@@ -23,10 +23,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                - "logs:DeleteDestination"
-                - "logs:PutDestinationPolicy"
                 - "logs:PutDestination"
                 - "logs:DescribeDestinations"
+                - "logs:PutDestinationPolicy"
+                - "logs:DeleteDestination"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

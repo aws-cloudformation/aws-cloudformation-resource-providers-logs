@@ -163,32 +163,6 @@ public class UpdateHandlerTest {
     }
 
     @Test
-    public void handleRequest_FailureNotFound() {
-        final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList())
-                .build();
-
-        doReturn(describeResponse)
-                .when(proxy)
-                .injectCredentialsAndInvokeV2(
-                        ArgumentMatchers.any(),
-                        ArgumentMatchers.any()
-                );
-
-        final ResourceModel model = ResourceModel.builder()
-                .logGroupName("LogGroup")
-                .retentionInDays(1)
-                .build();
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
-
-        assertThrows(com.amazonaws.cloudformation.exceptions.ResourceNotFoundException.class,
-            () -> handler.handleRequest(proxy, request, null, logger));
-    }
-
-    @Test
     public void handleRequest_FailureNotFound_ServiceException() {
         doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException.class)
             .when(proxy)

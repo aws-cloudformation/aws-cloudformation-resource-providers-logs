@@ -1,11 +1,12 @@
 package com.aws.logs.loggroup;
 
-import com.amazonaws.cloudformation.exceptions.ResourceAlreadyExistsException;
+import com.amazonaws.cloudformation.exceptions.CfnAlreadyExistsException;
 import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
 import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.OperationStatus;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
+import com.amazonaws.services.logs.model.ResourceAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,8 +22,7 @@ import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CreateHandlerTest {
@@ -50,14 +50,10 @@ public class CreateHandlerTest {
         final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
-                .arn("arn")
                 .retentionInDays(1)
                 .build();
-        final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList(logGroup))
-                .build();
 
-        doReturn(describeResponseInitial, createLogGroupResponse, putRetentionPolicyResponse, describeResponse)
+        doReturn(describeResponseInitial, createLogGroupResponse, putRetentionPolicyResponse)
             .when(proxy)
             .injectCredentialsAndInvokeV2(
                 ArgumentMatchers.any(),
@@ -91,15 +87,8 @@ public class CreateHandlerTest {
             .logGroups(Arrays.asList())
             .build();
         final CreateLogGroupResponse createLogGroupResponse = CreateLogGroupResponse.builder().build();
-        final LogGroup logGroup = LogGroup.builder()
-            .logGroupName("LogGroup")
-            .retentionInDays(1)
-            .build();
-        final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-            .logGroups(Arrays.asList(logGroup))
-            .build();
 
-        doReturn(describeResponseInitial, createLogGroupResponse, describeResponse)
+        doReturn(describeResponseInitial, createLogGroupResponse)
             .when(proxy)
             .injectCredentialsAndInvokeV2(
                 ArgumentMatchers.any(),
@@ -117,7 +106,8 @@ public class CreateHandlerTest {
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getResourceModel()).isEqualToComparingFieldByField(logGroup);
+        // There isn't an easy way to check the generated value of the name
+        assertThat(response.getResourceModel()).isNotNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
@@ -129,15 +119,8 @@ public class CreateHandlerTest {
                 .build();
         final CreateLogGroupResponse createLogGroupResponse = CreateLogGroupResponse.builder().build();
         final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
-        final LogGroup logGroup = LogGroup.builder()
-                .logGroupName("LogGroup")
-                .retentionInDays(1)
-                .build();
-        final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList(logGroup))
-                .build();
 
-        doReturn(describeResponseInitial, createLogGroupResponse, putRetentionPolicyResponse, describeResponse)
+        doReturn(describeResponseInitial, createLogGroupResponse, putRetentionPolicyResponse)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(
                         ArgumentMatchers.any(),
@@ -161,21 +144,15 @@ public class CreateHandlerTest {
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getResourceModel()).isEqualToComparingFieldByField(logGroup);
+        // There isn't an easy way to check the generated value of the name
+        assertThat(response.getResourceModel()).isNotNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
 
     @Test
     public void handleRequest_FailureAlreadyExists() {
-        final LogGroup logGroup = LogGroup.builder()
-                .logGroupName("LogGroup")
-                .retentionInDays(1)
-                .build();
-        final DescribeLogGroupsResponse describeResponseInitial = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList(logGroup))
-                .build();
-        doReturn(describeResponseInitial)
+        doThrow(ResourceAlreadyExistsException.class)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(
                         ArgumentMatchers.any(),
@@ -191,7 +168,7 @@ public class CreateHandlerTest {
                 .desiredResourceState(model)
                 .build();
 
-        assertThrows(ResourceAlreadyExistsException.class,
+        assertThrows(CfnAlreadyExistsException.class,
             () -> handler.handleRequest(proxy, request, null, logger));
     }
 }
