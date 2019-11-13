@@ -6,8 +6,8 @@ import com.amazonaws.cloudformation.proxy.Logger;
 import com.amazonaws.cloudformation.proxy.ProgressEvent;
 import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
 import com.amazonaws.cloudformation.resource.IdentifierUtils;
-import com.amazonaws.services.logs.model.ResourceAlreadyExistsException;
 import com.amazonaws.util.StringUtils;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 
 import java.util.Objects;
 
