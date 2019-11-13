@@ -53,19 +53,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             updateRetentionInDays();
         }
 
-        final ResourceModel readResponse =
-            new ReadHandler().handleRequest(proxy, request, callbackContext, logger)
-                .getResourceModel();
-
-        model.setArn(readResponse.getArn());
-
-        final ResourceModel finalModel = new ReadHandler().handleRequest(proxy,
-                request,
-                callbackContext,
-                logger)
-                .getResourceModel();
-
-        return ProgressEvent.defaultSuccessHandler(finalModel);
+        return ProgressEvent.defaultSuccessHandler(model);
     }
 
     /**

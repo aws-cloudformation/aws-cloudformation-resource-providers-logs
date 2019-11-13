@@ -23,9 +23,9 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                - "logs:DescribeMetricFilters"
                 - "logs:DeleteMetricFilter"
                 - "logs:PutMetricFilter"
-                - "logs:DescribeMetricFilters"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:
