@@ -1,4 +1,4 @@
-package com.aws.logs.loggroup;
+package software.amazon.logs.loggroup;
 
 import software.amazon.awssdk.services.cloudwatchlogs.model.CreateLogGroupRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteLogGroupRequest;
@@ -6,6 +6,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolic
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
+import software.amazon.logs.loggroup.ResourceModel;
 
 import java.util.Collection;
 import java.util.List;

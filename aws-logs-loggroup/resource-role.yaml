@@ -23,11 +23,11 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                - "logs:CreateLogGroup"
-                - "logs:DeleteLogGroup"
-                - "logs:DeleteRetentionPolicy"
                 - "logs:DescribeLogGroups"
+                - "logs:CreateLogGroup"
+                - "logs:DeleteRetentionPolicy"
                 - "logs:PutRetentionPolicy"
+                - "logs:DeleteLogGroup"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:
