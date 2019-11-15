@@ -2,12 +2,12 @@
     "typeName": "AWS::Logs::LogGroup",
     "language": "java",
     "runtime": "java8",
-    "entrypoint": "com.aws.logs.loggroup.HandlerWrapper::handleRequest",
-    "testEntrypoint": "com.aws.logs.metricfilter.HandlerWrapper::testEntrypoint",
+    "entrypoint": "software.amazon.logs.loggroup.HandlerWrapper::handleRequest",
+    "testEntrypoint": "software.amazon.logs.metricfilter.HandlerWrapper::testEntrypoint",
     "settings": {
         "namespace": [
-            "com",
-            "aws",
+            "software",
+            "amazon",
             "logs",
             "loggroup"
         ]

@@ -5,7 +5,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.aws.logs.loggroup</groupId>
+    <groupId>software.amazon.logs.loggroup</groupId>
     <artifactId>aws-logs-loggroup-handler</artifactId>
     <name>aws-logs-loggroup-handler</name>
     <version>1.0-SNAPSHOT</version>
@@ -26,9 +26,9 @@
     </repositories>
 
     <dependencies>
-        <!-- https://github.com/awslabs/aws-cloudformation-rpdk-java-plugin/ -->
+        <!-- https://github.com/aws-cloudformation/aws-cloudformation-rpdk-java-plugin/ -->
         <dependency>
-            <groupId>com.amazonaws.cloudformation</groupId>
+            <groupId>software.amazon.cloudformation</groupId>
             <artifactId>aws-cloudformation-rpdk-java-plugin</artifactId>
             <version>1.0</version>
         </dependency>

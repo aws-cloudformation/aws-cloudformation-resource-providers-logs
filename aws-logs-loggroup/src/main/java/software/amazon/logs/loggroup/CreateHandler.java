@@ -1,11 +1,11 @@
-package com.aws.logs.loggroup;
+package software.amazon.logs.loggroup;
 
-import com.amazonaws.cloudformation.exceptions.CfnAlreadyExistsException;
-import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.Logger;
-import com.amazonaws.cloudformation.proxy.ProgressEvent;
-import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
-import com.amazonaws.cloudformation.resource.IdentifierUtils;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
+import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.Logger;
+import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.resource.IdentifierUtils;
 import com.amazonaws.util.StringUtils;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 

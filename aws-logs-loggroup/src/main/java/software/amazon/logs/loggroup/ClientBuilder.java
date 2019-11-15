@@ -1,4 +1,4 @@
-package com.aws.logs.loggroup;
+package software.amazon.logs.loggroup;
 
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 

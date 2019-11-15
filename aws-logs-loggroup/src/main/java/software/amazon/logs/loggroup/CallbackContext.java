@@ -1,4 +1,4 @@
-package com.aws.logs.loggroup;
+package software.amazon.logs.loggroup;
 
 import lombok.Builder;
 import lombok.Data;
