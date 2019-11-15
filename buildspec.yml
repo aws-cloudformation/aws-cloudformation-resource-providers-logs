@@ -35,23 +35,7 @@ phases:
       - pip install "$CODEBUILD_SRC_DIR_RPDK" .
       # end-to-end test child repo(s)
       - cd "$CODEBUILD_SRC_DIR"
-      - cd aws-logs-destination
-      - mvn clean verify --no-transfer-progress
-      - cd "$CODEBUILD_SRC_DIR"
       - cd aws-logs-loggroup
       - mvn clean verify --no-transfer-progress
-      - cd "$CODEBUILD_SRC_DIR"
-      - cd aws-logs-logstream
-      - mvn clean verify --no-transfer-progress
-      - cd "$CODEBUILD_SRC_DIR"
-      - cd aws-logs-metricfilter
-      - mvn clean verify --no-transfer-progress
-      - cd "$CODEBUILD_SRC_DIR"
-      - cd aws-logs-subscriptionfilter
-      - mvn clean verify --no-transfer-progress
     finally:
-      - cat "$CODEBUILD_SRC_DIR/aws-logs-destination/rpdk.log"
       - cat "$CODEBUILD_SRC_DIR/aws-logs-loggroup/rpdk.log"
-      - cat "$CODEBUILD_SRC_DIR/aws-logs-logstream/rpdk.log"
-      - cat "$CODEBUILD_SRC_DIR/aws-logs-metricfilter/rpdk.log"
-      - cat "$CODEBUILD_SRC_DIR/aws-logs-subscriptionfilter/rpdk.log"
