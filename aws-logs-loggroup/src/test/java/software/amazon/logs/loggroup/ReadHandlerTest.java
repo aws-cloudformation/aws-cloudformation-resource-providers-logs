@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,7 +47,7 @@ public class ReadHandlerTest {
                 .retentionInDays(1)
                 .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList(logGroup))
+                .logGroups(Collections.singletonList(logGroup))
                 .build();
 
         doReturn(describeResponse)
@@ -81,7 +81,7 @@ public class ReadHandlerTest {
     @Test
     public void handleRequest_FailureNotFound_EmptyLogGroupResponse() {
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList())
+                .logGroups(Collections.emptyList())
                 .build();
 
         doReturn(describeResponse)

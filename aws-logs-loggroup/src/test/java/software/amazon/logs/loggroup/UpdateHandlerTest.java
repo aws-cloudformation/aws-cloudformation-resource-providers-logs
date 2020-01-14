@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyResponse;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -49,7 +50,7 @@ public class UpdateHandlerTest {
                 .retentionInDays(1)
                 .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList(logGroup))
+                .logGroups(Collections.singletonList(logGroup))
                 .build();
 
         doReturn(putRetentionPolicyResponse, describeResponse)
@@ -87,7 +88,7 @@ public class UpdateHandlerTest {
             .logGroupName("LogGroup")
             .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-            .logGroups(Arrays.asList(logGroup))
+            .logGroups(Collections.singletonList(logGroup))
             .build();
 
         doReturn(deleteRetentionPolicyResponse, describeResponse)
@@ -124,14 +125,14 @@ public class UpdateHandlerTest {
             .retentionInDays(1)
             .build();
         final DescribeLogGroupsResponse initialDescribeResponse = DescribeLogGroupsResponse.builder()
-            .logGroups(Arrays.asList(initialLogGroup))
+            .logGroups(Collections.singletonList(initialLogGroup))
             .build();
         final LogGroup logGroup = LogGroup.builder()
             .logGroupName("LogGroup")
             .retentionInDays(1)
             .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
-            .logGroups(Arrays.asList(logGroup))
+            .logGroups(Collections.singletonList(logGroup))
             .build();
 
         doReturn(initialDescribeResponse, describeResponse)

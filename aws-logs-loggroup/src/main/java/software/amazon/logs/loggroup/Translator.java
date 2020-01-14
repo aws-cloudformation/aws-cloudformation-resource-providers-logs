@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolic
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
-import software.amazon.logs.loggroup.ResourceModel;
 
 import java.util.Collection;
 import java.util.List;

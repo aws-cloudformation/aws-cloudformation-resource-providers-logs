@@ -7,8 +7,6 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.logs.loggroup.BaseHandler;
-import software.amazon.logs.loggroup.ResourceModel;
 
 import java.util.Objects;
 
