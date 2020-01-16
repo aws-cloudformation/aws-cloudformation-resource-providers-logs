@@ -18,7 +18,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,7 +44,7 @@ public class CreateHandlerTest {
     @Test
     public void handleRequest_Success() {
         final DescribeLogGroupsResponse describeResponseInitial = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList())
+                .logGroups(Collections.emptyList())
                 .build();
         final CreateLogGroupResponse createLogGroupResponse = CreateLogGroupResponse.builder().build();
         final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
@@ -84,7 +84,7 @@ public class CreateHandlerTest {
     @Test
     public void handleRequest_SuccessGeneratedLogGroupName_ModelIsNull() {
         final DescribeLogGroupsResponse describeResponseInitial = DescribeLogGroupsResponse.builder()
-            .logGroups(Arrays.asList())
+            .logGroups(Collections.emptyList())
             .build();
         final CreateLogGroupResponse createLogGroupResponse = CreateLogGroupResponse.builder().build();
 
@@ -115,7 +115,7 @@ public class CreateHandlerTest {
     @Test
     public void handleRequest_SuccessGeneratedLogGroupName() {
         final DescribeLogGroupsResponse describeResponseInitial = DescribeLogGroupsResponse.builder()
-                .logGroups(Arrays.asList())
+                .logGroups(Collections.emptyList())
                 .build();
         final CreateLogGroupResponse createLogGroupResponse = CreateLogGroupResponse.builder().build();
         final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
