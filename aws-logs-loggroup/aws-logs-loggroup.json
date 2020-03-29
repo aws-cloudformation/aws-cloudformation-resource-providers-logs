@@ -1,82 +1,82 @@
 {
-    "typeName": "AWS::Logs::LogGroup",
-    "description": "Resource schema for AWS::Logs::LogGroup",
-    "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
-    "properties": {
-        "LogGroupName": {
-            "description": "The name of the log group. If you don't specify a name, AWS CloudFormation generates a unique ID for the log group. ",
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 512,
-            "pattern": "^[.\\-_/#A-Za-z0-9]{1,512}\\Z"
-        },
-        "RetentionInDays": {
-            "description": "The number of days to retain the log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, and 3653.",
-            "type": "integer",
-            "enum": [
-                1,
-                3,
-                5,
-                7,
-                14,
-                30,
-                60,
-                90,
-                120,
-                150,
-                180,
-                365,
-                400,
-                545,
-                731,
-                1827,
-                3653
-            ]
-        },
-        "Arn": {
-            "description": "The CloudWatch log group ARN.",
-            "type": "string"
-        }
+  "typeName": "AWS::Logs::LogGroup",
+  "description": "Resource schema for AWS::Logs::LogGroup",
+  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
+  "properties": {
+    "LogGroupName": {
+      "description": "The name of the log group. If you don't specify a name, AWS CloudFormation generates a unique ID for the log group. ",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[.\\-_/#A-Za-z0-9]{1,512}\\Z"
     },
-    "handlers": {
-        "create": {
-            "permissions": [
-                "logs:DescribeLogGroups",
-                "logs:CreateLogGroup"
-            ]
-        },
-        "read": {
-            "permissions": [
-                "logs:DescribeLogGroups"
-            ]
-        },
-        "update": {
-            "permissions": [
-                "logs:DescribeLogGroups",
-                "logs:PutRetentionPolicy",
-                "logs:DeleteRetentionPolicy"
-            ]
-        },
-        "delete": {
-            "permissions": [
-                "logs:DescribeLogGroups",
-                "logs:DeleteLogGroup"
-            ]
-        },
-        "list": {
-            "permissions": [
-                "logs:DescribeLogGroups"
-            ]
-        }
+    "RetentionInDays": {
+      "description": "The number of days to retain the log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, and 3653.",
+      "type": "integer",
+      "enum": [
+        1,
+        3,
+        5,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120,
+        150,
+        180,
+        365,
+        400,
+        545,
+        731,
+        1827,
+        3653
+      ]
     },
-    "createOnlyProperties": [
-        "/properties/LogGroupName"
-    ],
-    "readOnlyProperties": [
-        "/properties/Arn"
-    ],
-    "primaryIdentifier": [
-        "/properties/LogGroupName"
-    ],
-    "additionalProperties": false
+    "Arn": {
+      "description": "The CloudWatch log group ARN.",
+      "type": "string"
+    }
+  },
+  "handlers": {
+    "create": {
+      "permissions": [
+        "logs:DescribeLogGroups",
+        "logs:CreateLogGroup"
+      ]
+    },
+    "read": {
+      "permissions": [
+        "logs:DescribeLogGroups"
+      ]
+    },
+    "update": {
+      "permissions": [
+        "logs:DescribeLogGroups",
+        "logs:PutRetentionPolicy",
+        "logs:DeleteRetentionPolicy"
+      ]
+    },
+    "delete": {
+      "permissions": [
+        "logs:DescribeLogGroups",
+        "logs:DeleteLogGroup"
+      ]
+    },
+    "list": {
+      "permissions": [
+        "logs:DescribeLogGroups"
+      ]
+    }
+  },
+  "createOnlyProperties": [
+    "/properties/LogGroupName"
+  ],
+  "readOnlyProperties": [
+    "/properties/Arn"
+  ],
+  "primaryIdentifier": [
+    "/properties/LogGroupName"
+  ],
+  "additionalProperties": false
 }
