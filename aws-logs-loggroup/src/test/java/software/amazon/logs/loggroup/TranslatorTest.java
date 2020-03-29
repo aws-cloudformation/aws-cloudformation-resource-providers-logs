@@ -1,4 +1,4 @@
-package com.aws.logs.loggroup;
+package software.amazon.logs.loggroup;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

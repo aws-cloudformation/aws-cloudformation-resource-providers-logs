@@ -1,9 +1,9 @@
-package com.aws.logs.loggroup;
+package software.amazon.logs.loggroup;
 
-import com.amazonaws.cloudformation.proxy.AmazonWebServicesClientProxy;
-import com.amazonaws.cloudformation.proxy.Logger;
-import com.amazonaws.cloudformation.proxy.ProgressEvent;
-import com.amazonaws.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.Logger;
+import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
@@ -80,7 +80,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
     }
 
     private void throwNotFoundException(final ResourceModel model) {
-        throw new com.amazonaws.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
+        throw new software.amazon.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
             Objects.toString(model.getPrimaryIdentifier()));
     }
 }
