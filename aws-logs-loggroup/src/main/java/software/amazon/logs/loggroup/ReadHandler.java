@@ -11,10 +11,6 @@ import java.util.Objects;
 
 public class ReadHandler extends BaseHandler<CallbackContext> {
 
-    private AmazonWebServicesClientProxy proxy;
-    private ResourceHandlerRequest<ResourceModel> request;
-    private Logger logger;
-
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
@@ -22,20 +18,11 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        this.proxy = proxy;
-        this.request = request;
-        this.logger = logger;
-
-        return fetchLogGroupAndAssertExists();
-    }
-
-    private ProgressEvent<ResourceModel, CallbackContext> fetchLogGroupAndAssertExists() {
         final ResourceModel model = request.getDesiredResourceState();
 
         if (model == null || model.getLogGroupName() == null) {
             throwNotFoundException(model);
         }
-
 
         DescribeLogGroupsResponse response = null;
         try {

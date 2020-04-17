@@ -15,10 +15,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
     private static final String DEFAULT_LOG_GROUP_NAME_PREFIX = "LogGroup";
     private static final int MAX_LENGTH_LOG_GROUP_NAME = 512;
 
-    private AmazonWebServicesClientProxy proxy;
-    private ResourceHandlerRequest<ResourceModel> request;
-    private Logger logger;
-
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
@@ -26,11 +22,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        this.proxy = proxy;
-        this.request = request;
-        this.logger = logger;
-
-        prepareResourceModel();
+        prepareResourceModel(request);
 
         final ResourceModel model = request.getDesiredResourceState();
 
@@ -47,7 +39,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         logger.log(createMessage);
 
         if (model.getRetentionInDays() != null) {
-            updateRetentionInDays();
+            updateRetentionInDays(proxy, request, logger);
         }
 
         return ProgressEvent.defaultSuccessHandler(model);
@@ -62,7 +54,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
      * 2. Generating a log name if one is not given. This is a createOnly property,
      *    but we generate one if one is not provided.
      */
-    private void prepareResourceModel() {
+    private void prepareResourceModel(final ResourceHandlerRequest<ResourceModel> request) {
         if (request.getDesiredResourceState() == null) {
             request.setDesiredResourceState(new ResourceModel());
         }
@@ -83,7 +75,9 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         }
     }
 
-    private void updateRetentionInDays() {
+    private void updateRetentionInDays(final AmazonWebServicesClientProxy proxy,
+                                       final ResourceHandlerRequest<ResourceModel> request,
+                                       final Logger logger) {
         final ResourceModel model = request.getDesiredResourceState();
         proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRetentionPolicyRequest(model),
             ClientBuilder.getClient()::putRetentionPolicy);

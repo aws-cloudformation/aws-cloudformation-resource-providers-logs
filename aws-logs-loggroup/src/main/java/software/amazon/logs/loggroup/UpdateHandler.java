@@ -12,11 +12,6 @@ import java.util.Objects;
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
 
-    private AmazonWebServicesClientProxy proxy;
-    private ResourceHandlerRequest<ResourceModel> request;
-    private CallbackContext callbackContext;
-    private Logger logger;
-
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
@@ -24,28 +19,21 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        this.proxy = proxy;
-        this.request = request;
-        this.callbackContext = callbackContext;
-        this.logger = logger;
-
         // RetentionPolicyInDays is the only attribute that is not createOnly
-        return updateRetentionPolicy();
-    }
-
-    private ProgressEvent<ResourceModel, CallbackContext> updateRetentionPolicy() {
         final ResourceModel model = request.getDesiredResourceState();
 
         if (model.getRetentionInDays() == null) {
-            deleteRetentionPolicy();
+            deleteRetentionPolicy(proxy, request, logger);
         } else {
-            putRetentionPolicy();
+            putRetentionPolicy(proxy, request, logger);
         }
 
         return ProgressEvent.defaultSuccessHandler(model);
     }
 
-    private void deleteRetentionPolicy() {
+    private void deleteRetentionPolicy(final AmazonWebServicesClientProxy proxy,
+                                       final ResourceHandlerRequest<ResourceModel> request,
+                                       final Logger logger) {
         final ResourceModel model = request.getDesiredResourceState();
         final DeleteRetentionPolicyRequest deleteRetentionPolicyRequest =
             Translator.translateToDeleteRetentionPolicyRequest(model);
@@ -62,7 +50,9 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         logger.log(retentionPolicyMessage);
     }
 
-    private void putRetentionPolicy() {
+    private void putRetentionPolicy(final AmazonWebServicesClientProxy proxy,
+                                    final ResourceHandlerRequest<ResourceModel> request,
+                                    final Logger logger) {
         final ResourceModel model = request.getDesiredResourceState();
         final PutRetentionPolicyRequest putRetentionPolicyRequest =
             Translator.translateToPutRetentionPolicyRequest(model);
