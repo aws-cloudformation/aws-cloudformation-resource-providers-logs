@@ -1,5 +1,6 @@
 package software.amazon.logs.loggroup;
 
+import org.apache.commons.collections.MapUtils;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
@@ -21,9 +22,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         final ResourceHandlerRequest<ResourceModel> request,
         final CallbackContext callbackContext,
         final Logger logger) {
-
         prepareResourceModel(request);
-
         final ResourceModel model = request.getDesiredResourceState();
 
         try {
@@ -33,7 +32,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME,
                 Objects.toString(model.getPrimaryIdentifier()));
         }
-
         final String createMessage = String.format("%s [%s] successfully created.",
                 ResourceModel.TYPE_NAME, model.getLogGroupName());
         logger.log(createMessage);
@@ -41,7 +39,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         if (model.getRetentionInDays() != null) {
             updateRetentionInDays(proxy, request, logger);
         }
-
         return ProgressEvent.defaultSuccessHandler(model);
     }
 
@@ -58,21 +55,28 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         if (request.getDesiredResourceState() == null) {
             request.setDesiredResourceState(new ResourceModel());
         }
-
         final ResourceModel model = request.getDesiredResourceState();
-        final String identifierPrefix = request.getLogicalResourceIdentifier() == null ?
-            DEFAULT_LOG_GROUP_NAME_PREFIX :
-            request.getLogicalResourceIdentifier();
 
         if (StringUtils.isNullOrEmpty(model.getLogGroupName())) {
-            model.setLogGroupName(
-                IdentifierUtils.generateResourceIdentifier(
-                    identifierPrefix,
-                    request.getClientRequestToken(),
-                    MAX_LENGTH_LOG_GROUP_NAME
-                )
-            );
+            model.setLogGroupName(generateName(request));
         }
+    }
+
+    private static String generateName(final ResourceHandlerRequest<ResourceModel> request) {
+        final StringBuilder identifierPrefix = new StringBuilder();
+        // the prefix will be <stack-name>-<resource type>
+        identifierPrefix.append((request.getSystemTags() != null &&
+                MapUtils.isNotEmpty(request.getSystemTags())) ?
+                request.getSystemTags().get("aws:cloudformation:stack-name") + "-" : "");
+        identifierPrefix.append(request.getLogicalResourceIdentifier() == null ?
+                DEFAULT_LOG_GROUP_NAME_PREFIX :
+                request.getLogicalResourceIdentifier());
+
+        // This utility function will add the auto-generated ID after the prefix.
+        return IdentifierUtils.generateResourceIdentifier(
+                identifierPrefix.toString(),
+                request.getClientRequestToken(),
+                MAX_LENGTH_LOG_GROUP_NAME);
     }
 
     private void updateRetentionInDays(final AmazonWebServicesClientProxy proxy,
