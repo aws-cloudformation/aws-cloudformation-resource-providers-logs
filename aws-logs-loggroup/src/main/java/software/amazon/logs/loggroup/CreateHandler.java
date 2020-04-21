@@ -64,7 +64,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
     private String generateName(final ResourceHandlerRequest<ResourceModel> request) {
         final StringBuilder identifierPrefix = new StringBuilder();
-        // the prefix will be <stack-name>-<resource type>
         identifierPrefix.append((request.getSystemTags() != null &&
                 MapUtils.isNotEmpty(request.getSystemTags())) ?
                 request.getSystemTags().get("aws:cloudformation:stack-name") + "-" : "");
@@ -72,7 +71,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                 DEFAULT_LOG_GROUP_NAME_PREFIX :
                 request.getLogicalResourceIdentifier());
 
-        // This utility function will add the auto-generated ID after the prefix.
         return IdentifierUtils.generateResourceIdentifier(
                 identifierPrefix.toString(),
                 request.getClientRequestToken(),
