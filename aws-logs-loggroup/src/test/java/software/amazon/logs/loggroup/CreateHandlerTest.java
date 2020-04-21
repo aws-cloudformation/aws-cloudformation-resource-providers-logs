@@ -19,6 +19,8 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRe
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -137,12 +139,19 @@ public class CreateHandlerTest {
                 .desiredResourceState(model)
                 .build();
 
+        final Map<String, String> systemTags = new HashMap<>();
+        systemTags.put("aws:cloudformation:stack-name", "unit_test_Stack");
+        request.setSystemTags(systemTags);
+        request.setClientRequestToken("4b90a7e4-b790-456b-a937-0cfdfa212fed");
+        request.setLogicalResourceIdentifier("taskDefinition");
+
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel().getLogGroupName()).startsWith("unit_test_Stack");
         assertThat(response.getResourceModels()).isNull();
         // There isn't an easy way to check the generated value of the name
         assertThat(response.getResourceModel()).isNotNull();
