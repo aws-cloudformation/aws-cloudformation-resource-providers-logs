@@ -62,7 +62,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         }
     }
 
-    private static String generateName(final ResourceHandlerRequest<ResourceModel> request) {
+    private String generateName(final ResourceHandlerRequest<ResourceModel> request) {
         final StringBuilder identifierPrefix = new StringBuilder();
         // the prefix will be <stack-name>-<resource type>
         identifierPrefix.append((request.getSystemTags() != null &&

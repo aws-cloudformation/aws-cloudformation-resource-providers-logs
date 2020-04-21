@@ -151,7 +151,7 @@ public class CreateHandlerTest {
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel().getLogGroupName()).contains("unit_test_Stack");
+        assertThat(response.getResourceModel().getLogGroupName()).startsWith("unit_test_Stack");
         assertThat(response.getResourceModels()).isNull();
         // There isn't an easy way to check the generated value of the name
         assertThat(response.getResourceModel()).isNotNull();
