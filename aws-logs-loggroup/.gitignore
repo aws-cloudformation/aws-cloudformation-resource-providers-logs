@@ -15,6 +15,7 @@ out/
 
 # auto-generated files
 target/
+docs/README.md
 
 # our logs
 rpdk.log
