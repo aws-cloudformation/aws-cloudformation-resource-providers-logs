@@ -51,8 +51,8 @@ final class Translator {
 
     static DeleteRetentionPolicyRequest translateToDeleteRetentionPolicyRequest(final ResourceModel model) {
         return DeleteRetentionPolicyRequest.builder()
-            .logGroupName(model.getLogGroupName())
-            .build();
+                .logGroupName(model.getLogGroupName())
+                .build();
     }
 
     static ResourceModel translateForRead(final DescribeLogGroupsResponse response) {
@@ -62,10 +62,10 @@ final class Translator {
                 .findAny()
                 .orElse(null);
         final String logGroupArn = streamOfOrEmpty(response.logGroups())
-            .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::arn)
-            .filter(Objects::nonNull)
-            .findAny()
-            .orElse(null);
+                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::arn)
+                .filter(Objects::nonNull)
+                .findAny()
+                .orElse(null);
         final Integer retentionInDays = streamOfOrEmpty(response.logGroups())
                 .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::retentionInDays)
                 .filter(Objects::nonNull)
