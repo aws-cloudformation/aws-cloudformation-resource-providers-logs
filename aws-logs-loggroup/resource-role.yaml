@@ -23,10 +23,12 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                - "logs:AssociateKmsKey"
                 - "logs:CreateLogGroup"
                 - "logs:DeleteLogGroup"
                 - "logs:DeleteRetentionPolicy"
                 - "logs:DescribeLogGroups"
+                - "logs:DisassociateKmsKey"
                 - "logs:PutRetentionPolicy"
                 Resource: "*"
 Outputs:

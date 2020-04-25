@@ -10,6 +10,8 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsReq
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
 
 import java.util.Collections;
 
@@ -19,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TranslatorTest {
     private static final ResourceModel RESOURCE_MODEL = ResourceModel.builder()
         .retentionInDays(1)
+        .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
         .logGroupName("LogGroup")
         .build();
 
@@ -51,6 +54,7 @@ public class TranslatorTest {
     public void testTranslateToCreate() {
         final CreateLogGroupRequest request = CreateLogGroupRequest.builder()
             .logGroupName(RESOURCE_MODEL.getLogGroupName())
+            .kmsKeyId(RESOURCE_MODEL.getKmsKeyId())
             .build();
         assertThat(Translator.translateToCreateRequest(RESOURCE_MODEL)).isEqualToComparingFieldByField(request);
     }
@@ -77,10 +81,32 @@ public class TranslatorTest {
     }
 
     @Test
+    public void testTranslateToDisassociateKmsKeyRequest() {
+        final DisassociateKmsKeyRequest request = DisassociateKmsKeyRequest.builder()
+            .logGroupName(RESOURCE_MODEL.getLogGroupName())
+            .build();
+
+        assertThat(Translator.translateToDisassociateKmsKeyRequest(RESOURCE_MODEL))
+            .isEqualToComparingFieldByField(request);
+    }
+
+    @Test
+    public void testTranslateToAssociateKmsKeyRequest() {
+        final AssociateKmsKeyRequest request = AssociateKmsKeyRequest.builder()
+            .logGroupName(RESOURCE_MODEL.getLogGroupName())
+            .kmsKeyId(RESOURCE_MODEL.getKmsKeyId())
+            .build();
+
+        assertThat(Translator.translateToAssociateKmsKeyRequest(RESOURCE_MODEL))
+            .isEqualToComparingFieldByField(request);
+    }
+
+    @Test
     public void testTranslateForRead() {
         final LogGroup logGroup = LogGroup.builder()
             .logGroupName("LogGroup")
             .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build();
 
         final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()

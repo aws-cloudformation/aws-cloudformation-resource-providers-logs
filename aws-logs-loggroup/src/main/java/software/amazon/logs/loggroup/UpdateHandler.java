@@ -7,6 +7,8 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
 
 import java.util.Objects;
 
@@ -19,13 +21,22 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        // RetentionPolicyInDays is the only attribute that is not createOnly
+        // Everything except RetentionPolicyInDays KmsKeyId is createOnly
         final ResourceModel model = request.getDesiredResourceState();
 
         if (model.getRetentionInDays() == null) {
             deleteRetentionPolicy(proxy, request, logger);
         } else {
             putRetentionPolicy(proxy, request, logger);
+        }
+
+        // It can take up to five minutes for the (dis)associate operation to take effect
+        // It's unclear from the documentation if that state can be checked via the API.
+        // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html
+        if (model.getKmsKeyId() == null) {
+            disassociateKmsKey(proxy, request, logger);
+        } else {
+            associateKmsKey(proxy, request, logger);
         }
 
         return ProgressEvent.defaultSuccessHandler(model);
@@ -67,6 +78,44 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             String.format("%s [%s] successfully applied retention in days: [%d].",
                 ResourceModel.TYPE_NAME, model.getLogGroupName(), model.getRetentionInDays());
         logger.log(retentionPolicyMessage);
+    }
+
+    private void disassociateKmsKey(final AmazonWebServicesClientProxy proxy,
+                                    final ResourceHandlerRequest<ResourceModel> request,
+                                    final Logger logger) {
+        final ResourceModel model = request.getDesiredResourceState();
+        final DisassociateKmsKeyRequest disassociateKmsKeyRequest =
+                Translator.translateToDisassociateKmsKeyRequest(model);
+        try {
+            proxy.injectCredentialsAndInvokeV2(disassociateKmsKeyRequest,
+                    ClientBuilder.getClient()::disassociateKmsKey);
+        } catch (final ResourceNotFoundException e) {
+            throwNotFoundException(model);
+        }
+
+        final String kmsKeyMessage =
+                String.format("%s [%s] successfully disassociated kms key.",
+                        ResourceModel.TYPE_NAME, model.getLogGroupName());
+        logger.log(kmsKeyMessage);
+    }
+
+    private void associateKmsKey(final AmazonWebServicesClientProxy proxy,
+                                 final ResourceHandlerRequest<ResourceModel> request,
+                                 final Logger logger) {
+        final ResourceModel model = request.getDesiredResourceState();
+        final AssociateKmsKeyRequest associateKmsKeyRequest =
+                Translator.translateToAssociateKmsKeyRequest(model);
+        try {
+            proxy.injectCredentialsAndInvokeV2(associateKmsKeyRequest,
+                    ClientBuilder.getClient()::associateKmsKey);
+        } catch (final ResourceNotFoundException e) {
+            throwNotFoundException(model);
+        }
+
+        final String kmsKeyMessage =
+                String.format("%s [%s] successfully associated kms key: [%s].",
+                        ResourceModel.TYPE_NAME, model.getLogGroupName(), model.getKmsKeyId());
+        logger.log(kmsKeyMessage);
     }
 
     private void throwNotFoundException(final ResourceModel model) {
