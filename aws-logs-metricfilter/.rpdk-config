@@ -1,0 +1,15 @@
+{
+    "typeName": "AWS::Logs::MetricFilter",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "software.amazon.logs.metricfilter.HandlerWrapper::handleRequest",
+    "testEntrypoint": "software.amazon.logs.metricfilter.HandlerWrapper::testEntrypoint",
+    "settings": {
+        "namespace": [
+            "software",
+            "amazon",
+            "logs",
+            "metricfilter"
+        ]
+    }
+}
