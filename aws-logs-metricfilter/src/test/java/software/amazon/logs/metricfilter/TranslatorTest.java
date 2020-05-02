@@ -49,46 +49,41 @@ public class TranslatorTest {
 
     @Test
     public void translate_packageModel() {
-        assertThat(Translator.translate(RPDK_METRIC_TRANSFORMATION))
+        assertThat(Translator.translateMetricTransformationToSdk(RPDK_METRIC_TRANSFORMATION))
                 .isEqualToComparingFieldByField(METRIC_TRANSFORMATION);
     }
 
     @Test
     public void translate_nullPackageModel_returnsNull() {
-        assertThat(Translator.translate((MetricTransformation)null)).isNull();
+        assertThat(Translator.translateMetricTransformationToSdk((MetricTransformation)null)).isNull();
     }
 
     @Test
     public void translate_nullSDKModel_returnsNull() {
-        assertThat(Translator.translate((software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation)null)).isNull();
+        assertThat(Translator.translateMetricTransformationToSdk((software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation)null)).isNull();
     }
 
     @Test
     public void translate_SDKModel() {
-        assertThat(Translator.translate(METRIC_TRANSFORMATION))
+        assertThat(Translator.translateMetricTransformationToSdk(METRIC_TRANSFORMATION))
                 .isEqualToComparingFieldByField(RPDK_METRIC_TRANSFORMATION);
     }
 
     @Test
     public void translateToSDK() {
-        assertThat(Translator.translateToSDK(Collections.singletonList(RPDK_METRIC_TRANSFORMATION)))
+        assertThat(Translator.translateMetricTransformationToSDK(Collections.singletonList(RPDK_METRIC_TRANSFORMATION)))
                 .containsExactly(METRIC_TRANSFORMATION);
     }
 
     @Test
-    public void translateToSDK_emptyList_returnsNull() {
-        assertThat(Translator.translateToSDK(Collections.emptyList())).isNull();
-    }
-
-    @Test
-    public void translatefromSDK() {
-        assertThat(Translator.translateFromSDK(Collections.singletonList(METRIC_TRANSFORMATION)))
+    public void translateFromSDK() {
+        assertThat(Translator.translateMetricTransformationFromSdk(Collections.singletonList(METRIC_TRANSFORMATION)))
                 .containsExactly(RPDK_METRIC_TRANSFORMATION);
     }
 
     @Test
     public void translateFromSDK_emptyList_returnsNull() {
-        assertThat(Translator.translateFromSDK(Collections.emptyList())).isNull();
+        assertThat(Translator.translateMetricTransformationFromSdk(Collections.emptyList())).isNull();
     }
 
     @Test
@@ -104,13 +99,15 @@ public class TranslatorTest {
                 .metricTransformations(Collections.singletonList(RPDK_METRIC_TRANSFORMATION))
                 .build());
 
-        assertThat(Translator.translateFromSDK(response)).isEqualTo(expectedModels);
+        assertThat(Translator.translateFromListRequest(response)).isEqualTo(expectedModels);
     }
 
     @Test
     public void extractMetricFilters_API_removesEmptyFilterPattern() {
         final DescribeMetricFiltersResponse response = DescribeMetricFiltersResponse.builder()
-                .metricFilters(Collections.singletonList(METRIC_FILTER.toBuilder().filterPattern(null).build()))
+                .metricFilters(Collections.singletonList(METRIC_FILTER.toBuilder()
+                        .filterPattern(null)
+                        .build()))
                 .build();
         final List<ResourceModel> expectedModels = Arrays.asList(ResourceModel.builder()
                 .filterName("Filter")
@@ -119,7 +116,7 @@ public class TranslatorTest {
                 .metricTransformations(Collections.singletonList(RPDK_METRIC_TRANSFORMATION))
                 .build());
 
-        assertThat(Translator.translateFromSDK(response)).isEqualTo(expectedModels);
+        assertThat(Translator.translateFromListRequest(response)).isEqualTo(expectedModels);
     }
 
     @Test
@@ -129,8 +126,7 @@ public class TranslatorTest {
                 .build();
         final List<ResourceModel> expectedModels = Collections.emptyList();
 
-        assertThat(Translator.translateFromSDK(response)).isEqualTo(expectedModels);
-
+        assertThat(Translator.translateFromListRequest(response)).isEqualTo(expectedModels);
     }
 
     @Test
@@ -179,20 +175,9 @@ public class TranslatorTest {
                 .nextToken("token")
                 .build();
 
-        final DescribeMetricFiltersRequest actualRequest = Translator.translateToListRequest(50, "token");
+        final DescribeMetricFiltersRequest actualRequest = Translator.translateToListRequest( "token");
 
         assertThat(actualRequest).isEqualToComparingFieldByField(expectedRequest);
     }
 
-    @Test
-    public void buildResourceAlreadyExistsErrorMessage() {
-        final String expected = "Resource of type 'AWS::Logs::MetricFilter' with identifier 'ID' already exists.";
-        assertThat(Translator.buildResourceAlreadyExistsErrorMessage("ID")).isEqualTo(expected);
-    }
-
-    @Test
-    public void buildResourceDoesNotExistErrorMessage() {
-        final String expected = "Resource of type 'AWS::Logs::MetricFilter' with identifier 'ID' was not found.";
-        assertThat(Translator.buildResourceDoesNotExistErrorMessage("ID")).isEqualTo(expected);
-    }
 }

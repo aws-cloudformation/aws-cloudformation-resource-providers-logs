@@ -1,207 +1,186 @@
 package software.amazon.logs.metricfilter;
 
-import com.amazonaws.AmazonServiceException;
+import java.time.Duration;
+import java.util.Arrays;
+
+import org.mockito.ArgumentMatchers;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
+import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.core.exception.SdkException;
-import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter;
-
-import java.util.Collections;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class CreateHandlerTest {
-
-    private final CreateHandler handler = new CreateHandler();
+public class CreateHandlerTest extends AbstractTestBase {
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
 
     @Mock
-    private Logger logger;
+    private ProxyClient<CloudWatchLogsClient> proxyClient;
+
+    @Mock
+    CloudWatchLogsClient sdkClient;
+
+    final CreateHandler handler = new CreateHandler();
 
     @BeforeEach
     public void setup() {
-        proxy = mock(AmazonWebServicesClientProxy.class);
-        logger = mock(Logger.class);
+        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
+        sdkClient = mock(CloudWatchLogsClient.class);
+        proxyClient = MOCK_PROXY(proxy, sdkClient);
     }
 
     @Test
-    public void handleRequest_SimpleSuccess() {
-        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
-            .metricFilters(Collections.emptyList())
-            .build();
+    public void handleRequest_Success() {
+        final ResourceModel model = buildDefaultModel();
 
-        final PutMetricDataResponse createResponse = PutMetricDataResponse.builder().build();
+        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
+                .metricFilters(Translator.translateToSDK(model))
+                .build();
+
+        final PutMetricFilterResponse createResponse = PutMetricFilterResponse.builder()
+                .build();
 
         // return no existing metrics for pre-create and then success response for create
-        doReturn(describeResponse)
-            .doReturn(createResponse)
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
+        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+                .thenThrow(CfnNotFoundException.class)
+                .thenReturn(describeResponse);
 
-        final ResourceModel model = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-log-group")
-            .filterPattern("some pattern")
-            .build();
+        when(proxyClient.client().putMetricFilter(ArgumentMatchers.any(PutMetricFilterRequest.class)))
+                .thenReturn(createResponse);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
+                .desiredResourceState(model)
+                .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getResourceModel()).isEqualTo(model);
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
 
     @Test
-    public void handleRequest_FailedCreate_UnknownError() {
+    public void handleRequest_FailedCreate_InternalReadThrowsException() {
+        final ResourceModel model = buildDefaultModel();
+
         // throw arbitrary error which should propagate to be handled by wrapper
-        doThrow(SdkException.builder().message("test error").build())
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
-
-        final ResourceModel model = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-log-group")
-            .filterPattern("some pattern")
-            .build();
+        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+                .thenThrow(ServiceUnavailableException.class);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
+                .desiredResourceState(model)
+                .build();
 
-        assertThrows(SdkException.class, () -> {
-            handler.handleRequest(proxy, request, null, logger);
-        });
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnGeneralServiceException.class);
     }
 
     @Test
-    public void handleRequest_FailedCreate_AmazonServiceException() {
-        // AmazonServiceExceptions should be thrown so they can be handled by wrapper
-        doThrow(new AmazonServiceException("test error"))
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
-
-        final ResourceModel model = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-log-group")
-            .filterPattern("some pattern")
-            .build();
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
-
-        assertThrows(AmazonServiceException.class, () -> {
-            handler.handleRequest(proxy, request, null, logger);
-        });
-    }
-
-    @Test
-    public void handleRequest_FailedPreExisting() {
-        final MetricFilter filter = MetricFilter.builder()
-            .filterName("test-filer")
-            .logGroupName("test-log-group")
-            .build();
+    public void handleRequest_FailedCreate_AlreadyExists() {
+        final ResourceModel model = buildDefaultModel();
 
         final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
-            .metricFilters(filter)
-            .build();
+                .metricFilters(Translator.translateToSDK(model))
+                .build();
 
-        doReturn(describeResponse)
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
-
-        final ResourceModel model = ResourceModel.builder()
-            .filterName("test-filer")
-            .logGroupName("test-log-group")
-            .build();
+        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+                .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
+                .desiredResourceState(model)
+                .build();
 
-        assertThrows(software.amazon.cloudformation.exceptions.ResourceAlreadyExistsException.class,
-            () -> handler.handleRequest(proxy, request, null, logger));
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnAlreadyExistsException.class);
     }
 
     @Test
-    public void handleRequest_WithGeneratedName() {
-        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
-            .metricFilters(Collections.emptyList())
-            .build();
+    public void handleRequest_FailedCreate_PutFailed() {
+        final ResourceModel model = buildDefaultModel();
 
-        final PutMetricDataResponse createResponse = PutMetricDataResponse.builder().build();
+        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
+                .metricFilters(Translator.translateToSDK(model))
+                .build();
 
         // return no existing metrics for pre-create and then success response for create
-        doReturn(describeResponse)
-            .doReturn(createResponse)
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
+        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+                .thenThrow(CfnNotFoundException.class)
+                .thenReturn(describeResponse);
 
+        when(proxyClient.client().putMetricFilter(ArgumentMatchers.any(PutMetricFilterRequest.class)))
+                .thenThrow(OperationAbortedException.class);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnGeneralServiceException.class);
+    }
+
+    @Test
+    public void handleRequest_Success_WithGeneratedName() {
         // no filter name supplied; should be generated
         final ResourceModel model = ResourceModel.builder()
-            .logGroupName("test-log-group")
-            .filterPattern("some pattern")
-            .build();
+                .logGroupName("test-log-group")
+                .filterPattern("some pattern")
+                .metricTransformations(Arrays.asList(MetricTransformation.builder()
+                        .metricName("metric-name")
+                        .metricValue("0")
+                        .metricNamespace("namespace")
+                        .build()))
+                .build();
+
+        // return no existing metrics for pre-create and then success response for create
+        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+                .thenThrow(CfnNotFoundException.class)
+                .thenReturn(DescribeMetricFiltersResponse.builder()
+                        .metricFilters(Translator.translateToSDK(model))
+                        .build());
+
+        when(proxyClient.client().putMetricFilter(ArgumentMatchers.any(PutMetricFilterRequest.class)))
+                .thenReturn(PutMetricFilterResponse.builder().build());
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .clientRequestToken(UUID.randomUUID().toString())
-            .logicalResourceIdentifier("myMetricFilter")
-            .desiredResourceState(model)
-            .build();
+                .desiredResourceState(model)
+                .logicalResourceIdentifier("logicalResourceIdentifier")
+                .clientRequestToken("requestToken")
+                .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
         assertThat(response.getResourceModel()).isNotNull();
-        assertThat(response.getResourceModels()).<ResourceModel>isNull();
+        assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-
-        ResourceModel outModel = response.getResourceModel();
-        assertThat(outModel.getFilterName()).startsWith("myMetricFilter");
     }
 }

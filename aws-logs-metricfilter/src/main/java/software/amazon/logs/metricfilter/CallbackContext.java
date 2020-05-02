@@ -1,12 +1,10 @@
 package software.amazon.logs.metricfilter;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import software.amazon.cloudformation.proxy.StdCallbackContext;
 
-@Data
-@NoArgsConstructor
-@Builder
-public class CallbackContext {
-
+@lombok.Getter
+@lombok.Setter
+@lombok.ToString
+@lombok.EqualsAndHashCode(callSuper = true)
+public class CallbackContext extends StdCallbackContext {
 }

@@ -1,67 +1,82 @@
 package software.amazon.logs.metricfilter;
 
-import software.amazon.cloudformation.exceptions.ResourceNotFoundException;
+import software.amazon.awssdk.awscore.AwsResponse;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 
-import java.util.Objects;
-
-public class UpdateHandler extends BaseHandler<CallbackContext> {
-
-    private AmazonWebServicesClientProxy proxy;
-    private ResourceHandlerRequest<ResourceModel> request;
-    private CloudWatchLogsClient client;
+public class UpdateHandler extends BaseHandlerStd {
     private Logger logger;
 
-    @Override
-    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
+    protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
         final ResourceHandlerRequest<ResourceModel> request,
         final CallbackContext callbackContext,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
         final Logger logger) {
 
-        this.proxy = proxy;
-        this.request = request;
-        this.client = ClientBuilder.getClient();
         this.logger = logger;
 
-        return updateMetricFilter();
-    }
+        final ResourceModel model = request.getDesiredResourceState();
+        final ResourceModel previousModel = request.getPreviousResourceState();
 
-    private ProgressEvent<ResourceModel, CallbackContext> updateMetricFilter() {
-
-        ResourceModel previousModel = request.getPreviousResourceState();
-        ResourceModel model = request.getDesiredResourceState();
-
-        // An update request MUST return a NotUpdatable error if the user attempts to change a property
-        // that is defined as create-only in the resource provider schema.
-        if (previousModel != null) {
-            if (!previousModel.getFilterName().equals(model.getFilterName())
-            || !previousModel.getLogGroupName().equals(model.getLogGroupName()))
+        final boolean updatable = checkUpdatable(model, previousModel);
+        if (!updatable) {
             return ProgressEvent.<ResourceModel, CallbackContext>builder()
                     .errorCode(HandlerErrorCode.NotUpdatable)
                     .status(OperationStatus.FAILED)
                     .build();
         }
 
-        // An update request MUST return a NotFound error if the resource does not exist.
+        return ProgressEvent.progress(model, callbackContext)
+            .then(progress ->
+                proxy.initiate("AWS-Foo-Bar::Update", proxyClient, model, callbackContext)
+                    .translateToServiceRequest(Translator::translateToUpdateRequest)
+                    .makeServiceCall(this::updateResource)
+                    .progress())
+
+            .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
+    }
+
+    private boolean checkUpdatable(final ResourceModel model, final ResourceModel previousModel) {
+        // An update request MUST return a NotUpdatable error if the user attempts to change a property
+        // that is defined as create-only in the resource provider schema.
+        if (previousModel != null) {
+            return previousModel.getFilterName().equals(model.getFilterName())
+                    && previousModel.getLogGroupName().equals(model.getLogGroupName());
+
+        }
+        return true;
+    }
+
+    private AwsResponse updateResource(
+        final PutMetricFilterRequest awsRequest,
+        final ProxyClient<CloudWatchLogsClient> proxyClient) {
+        PutMetricFilterResponse awsResponse;
         try {
-            new ReadHandler().handleRequest(proxy, request, null, logger);
-        } catch (ResourceNotFoundException e) {
-            throw new ResourceNotFoundException(ResourceModel.TYPE_NAME,
-                    Objects.toString(model.getPrimaryIdentifier()));
+
+            awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putMetricFilter);
+        } catch (final ResourceNotFoundException e) {
+            logger.log("Resource not found. " + e.getMessage());
+            throw new CfnNotFoundException(e);
+        } catch (final AwsServiceException e) {
+            logger.log("Error trying to update resource: " + e.getMessage());
+            throw new CfnGeneralServiceException(ResourceModel.TYPE_NAME, e);
         }
 
-        proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model),
-            client::putMetricFilter);
-        logger.log(String.format("%s [%s] updated successfully",
-            ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier())));
-
-        return ProgressEvent.defaultSuccessHandler(model);
+        logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
+        return awsResponse;
     }
+
 }

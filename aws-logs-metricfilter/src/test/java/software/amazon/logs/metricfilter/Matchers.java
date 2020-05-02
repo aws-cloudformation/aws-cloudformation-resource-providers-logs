@@ -2,7 +2,9 @@ package software.amazon.logs.metricfilter;
 
 import software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter;
 
-import static software.amazon.logs.metricfilter.Translator.translateFromSDK;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class Matchers {
@@ -14,6 +16,11 @@ public class Matchers {
         assertThat(model.getFilterName()).isEqualTo(sdkModel.filterName());
         assertThat(model.getFilterPattern()).isEqualTo(sdkModel.filterPattern());
         assertThat(model.getLogGroupName()).isEqualTo(sdkModel.logGroupName());
-        assertThat(model.getMetricTransformations()).isEqualTo(translateFromSDK(sdkModel.metricTransformations()));
+
+        List<MetricTransformation> mts = sdkModel.metricTransformations()
+                .stream()
+                .map(Translator::translateMetricTransformationToSdk)
+                .collect(Collectors.toList());
+        assertThat(model.getMetricTransformations()).isEqualTo(mts);
     }
 }

@@ -10,6 +10,7 @@
             "amazon",
             "logs",
             "metricfilter"
-        ]
+        ],
+        "codegen_template_path": "guided_aws"
     }
 }

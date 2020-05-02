@@ -1,158 +1,101 @@
 package software.amazon.logs.metricfilter;
 
-import com.amazonaws.AmazonServiceException;
+import java.time.Duration;
+
+import org.mockito.ArgumentMatchers;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.HandlerErrorCode;
-import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import software.amazon.awssdk.core.exception.SdkException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class DeleteHandlerTest {
-
-    private final DeleteHandler handler = new DeleteHandler();
+public class DeleteHandlerTest extends AbstractTestBase {
 
     @Mock
     private AmazonWebServicesClientProxy proxy;
 
     @Mock
-    private Logger logger;
+    private ProxyClient<CloudWatchLogsClient> proxyClient;
+
+    @Mock
+    CloudWatchLogsClient sdkClient;
+
+    final DeleteHandler handler = new DeleteHandler();
 
     @BeforeEach
     public void setup() {
-        proxy = mock(AmazonWebServicesClientProxy.class);
-        logger = mock(Logger.class);
+        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
+        sdkClient = mock(CloudWatchLogsClient.class);
+        proxyClient = MOCK_PROXY(proxy, sdkClient);
     }
 
     @Test
-    public void handleRequest_SimpleSuccess() {
-        doReturn(DeleteMetricFilterResponse.builder().build())
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
+    public void handleRequest_Success() {
+        final ResourceModel model = buildDefaultModel();
 
-        final ResourceModel model = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-log-group")
-            .filterPattern("some pattern")
-            .build();
+        when(proxyClient.client().deleteMetricFilter(ArgumentMatchers.any(DeleteMetricFilterRequest.class)))
+                .thenReturn(DeleteMetricFilterResponse.builder().build());
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
             .desiredResourceState(model)
             .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel()).isNull();
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
 
     @Test
-    public void handleRequest_FailedDelete_UnknownError() {
-        // all Exceptions should be thrown so they can be handled by wrapper
-        doThrow(SdkException.builder().message("test error").build())
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
+    public void handleRequest_ResourceNotFound() {
+        final ResourceModel model = buildDefaultModel();
 
-        final ResourceModel model = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-log-group")
-            .filterPattern("some pattern")
-            .build();
+        when(proxyClient.client().deleteMetricFilter(ArgumentMatchers.any(DeleteMetricFilterRequest.class)))
+                .thenThrow(ResourceNotFoundException.class);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
+                .desiredResourceState(model)
+                .build();
 
-        assertThrows(SdkException.class, () -> {
-            final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
-
-            assertThat(response).isNotNull();
-            assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-            assertThat(response.getCallbackContext()).isNull();
-            assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-            assertThat(response.getResourceModel()).isNull();
-            assertThat(response.getResourceModels()).isNull();
-            assertThat(response.getMessage()).isEqualTo("test error");
-            assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InternalFailure);
-        });
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnNotFoundException.class);
     }
 
     @Test
-    public void handleRequest_FailedDelete_AmazonServiceException() {
-        // AmazonServiceExceptions should be thrown so they can be handled by wrapper
-        doThrow(new AmazonServiceException("test error"))
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
+    public void handleRequest_DeleteFailed() {
+        final ResourceModel model = buildDefaultModel();
 
-        final ResourceModel model = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-log-group")
-            .filterPattern("some pattern")
-            .build();
+        when(proxyClient.client().deleteMetricFilter(ArgumentMatchers.any(DeleteMetricFilterRequest.class)))
+                .thenThrow(AwsServiceException.class);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
+                .desiredResourceState(model)
+                .build();
 
-        assertThrows(AmazonServiceException.class, () -> {
-            handler.handleRequest(proxy, request, null, logger);
-        });
-    }
-
-    @Test
-    public void handleRequest_UnderlyingAPIThrowsResourceNotFound_Failed() {
-        // no matching log group throws exception
-        doThrow(ResourceNotFoundException.class)
-            .when(proxy)
-            .injectCredentialsAndInvokeV2(
-                ArgumentMatchers.any(),
-                ArgumentMatchers.any()
-            );
-
-        final ResourceModel model = ResourceModel.builder()
-            .filterName("test-filter")
-            .logGroupName("test-log-group")
-            .filterPattern("some pattern")
-            .build();
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
-
-        assertThrows(software.amazon.cloudformation.exceptions.ResourceNotFoundException.class,
-            () -> handler.handleRequest(proxy, request, null, logger));
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnGeneralServiceException.class);
     }
 }

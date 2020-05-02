@@ -1,11 +1,14 @@
 package software.amazon.logs.metricfilter;
 
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+
+import java.util.List;
 
 public class ListHandler extends BaseHandler<CallbackContext> {
 
@@ -16,14 +19,15 @@ public class ListHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        final String nextToken = request.getNextToken();
-        final DescribeMetricFiltersResponse response =
-            proxy.injectCredentialsAndInvokeV2(Translator.translateToListRequest(50, nextToken),
-                ClientBuilder.getClient()::describeMetricFilters);
+        final DescribeMetricFiltersRequest awsRequest = Translator.translateToListRequest(request.getNextToken());
+
+        DescribeMetricFiltersResponse awsResponse = proxy.injectCredentialsAndInvokeV2(awsRequest, ClientBuilder.getClient()::describeMetricFilters);
+
+        final List<ResourceModel> models = Translator.translateFromListRequest(awsResponse);
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
-            .resourceModels(Translator.translateFromSDK(response))
-            .nextToken(response.nextToken())
+            .resourceModels(models)
+            .nextToken(awsResponse.nextToken())
             .status(OperationStatus.SUCCESS)
             .build();
     }
