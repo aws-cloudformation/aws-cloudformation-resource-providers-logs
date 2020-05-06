@@ -23,7 +23,7 @@ public class ListHandler extends BaseHandler<CallbackContext> {
 
         DescribeMetricFiltersResponse awsResponse = proxy.injectCredentialsAndInvokeV2(awsRequest, ClientBuilder.getClient()::describeMetricFilters);
 
-        final List<ResourceModel> models = Translator.translateFromListRequest(awsResponse);
+        final List<ResourceModel> models = Translator.translateFromListResponse(awsResponse);
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
             .resourceModels(models)

@@ -137,7 +137,7 @@ public class Translator {
             .build();
   }
 
-  static List<ResourceModel> translateFromListRequest(final DescribeMetricFiltersResponse awsResponse) {
+  static List<ResourceModel> translateFromListResponse(final DescribeMetricFiltersResponse awsResponse) {
     return streamOfOrEmpty(awsResponse.metricFilters())
         .map(Translator::translateMetricFilter)
         .collect(Collectors.toList());

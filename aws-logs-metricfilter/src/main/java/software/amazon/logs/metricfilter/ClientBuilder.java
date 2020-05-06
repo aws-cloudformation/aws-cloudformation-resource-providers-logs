@@ -10,5 +10,4 @@ public class ClientBuilder {
               .httpClient(LambdaWrapper.HTTP_CLIENT)
               .build();
   }
-
 }

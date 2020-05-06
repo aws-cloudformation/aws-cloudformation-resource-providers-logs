@@ -7,6 +7,7 @@ import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
@@ -46,8 +47,6 @@ public class CreateHandler extends BaseHandlerStd {
         }
 
         return ProgressEvent.progress(model, callbackContext)
-            // target API does not support 'ResourceAlreadyExistsException' (see https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutMetricFilter.html#API_PutMetricFilter_Errors)
-            // so the following check is required
             .then(progress -> checkForPreCreateResourceExistence(proxy, proxyClient, request, progress))
             .then(progress ->
                 proxy.initiate("AWS-Logs-MetricFilter::Create", proxyClient, model, callbackContext)
@@ -83,10 +82,10 @@ public class CreateHandler extends BaseHandlerStd {
      * @param proxyClient the aws service client to make the call
      * @return awsResponse create resource response
      */
-    private AwsResponse createResource(
+    private PutMetricFilterResponse createResource(
         final PutMetricFilterRequest awsRequest,
         final ProxyClient<CloudWatchLogsClient> proxyClient) {
-        AwsResponse awsResponse;
+        PutMetricFilterResponse awsResponse;
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putMetricFilter);
         } catch (final AwsServiceException e) {

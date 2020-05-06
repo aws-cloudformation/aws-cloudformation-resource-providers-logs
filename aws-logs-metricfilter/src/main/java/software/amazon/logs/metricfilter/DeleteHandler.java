@@ -4,6 +4,7 @@ import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
@@ -37,10 +38,10 @@ public class DeleteHandler extends BaseHandlerStd {
                     .success());
     }
 
-    private AwsResponse deleteResource(
+    private DeleteMetricFilterResponse deleteResource(
         final DeleteMetricFilterRequest awsRequest,
         final ProxyClient<CloudWatchLogsClient> proxyClient) {
-        AwsResponse awsResponse = null;
+        DeleteMetricFilterResponse awsResponse = null;
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteMetricFilter);
         } catch (ResourceNotFoundException e) {

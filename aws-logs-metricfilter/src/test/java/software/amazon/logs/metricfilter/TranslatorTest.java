@@ -99,7 +99,7 @@ public class TranslatorTest {
                 .metricTransformations(Collections.singletonList(RPDK_METRIC_TRANSFORMATION))
                 .build());
 
-        assertThat(Translator.translateFromListRequest(response)).isEqualTo(expectedModels);
+        assertThat(Translator.translateFromListResponse(response)).isEqualTo(expectedModels);
     }
 
     @Test
@@ -116,7 +116,7 @@ public class TranslatorTest {
                 .metricTransformations(Collections.singletonList(RPDK_METRIC_TRANSFORMATION))
                 .build());
 
-        assertThat(Translator.translateFromListRequest(response)).isEqualTo(expectedModels);
+        assertThat(Translator.translateFromListResponse(response)).isEqualTo(expectedModels);
     }
 
     @Test
@@ -126,7 +126,7 @@ public class TranslatorTest {
                 .build();
         final List<ResourceModel> expectedModels = Collections.emptyList();
 
-        assertThat(Translator.translateFromListRequest(response)).isEqualTo(expectedModels);
+        assertThat(Translator.translateFromListResponse(response)).isEqualTo(expectedModels);
     }
 
     @Test

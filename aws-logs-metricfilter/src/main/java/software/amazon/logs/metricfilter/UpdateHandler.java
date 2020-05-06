@@ -41,7 +41,7 @@ public class UpdateHandler extends BaseHandlerStd {
 
         return ProgressEvent.progress(model, callbackContext)
             .then(progress ->
-                proxy.initiate("AWS-Foo-Bar::Update", proxyClient, model, callbackContext)
+                proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
                     .translateToServiceRequest(Translator::translateToUpdateRequest)
                     .makeServiceCall(this::updateResource)
                     .progress())
@@ -60,7 +60,7 @@ public class UpdateHandler extends BaseHandlerStd {
         return true;
     }
 
-    private AwsResponse updateResource(
+    private PutMetricFilterResponse updateResource(
         final PutMetricFilterRequest awsRequest,
         final ProxyClient<CloudWatchLogsClient> proxyClient) {
         PutMetricFilterResponse awsResponse;
