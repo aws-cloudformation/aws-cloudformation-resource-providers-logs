@@ -74,11 +74,6 @@
             <version>2.26.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-logs</artifactId>
-            <version>1.11.592</version>
-        </dependency>
     </dependencies>
 
     <build>
