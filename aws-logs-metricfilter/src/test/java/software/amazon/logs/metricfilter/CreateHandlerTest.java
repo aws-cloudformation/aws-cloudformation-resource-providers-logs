@@ -12,8 +12,9 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterReque
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -98,7 +99,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnGeneralServiceException.class);
+                .isInstanceOf(CfnServiceInternalErrorException.class);
     }
 
     @Test
@@ -141,7 +142,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnGeneralServiceException.class);
+                .isInstanceOf(CfnResourceConflictException.class);
     }
 
     @Test

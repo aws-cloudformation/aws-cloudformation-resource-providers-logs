@@ -4,12 +4,12 @@ import java.time.Duration;
 import java.util.Collections;
 
 import org.mockito.ArgumentMatchers;
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -113,13 +113,13 @@ public class ReadHandlerTest extends AbstractTestBase {
         final ResourceModel model = buildDefaultModel();
 
         when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
-                .thenThrow(AwsServiceException.class);
+                .thenThrow(InvalidParameterException.class);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
 
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnGeneralServiceException.class);
+                .isInstanceOf(CfnInvalidRequestException.class);
     }
 }

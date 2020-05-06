@@ -1,13 +1,18 @@
 package software.amazon.logs.metricfilter;
 
-import software.amazon.awssdk.awscore.AwsResponse;
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
@@ -65,14 +70,18 @@ public class UpdateHandler extends BaseHandlerStd {
         final ProxyClient<CloudWatchLogsClient> proxyClient) {
         PutMetricFilterResponse awsResponse;
         try {
-
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putMetricFilter);
         } catch (final ResourceNotFoundException e) {
             logger.log("Resource not found. " + e.getMessage());
             throw new CfnNotFoundException(e);
-        } catch (final AwsServiceException e) {
-            logger.log("Error trying to update resource: " + e.getMessage());
-            throw new CfnGeneralServiceException(ResourceModel.TYPE_NAME, e);
+        } catch (final InvalidParameterException e) {
+            throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, e);
+        } catch (final LimitExceededException e) {
+            throw new CfnServiceLimitExceededException(e);
+        } catch (final ServiceUnavailableException e) {
+            throw new CfnServiceInternalErrorException(e);
+        } catch (final OperationAbortedException e) {
+            throw new CfnResourceConflictException(e);
         }
 
         logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));

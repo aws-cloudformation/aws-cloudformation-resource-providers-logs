@@ -1,12 +1,14 @@
 package software.amazon.logs.metricfilter;
 
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -41,14 +43,13 @@ public class ReadHandler extends BaseHandlerStd {
         final ResourceModel model) {
         DescribeMetricFiltersResponse awsResponse;
         try {
-
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeMetricFilters);
-
-        } catch (final ResourceNotFoundException e) {
+        } catch (InvalidParameterException e) {
+            throw new CfnInvalidRequestException(e);
+        } catch (ResourceNotFoundException e) {
             throw new CfnNotFoundException(e);
-        } catch (final AwsServiceException e) {
-            logger.log("Error trying to read resource: " + e.getMessage());
-            throw new CfnGeneralServiceException(ResourceModel.TYPE_NAME, e);
+        } catch (ServiceUnavailableException e) {
+            throw new CfnServiceInternalErrorException(e);
         }
 
         if (awsResponse.metricFilters().isEmpty()) {
