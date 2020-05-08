@@ -36,21 +36,21 @@ public class UpdateHandler extends BaseHandlerStd {
         final ResourceModel model = request.getDesiredResourceState();
         final ResourceModel previousModel = request.getPreviousResourceState();
 
-        final boolean updatable = checkUpdatable(model, previousModel);
-        if (!updatable) {
-            return ProgressEvent.<ResourceModel, CallbackContext>builder()
-                    .errorCode(HandlerErrorCode.NotUpdatable)
-                    .status(OperationStatus.FAILED)
-                    .build();
-        }
-
         return ProgressEvent.progress(model, callbackContext)
-            .then(progress ->
-                proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
+            .then(progress -> {
+                final boolean updatable = checkUpdatable(model, previousModel);
+                if (!updatable) {
+                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
+                            .errorCode(HandlerErrorCode.NotUpdatable)
+                            .status(OperationStatus.FAILED)
+                            .build();
+                }
+                return progress;
+            })
+            .then(progress -> proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
                     .translateToServiceRequest(Translator::translateToUpdateRequest)
                     .makeServiceCall(this::updateResource)
                     .progress())
-
             .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
     }
 

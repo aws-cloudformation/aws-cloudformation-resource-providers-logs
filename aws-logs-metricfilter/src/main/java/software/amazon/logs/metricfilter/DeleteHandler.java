@@ -33,12 +33,10 @@ public class DeleteHandler extends BaseHandlerStd {
 
         this.logger.log(String.format("Trying to delete model %s", model.getPrimaryIdentifier()));
 
-        return ProgressEvent.progress(model, callbackContext)
-            .then(progress ->
-                proxy.initiate("AWS-Logs-MetricFilter::Delete", proxyClient, model, callbackContext)
-                    .translateToServiceRequest(Translator::translateToDeleteRequest)
-                    .makeServiceCall(this::deleteResource)
-                    .success());
+        return proxy.initiate("AWS-Logs-MetricFilter::Delete", proxyClient, model, callbackContext)
+                .translateToServiceRequest(Translator::translateToDeleteRequest)
+                .makeServiceCall(this::deleteResource)
+                .success();
     }
 
     private DeleteMetricFilterResponse deleteResource(
