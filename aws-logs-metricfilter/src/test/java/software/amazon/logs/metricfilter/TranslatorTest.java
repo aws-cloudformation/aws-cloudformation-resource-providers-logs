@@ -60,12 +60,12 @@ public class TranslatorTest {
 
     @Test
     public void translate_nullSDKModel_returnsNull() {
-        assertThat(Translator.translateMetricTransformationToSdk((software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation)null)).isNull();
+        assertThat(Translator.translateMetricTransformationFromSdk((software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation)null)).isNull();
     }
 
     @Test
     public void translate_SDKModel() {
-        assertThat(Translator.translateMetricTransformationToSdk(METRIC_TRANSFORMATION))
+        assertThat(Translator.translateMetricTransformationFromSdk(METRIC_TRANSFORMATION))
                 .isEqualToComparingFieldByField(RPDK_METRIC_TRANSFORMATION);
     }
 

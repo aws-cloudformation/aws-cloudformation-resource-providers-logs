@@ -19,7 +19,7 @@ public class Matchers {
 
         List<MetricTransformation> mts = sdkModel.metricTransformations()
                 .stream()
-                .map(Translator::translateMetricTransformationToSdk)
+                .map(Translator::translateMetricTransformationFromSdk)
                 .collect(Collectors.toList());
         assertThat(model.getMetricTransformations()).isEqualTo(mts);
     }

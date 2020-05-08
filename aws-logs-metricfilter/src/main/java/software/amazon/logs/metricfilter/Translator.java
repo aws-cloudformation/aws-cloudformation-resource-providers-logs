@@ -26,7 +26,7 @@ public class Translator {
             .build();
   }
 
-  static software.amazon.logs.metricfilter.MetricTransformation translateMetricTransformationToSdk
+  static software.amazon.logs.metricfilter.MetricTransformation translateMetricTransformationFromSdk
           (final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation mt) {
     if (mt == null) {
       return null;
@@ -45,7 +45,7 @@ public class Translator {
       return null;
     }
     return mt.stream()
-            .map(Translator::translateMetricTransformationToSdk)
+            .map(Translator::translateMetricTransformationFromSdk)
             .collect(Collectors.toList());
   }
 
@@ -53,7 +53,7 @@ public class Translator {
           (final software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter mf) {
     List<MetricTransformation> mts = mf.metricTransformations()
             .stream()
-            .map(Translator::translateMetricTransformationToSdk)
+            .map(Translator::translateMetricTransformationFromSdk)
             .collect(Collectors.toList());
     return ResourceModel.builder()
             .filterName(mf.filterName())
