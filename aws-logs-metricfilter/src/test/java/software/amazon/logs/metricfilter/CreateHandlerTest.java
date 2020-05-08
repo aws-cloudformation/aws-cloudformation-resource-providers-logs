@@ -3,7 +3,6 @@ package software.amazon.logs.metricfilter;
 import java.time.Duration;
 import java.util.Arrays;
 
-import org.mockito.ArgumentMatchers;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
@@ -28,7 +27,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,11 +66,11 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         // return no existing metrics for pre-create and then success response for create
-        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+        when(proxyClient.client().describeMetricFilters(any(DescribeMetricFiltersRequest.class)))
                 .thenThrow(CfnNotFoundException.class)
                 .thenReturn(describeResponse);
 
-        when(proxyClient.client().putMetricFilter(ArgumentMatchers.any(PutMetricFilterRequest.class)))
+        when(proxyClient.client().putMetricFilter(any(PutMetricFilterRequest.class)))
                 .thenReturn(createResponse);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -84,6 +86,8 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
+        verify(proxyClient.client(), times(2)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
+        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
     }
 
     @Test
@@ -91,7 +95,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         final ResourceModel model = buildDefaultModel();
 
         // throw arbitrary error which should propagate to be handled by wrapper
-        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+        when(proxyClient.client().describeMetricFilters(any(DescribeMetricFiltersRequest.class)))
                 .thenThrow(ServiceUnavailableException.class);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -110,7 +114,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .metricFilters(Translator.translateToSDK(model))
                 .build();
 
-        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+        when(proxyClient.client().describeMetricFilters(any(DescribeMetricFiltersRequest.class)))
                 .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -130,11 +134,11 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         // return no existing metrics for pre-create and then success response for create
-        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+        when(proxyClient.client().describeMetricFilters(any(DescribeMetricFiltersRequest.class)))
                 .thenThrow(CfnNotFoundException.class)
                 .thenReturn(describeResponse);
 
-        when(proxyClient.client().putMetricFilter(ArgumentMatchers.any(PutMetricFilterRequest.class)))
+        when(proxyClient.client().putMetricFilter(any(PutMetricFilterRequest.class)))
                 .thenThrow(OperationAbortedException.class);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -159,13 +163,13 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         // return no existing metrics for pre-create and then success response for create
-        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+        when(proxyClient.client().describeMetricFilters(any(DescribeMetricFiltersRequest.class)))
                 .thenThrow(CfnNotFoundException.class)
                 .thenReturn(DescribeMetricFiltersResponse.builder()
                         .metricFilters(Translator.translateToSDK(model))
                         .build());
 
-        when(proxyClient.client().putMetricFilter(ArgumentMatchers.any(PutMetricFilterRequest.class)))
+        when(proxyClient.client().putMetricFilter(any(PutMetricFilterRequest.class)))
                 .thenReturn(PutMetricFilterResponse.builder().build());
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
