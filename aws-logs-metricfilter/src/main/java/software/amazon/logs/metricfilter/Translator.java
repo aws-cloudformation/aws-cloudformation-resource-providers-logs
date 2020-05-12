@@ -14,53 +14,53 @@ import java.util.stream.Stream;
 public class Translator {
 
   static software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation translateMetricTransformationToSdk
-          (final software.amazon.logs.metricfilter.MetricTransformation mt) {
-    if (mt == null) {
+          (final software.amazon.logs.metricfilter.MetricTransformation metricTransformation) {
+    if (metricTransformation == null) {
       return null;
     }
     return software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
-            .metricName(mt.getMetricName())
-            .metricValue(mt.getMetricValue())
-            .metricNamespace(mt.getMetricNamespace())
-            .defaultValue(mt.getDefaultValue())
+            .metricName(metricTransformation.getMetricName())
+            .metricValue(metricTransformation.getMetricValue())
+            .metricNamespace(metricTransformation.getMetricNamespace())
+            .defaultValue(metricTransformation.getDefaultValue())
             .build();
   }
 
   static software.amazon.logs.metricfilter.MetricTransformation translateMetricTransformationFromSdk
-          (final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation mt) {
-    if (mt == null) {
+          (final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation metricTransformation) {
+    if (metricTransformation == null) {
       return null;
     }
     return software.amazon.logs.metricfilter.MetricTransformation.builder()
-            .metricName(mt.metricName())
-            .metricValue(mt.metricValue())
-            .metricNamespace(mt.metricNamespace())
-            .defaultValue(mt.defaultValue())
+            .metricName(metricTransformation.metricName())
+            .metricValue(metricTransformation.metricValue())
+            .metricNamespace(metricTransformation.metricNamespace())
+            .defaultValue(metricTransformation.defaultValue())
             .build();
   }
 
   static List<software.amazon.logs.metricfilter.MetricTransformation> translateMetricTransformationFromSdk
-          (final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> mt) {
-    if (mt.isEmpty()) {
+          (final List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> metricTransformations) {
+    if (metricTransformations.isEmpty()) {
       return null;
     }
-    return mt.stream()
+    return metricTransformations.stream()
             .map(Translator::translateMetricTransformationFromSdk)
             .collect(Collectors.toList());
   }
 
   static ResourceModel translateMetricFilter
-          (final software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter mf) {
-    List<MetricTransformation> mts = mf.metricTransformations()
+          (final software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter metricFilter) {
+    List<MetricTransformation> mts = metricFilter.metricTransformations()
             .stream()
             .map(Translator::translateMetricTransformationFromSdk)
             .collect(Collectors.toList());
     return ResourceModel.builder()
-            .filterName(mf.filterName())
-            .logGroupName(mf.logGroupName())
+            .filterName(metricFilter.filterName())
+            .logGroupName(metricFilter.logGroupName())
             // When a filter pattern is "" the API sets it to null, but this is a meaningful pattern and the
             // contract should be identical to what our caller provided
-            .filterPattern(mf.filterPattern() == null ? "" : mf.filterPattern())
+            .filterPattern(metricFilter.filterPattern() == null ? "" : metricFilter.filterPattern())
             .metricTransformations(mts)
             .build();
   }
@@ -85,8 +85,8 @@ public class Translator {
   }
 
   static List<software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation> translateMetricTransformationToSDK
-          (final List<MetricTransformation> metricTransformationsList) {
-    return metricTransformationsList.stream()
+          (final List<MetricTransformation> metricTransformations) {
+    return metricTransformations.stream()
             .map(Translator::translateToSDK)
             .collect(Collectors.toList());
   }

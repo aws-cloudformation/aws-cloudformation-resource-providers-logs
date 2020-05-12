@@ -2,6 +2,7 @@ package software.amazon.logs.metricfilter;
 
 import java.time.Duration;
 
+import org.junit.jupiter.api.AfterEach;
 import org.mockito.ArgumentMatchers;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
@@ -27,9 +28,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -84,6 +87,8 @@ public class UpdateHandlerTest extends AbstractTestBase {
         assertThat(response.getErrorCode()).isNull();
         verify(proxyClient.client(), times(1)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
         verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
+        verify(sdkClient, atLeastOnce()).serviceName();
+        verifyNoMoreInteractions(sdkClient);
     }
 
     @Test
@@ -135,6 +140,9 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
                 .isInstanceOf(CfnNotFoundException.class);
+        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
+        verify(sdkClient, atLeastOnce()).serviceName();
+        verifyNoMoreInteractions(sdkClient);
     }
 
     @Test
@@ -150,5 +158,8 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
                 .isInstanceOf(CfnInvalidRequestException.class);
+        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
+        verify(sdkClient, atLeastOnce()).serviceName();
+        verifyNoMoreInteractions(sdkClient);
     }
 }

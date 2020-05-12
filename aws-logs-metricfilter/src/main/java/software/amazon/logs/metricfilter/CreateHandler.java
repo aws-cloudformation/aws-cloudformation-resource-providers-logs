@@ -25,6 +25,7 @@ import software.amazon.cloudformation.resource.IdentifierUtils;
 
 public class CreateHandler extends BaseHandlerStd {
     private Logger logger;
+    // if you change the value in the line below, please also update the resource schema
     private static final int MAX_LENGTH_METRIC_FILTER_NAME = 512;
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(

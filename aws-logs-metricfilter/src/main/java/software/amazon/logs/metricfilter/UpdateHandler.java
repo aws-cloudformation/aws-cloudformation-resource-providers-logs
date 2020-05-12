@@ -38,8 +38,7 @@ public class UpdateHandler extends BaseHandlerStd {
 
         return ProgressEvent.progress(model, callbackContext)
             .then(progress -> {
-                final boolean updatable = checkUpdatable(model, previousModel);
-                if (!updatable) {
+                if (!isUpdatable(model, previousModel)) {
                     return ProgressEvent.<ResourceModel, CallbackContext>builder()
                             .errorCode(HandlerErrorCode.NotUpdatable)
                             .status(OperationStatus.FAILED)
@@ -54,7 +53,7 @@ public class UpdateHandler extends BaseHandlerStd {
             .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
     }
 
-    private boolean checkUpdatable(final ResourceModel model, final ResourceModel previousModel) {
+    private boolean isUpdatable(final ResourceModel model, final ResourceModel previousModel) {
         // An update request MUST return a NotUpdatable error if the user attempts to change a property
         // that is defined as create-only in the resource provider schema.
         if (previousModel != null) {
