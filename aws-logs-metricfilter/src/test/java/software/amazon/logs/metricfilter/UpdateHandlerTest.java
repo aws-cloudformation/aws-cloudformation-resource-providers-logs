@@ -1,6 +1,7 @@
 package software.amazon.logs.metricfilter;
 
 import java.time.Duration;
+import java.util.Collections;
 
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
@@ -84,7 +85,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(1)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
+        verify(proxyClient.client(), times(2)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
         verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
         verify(sdkClient, atLeastOnce()).serviceName();
         verifyNoMoreInteractions(sdkClient);
@@ -130,23 +131,34 @@ public class UpdateHandlerTest extends AbstractTestBase {
     public void handleRequest_ResourceNotFound() {
         final ResourceModel model = buildDefaultModel();
 
-        when(proxyClient.client().putMetricFilter(ArgumentMatchers.any(PutMetricFilterRequest.class)))
-                .thenThrow(ResourceNotFoundException.class);
+        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
+                .metricFilters(Collections.emptyList())
+                .build();
+
+        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+                .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnNotFoundException.class);
-        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
-        verify(sdkClient, atLeastOnce()).serviceName();
-        verifyNoMoreInteractions(sdkClient);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 
     @Test
     public void handleRequest_InternalException() {
         final ResourceModel model = buildDefaultModel();
+
+        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
+                .metricFilters(Translator.translateToSDK(model))
+                .build();
+
+        when(proxyClient.client().describeMetricFilters(ArgumentMatchers.any(DescribeMetricFiltersRequest.class)))
+                .thenReturn(describeResponse);
 
         when(proxyClient.client().putMetricFilter(ArgumentMatchers.any(PutMetricFilterRequest.class)))
                 .thenThrow(InvalidParameterException.class);
@@ -157,6 +169,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
                 .isInstanceOf(CfnInvalidRequestException.class);
+        verify(proxyClient.client(), times(1)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
         verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
         verify(sdkClient, atLeastOnce()).serviceName();
         verifyNoMoreInteractions(sdkClient);

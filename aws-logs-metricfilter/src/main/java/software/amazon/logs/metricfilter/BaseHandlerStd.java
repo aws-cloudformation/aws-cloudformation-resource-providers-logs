@@ -1,7 +1,13 @@
 package software.amazon.logs.metricfilter;
 
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.CallChain;
+import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
@@ -29,4 +35,24 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     final CallbackContext callbackContext,
     final ProxyClient<CloudWatchLogsClient> proxyClient,
     final Logger logger);
+
+  protected CallChain.Completed<DescribeMetricFiltersRequest, DescribeMetricFiltersResponse, CloudWatchLogsClient, ResourceModel, CallbackContext>
+    preCreateCheck(final AmazonWebServicesClientProxy proxy,
+                   final CallbackContext callbackContext,
+                   final ProxyClient<CloudWatchLogsClient> proxyClient,
+                   final ResourceModel model) {
+
+    return proxy.initiate("AWS-Logs-MetricFilter::PreExistenceCheck", proxyClient, model, callbackContext)
+            .translateToServiceRequest(Translator::translateToReadRequest)
+            .makeServiceCall((awsRequest, sdkProxyClient) -> sdkProxyClient.injectCredentialsAndInvokeV2(awsRequest, sdkProxyClient.client()::describeMetricFilters))
+            .handleError((request, exception, client, model1, context1) -> {
+              if (exception instanceof InvalidParameterException) {
+                return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, exception.getMessage());
+              }
+              else if (exception instanceof ServiceUnavailableException) {
+                return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.ServiceInternalError, exception.getMessage());
+              }
+              return ProgressEvent.progress(model, callbackContext);
+            });
+  }
 }

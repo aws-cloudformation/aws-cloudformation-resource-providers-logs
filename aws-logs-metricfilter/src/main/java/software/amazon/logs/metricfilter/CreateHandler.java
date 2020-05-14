@@ -1,7 +1,5 @@
 package software.amazon.logs.metricfilter;
 
-import java.util.Objects;
-
 import com.amazonaws.util.StringUtils;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
@@ -10,13 +8,12 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedExce
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
-import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
@@ -53,33 +50,23 @@ public class CreateHandler extends BaseHandlerStd {
         }
 
         return ProgressEvent.progress(model, callbackContext)
-            .then(progress -> checkForPreCreateResourceExistence(proxy, proxyClient, request, progress))
+            .then(progress ->
+                preCreateCheck(proxy, callbackContext, proxyClient, model)
+                    .done((response) -> {
+                        if (response.metricFilters().isEmpty()) {
+                            return ProgressEvent.progress(model, callbackContext);
+                        }
+                        return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.AlreadyExists, "Resource already exists");
+                    })
+            )
             .then(progress ->
                 proxy.initiate("AWS-Logs-MetricFilter::Create", proxyClient, model, callbackContext)
                     .translateToServiceRequest(Translator::translateToCreateRequest)
                     .makeServiceCall(this::createResource)
                     .progress())
             .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
-
     }
 
-    private ProgressEvent<ResourceModel, CallbackContext> checkForPreCreateResourceExistence(
-        final AmazonWebServicesClientProxy proxy,
-        final ProxyClient<CloudWatchLogsClient> proxyClient,
-        final ResourceHandlerRequest<ResourceModel> request,
-        final ProgressEvent<ResourceModel,
-        CallbackContext> progressEvent) {
-        final ResourceModel model = progressEvent.getResourceModel();
-        final CallbackContext callbackContext = progressEvent.getCallbackContext();
-        try {
-            new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger);
-            logger.log(model.getPrimaryIdentifier() + " already exists!");
-            throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier()));
-        } catch (CfnNotFoundException e) {
-            logger.log(model.getPrimaryIdentifier() + " does not exist; creating the resource.");
-            return ProgressEvent.progress(model, callbackContext);
-        }
-    }
 
     /**
      * Implement client invocation of the create request through the proxyClient, which is already initialised with
@@ -107,5 +94,4 @@ public class CreateHandler extends BaseHandlerStd {
         logger.log(String.format("%s successfully created.", ResourceModel.TYPE_NAME));
         return awsResponse;
     }
-
 }

@@ -22,15 +22,15 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 255,
-          "pattern": "^((?![:*$])[\\x00-\\x7F]){1,255}\\Z"
+          "pattern": "^((?![:*$])[\\x00-\\x7F]){1,255}"
         },
         "MetricNamespace": {
-          "$comment": "Namespaces can be up to 256 characters long; valid characters include 0-9A-Za-z.-_/#.",
+          "$comment": "Namespaces can be up to 256 characters long; valid characters include 0-9A-Za-z.-_/#",
           "description": "The namespace of the CloudWatch metric.",
           "type": "string",
           "minLength": 1,
           "maxLength": 256,
-          "pattern": "^[0-9a-zA-Z\\.-_\\/#\\.]{1,256}\\Z"
+          "pattern": "^[0-9a-zA-Z\\.\\-_\\/#]{1,256}"
         },
         "MetricValue": {
           "description": "The value to publish to the CloudWatch metric when a filter pattern matches a log event.",
@@ -53,7 +53,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 512,
-      "pattern": "^[^:*]{1,512}\\Z"
+      "pattern": "^[^:*]{1,512}"
     },
     "FilterPattern": {
       "description": "Pattern that Logs follows to interpret each entry in a log.",
@@ -65,7 +65,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 512,
-      "pattern": "^[.\\-_/#A-Za-z0-9]{1,512}\\Z"
+      "pattern": "^[.\\-_/#A-Za-z0-9]{1,512}"
     },
     "MetricTransformations": {
       "description": "A collection of information that defines how metric data gets emitted.",

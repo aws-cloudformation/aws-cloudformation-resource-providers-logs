@@ -36,6 +36,8 @@ public class UpdateHandler extends BaseHandlerStd {
         final ResourceModel model = request.getDesiredResourceState();
         final ResourceModel previousModel = request.getPreviousResourceState();
 
+        this.logger.log(String.format("Trying to update model %s", model.getPrimaryIdentifier()));
+
         return ProgressEvent.progress(model, callbackContext)
             .then(progress -> {
                 if (!isUpdatable(model, previousModel)) {
@@ -46,6 +48,15 @@ public class UpdateHandler extends BaseHandlerStd {
                 }
                 return progress;
             })
+            .then(progress ->
+                preCreateCheck(proxy, callbackContext, proxyClient, model)
+                    .done((response) -> {
+                        if (response.metricFilters().isEmpty()) {
+                            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.NotFound, "Resource didn't exist");
+                        }
+                        return ProgressEvent.progress(model, callbackContext);
+                    })
+            )
             .then(progress -> proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
                     .translateToServiceRequest(Translator::translateToUpdateRequest)
                     .makeServiceCall(this::updateResource)
@@ -86,5 +97,4 @@ public class UpdateHandler extends BaseHandlerStd {
         logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
         return awsResponse;
     }
-
 }

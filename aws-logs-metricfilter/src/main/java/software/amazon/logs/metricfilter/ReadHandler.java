@@ -31,6 +31,8 @@ public class ReadHandler extends BaseHandlerStd {
 
         final ResourceModel model = request.getDesiredResourceState();
 
+        logger.log("Trying to read resource...");
+
         return proxy.initiate("AWS-Logs-MetricFilter::Read", proxyClient, model, callbackContext)
             .translateToServiceRequest(Translator::translateToReadRequest)
             .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient , model))
@@ -53,6 +55,7 @@ public class ReadHandler extends BaseHandlerStd {
         }
 
         if (awsResponse.metricFilters().isEmpty()) {
+            logger.log("Resource does not exist.");
             throw new CfnNotFoundException(ResourceModel.TYPE_NAME,
                     Objects.toString(model.getPrimaryIdentifier()));
         }
@@ -64,4 +67,5 @@ public class ReadHandler extends BaseHandlerStd {
     private ProgressEvent<ResourceModel, CallbackContext> constructResourceModelFromResponse(final DescribeMetricFiltersResponse awsResponse) {
         return ProgressEvent.defaultSuccessHandler(Translator.translateFromReadResponse(awsResponse));
     }
+
 }
