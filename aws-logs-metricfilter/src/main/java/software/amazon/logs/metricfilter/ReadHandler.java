@@ -11,6 +11,7 @@ import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
+import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
@@ -36,7 +37,10 @@ public class ReadHandler extends BaseHandlerStd {
         return proxy.initiate("AWS-Logs-MetricFilter::Read", proxyClient, model, callbackContext)
             .translateToServiceRequest(Translator::translateToReadRequest)
             .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient , model))
-            .done(this::constructResourceModelFromResponse);
+            .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
+                .status(OperationStatus.SUCCESS)
+                .resourceModel(Translator.translateFromReadResponse(awsResponse))
+                .build());
     }
 
     private DescribeMetricFiltersResponse readResource(

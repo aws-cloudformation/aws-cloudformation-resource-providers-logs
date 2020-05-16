@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedExce
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
@@ -56,7 +57,7 @@ public class CreateHandler extends BaseHandlerStd {
                         if (response.metricFilters().isEmpty()) {
                             return ProgressEvent.progress(model, callbackContext);
                         }
-                        return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.AlreadyExists, "Resource already exists");
+                        return ProgressEvent.defaultFailureHandler(new CfnAlreadyExistsException(null), HandlerErrorCode.AlreadyExists);
                     })
             )
             .then(progress ->

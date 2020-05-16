@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterReque
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
@@ -52,7 +53,7 @@ public class UpdateHandler extends BaseHandlerStd {
                 preCreateCheck(proxy, callbackContext, proxyClient, model)
                     .done((response) -> {
                         if (response.metricFilters().isEmpty()) {
-                            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.NotFound, "Resource didn't exist");
+                            return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(null), HandlerErrorCode.NotFound);
                         }
                         return ProgressEvent.progress(model, callbackContext);
                     })
