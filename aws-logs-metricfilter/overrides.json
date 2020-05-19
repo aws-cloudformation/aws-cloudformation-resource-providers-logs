@@ -1,0 +1,14 @@
+{
+  "CREATE": {
+    "/LogGroupName": "this-is-a-random-loggroup",
+    "/FilterName": "my-metric-filter",
+    "/FilterPattern": "[size]",
+    "/MetricTransformations": [
+      {
+        "MetricValue": 10,
+        "MetricNamespace": "my-namespace",
+        "MetricName": "metric-name"
+      }
+    ]
+  }
+}
