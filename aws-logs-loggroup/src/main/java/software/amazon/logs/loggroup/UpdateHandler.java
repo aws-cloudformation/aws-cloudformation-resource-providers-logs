@@ -23,19 +23,21 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
         // Everything except RetentionPolicyInDays and KmsKeyId is createOnly
         final ResourceModel model = request.getDesiredResourceState();
-
-        if (model.getRetentionInDays() == null) {
+        final ResourceModel previousModel = request.getPreviousResourceState();
+        final boolean retentionChanged = ! retentionUnchanged(previousModel, model);
+        final boolean kmsKeyChanged = ! kmsKeyUnchanged(previousModel, model);
+        if (retentionChanged && model.getRetentionInDays() == null) {
             deleteRetentionPolicy(proxy, request, logger);
-        } else {
+        } else if (retentionChanged){
             putRetentionPolicy(proxy, request, logger);
         }
 
         // It can take up to five minutes for the (dis)associate operation to take effect
         // It's unclear from the documentation if that state can be checked via the API.
         // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html
-        if (model.getKmsKeyId() == null) {
+        if (kmsKeyChanged && model.getKmsKeyId() == null) {
             disassociateKmsKey(proxy, request, logger);
-        } else {
+        } else if (kmsKeyChanged) {
             associateKmsKey(proxy, request, logger);
         }
 
@@ -121,5 +123,14 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
     private void throwNotFoundException(final ResourceModel model) {
         throw new software.amazon.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
             Objects.toString(model.getPrimaryIdentifier()));
+    }
+
+
+    private static boolean retentionUnchanged(final ResourceModel previousModel, final ResourceModel model) {
+        return (previousModel != null && model.getRetentionInDays().equals(previousModel.getRetentionInDays()));
+    }
+
+    private static boolean kmsKeyUnchanged(final ResourceModel previousModel, final ResourceModel model) {
+        return (previousModel != null && model.getKmsKeyId().equals(previousModel.getKmsKeyId()));
     }
 }
