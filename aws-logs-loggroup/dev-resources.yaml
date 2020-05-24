@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Development dependencies for AWS::Logs::LogGroup
+Resources:
+  Cmk:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: KMS CMK for use with the AWS::Logs::LogGroup resource provider
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: cmk-policy
+        Statement:
+        - Sid: Enable IAM User Permissions
+          Effect: Allow
+          Principal:
+            AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+          Action: kms:*
+          Resource: "*"
+        - Sid: CloudWatch Logs Permissions
+          Effect: Allow
+          Principal:
+            Service: !Sub "logs.${AWS::Region}.${AWS::URLSuffix}"
+          Action:
+            - "kms:Encrypt*"
+            - "kms:Decrypt*"
+            - "kms:ReEncrypt*"
+            - "kms:GenerateDataKey*"
+            - "kms:Describe*"
+          Resource: "*"
+  # Alias is only added to show the StackName in the KMS Console
+  CmkAlias:
+    Type: "AWS::KMS::Alias"
+    Properties:
+      AliasName: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:alias/${AWS::StackName}"
+      TargetKeyId: !Ref Cmk
+Outputs:
+  OverridesJson:
+    Description: Use this as overrides.json
+    Value: !Sub "{\"CREATE\": {\"/KmsKeyId\": \"${Cmk.Arn}\"}}"
