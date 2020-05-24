@@ -21,7 +21,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        // Everything except RetentionPolicyInDays KmsKeyId is createOnly
+        // Everything except RetentionPolicyInDays and KmsKeyId is createOnly
         final ResourceModel model = request.getDesiredResourceState();
 
         if (model.getRetentionInDays() == null) {
