@@ -21,7 +21,7 @@ Lombok-annotated classes.
 You can execute the following commands to run the tests.
 You will need to have docker installed and running.
 
-```shell script
+```bash
 # Create a CloudFormation stack with development dependencies (a KMS CMK)
 # NOTE: this has a monthly cost of 1 USD for the CMK
 aws cloudformation deploy \
