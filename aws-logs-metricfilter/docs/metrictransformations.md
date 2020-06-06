@@ -83,4 +83,3 @@ _Maximum_: <code>100</code>
 _Pattern_: <code>.{1,100}</code>
 
 _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
-
