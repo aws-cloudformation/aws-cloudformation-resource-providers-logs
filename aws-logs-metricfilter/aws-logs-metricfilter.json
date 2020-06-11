@@ -35,6 +35,7 @@
         "MetricValue": {
           "description": "The value to publish to the CloudWatch metric when a filter pattern matches a log event.",
           "type": "string",
+          "pattern": ".{1,100}",
           "minLength": 1,
           "maxLength": 100
         }
