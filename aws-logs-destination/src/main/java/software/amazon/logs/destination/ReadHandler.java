@@ -44,6 +44,8 @@ public class ReadHandler extends BaseHandlerStd {
                     proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeDestinations);
             logger.log(String.format("%s has successfully been read.", ResourceModel.TYPE_NAME));
         } catch (AwsServiceException e) {
+            logger.log(String.format("Exception while reading the %s with name %s. %s", ResourceModel.TYPE_NAME,
+                    model.getDestinationName(), e));
             Translator.translateException(e);
         }
         return awsResponse;

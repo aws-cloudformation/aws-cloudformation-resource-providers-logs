@@ -12,10 +12,13 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 public class DeleteHandler extends BaseHandlerStd {
 
+    private Logger logger;
+
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
             final ResourceHandlerRequest<ResourceModel> request, final CallbackContext callbackContext,
             final ProxyClient<CloudWatchLogsClient> proxyClient, final Logger logger) {
 
+        this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
         ProgressEvent<ResourceModel, CallbackContext> progressEvent = ProgressEvent.progress(model, callbackContext)
@@ -37,6 +40,8 @@ public class DeleteHandler extends BaseHandlerStd {
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteDestination);
         } catch (AwsServiceException e) {
+            logger.log(String.format("Exception while deleting the %s with name %s. %s", ResourceModel.TYPE_NAME,
+                    awsRequest.destinationName(), e));
             Translator.translateException(e);
         }
         return awsResponse;

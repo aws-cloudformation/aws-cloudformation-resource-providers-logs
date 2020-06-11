@@ -56,7 +56,6 @@ public class CreateHandlerTest extends AbstractTestBase {
         testResourceModel = getTestResourceModel();
         destination = getTestDestination();
         handler = new CreateHandler();
-
     }
 
     @Test
@@ -73,7 +72,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 PutDestinationResponse.builder().destination(destination).build();
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
 
         Mockito.when(proxyClient.client().putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
                 .thenReturn(putDestinationResponse);
@@ -84,10 +83,17 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+
+        assertThat(response.getResourceModel()).isNotNull();
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
+    }
+
+    private ResourceHandlerRequest.ResourceHandlerRequestBuilder<ResourceModel> getDefaultRequestBuilder() {
+
+        return ResourceHandlerRequest.<ResourceModel>builder().logicalResourceIdentifier("logicalResourceIdentifier")
+                .clientRequestToken("requestToken");
     }
 
 
@@ -101,7 +107,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response =
                 handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
@@ -124,7 +130,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .thenThrow(OperationAbortedException.class);
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
 
         Assertions.assertThrows(CfnResourceConflictException.class,
                 () -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
@@ -145,7 +151,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 PutDestinationResponse.builder().destination(destination).build();
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
 
         Mockito.when(proxyClient.client().putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
                 .thenReturn(putDestinationResponse);
@@ -162,7 +168,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenThrow(InvalidParameterException.class);
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
 
         ProgressEvent<ResourceModel, CallbackContext> progressEvent =
                 handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);

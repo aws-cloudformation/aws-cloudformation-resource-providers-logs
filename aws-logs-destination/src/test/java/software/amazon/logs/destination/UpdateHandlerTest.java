@@ -54,63 +54,25 @@ public class UpdateHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_Should_ReturnSuccess_When_DestinationNotFound() {
+    public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationIsNotFound() {
 
         final Destination destination = getTestDestination();
 
-        final DescribeDestinationsResponse describeResponse =
-                DescribeDestinationsResponse.builder().destinations(destination).build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder().build();
 
         Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
-                .thenThrow(ResourceNotFoundException.class)
                 .thenReturn(describeResponse);
-
-        final PutDestinationResponse putDestinationResponse =
-                PutDestinationResponse.builder().destination(destination).build();
 
         final ResourceHandlerRequest<ResourceModel> request =
                 ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
-
-        Mockito.when(proxyClient.client().putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
-                .thenReturn(putDestinationResponse);
 
         final ProgressEvent<ResourceModel, CallbackContext> response =
                 handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
-        assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isNull();
-        assertThat(response.getErrorCode()).isNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
-
-//    @Test
-//    public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationIsFound() {
-//
-//        final Destination destination = getTestDestination();
-//
-//        final DescribeDestinationsResponse describeResponse =
-//                DescribeDestinationsResponse.builder().destinations(destination).build();
-//
-//        Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
-//                .thenReturn(describeResponse);
-//
-//        final ResourceHandlerRequest<ResourceModel> request =
-//                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
-//
-//        final ProgressEvent<ResourceModel, CallbackContext> response =
-//                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-//
-//        assertThat(response).isNotNull();
-//        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-//        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-//        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
-//        assertThat(response.getResourceModels()).isNull();
-//        assertThat(response.getMessage()).isNull();
-//        assertThat(response.getErrorCode()).isNull();
-//    }
 
     @Test
     public void handleRequest_Should_ThrowCfnNotFoundException_When_PutDestinationPolicyFails() {
@@ -173,6 +135,40 @@ public class UpdateHandlerTest extends AbstractTestBase {
         assertThat(progressEvent).isNotNull();
         assertThat(progressEvent.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(progressEvent.getErrorCode()).isEqualTo(HandlerErrorCode.NotUpdatable);
+    }
+
+
+    @Test
+    public void handleRequest_Should_ReturnSuccess_When_DestinationIsFound() {
+
+        final Destination destination = getTestDestination();
+
+        final DescribeDestinationsResponse describeResponse =
+                DescribeDestinationsResponse.builder().destinations(destination).build();
+
+        Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenThrow(ResourceNotFoundException.class)
+                .thenReturn(describeResponse);
+
+        final PutDestinationResponse putDestinationResponse =
+                PutDestinationResponse.builder().destination(destination).build();
+
+        final ResourceHandlerRequest<ResourceModel> request =
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+
+        Mockito.when(proxyClient.client().putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+                .thenReturn(putDestinationResponse);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
     }
 
 }

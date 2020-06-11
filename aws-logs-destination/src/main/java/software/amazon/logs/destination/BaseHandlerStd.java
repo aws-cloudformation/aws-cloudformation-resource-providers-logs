@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterExce
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationPolicyResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.Action;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.CallChain;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
@@ -71,12 +72,12 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                     try {
                         putDestinationResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest,
                                 proxyClient.client()::putDestination);
-                        if(model.getArn()==null){
-                            model.setArn(putDestinationResponse.destination().arn());
-                        }
                         logger.log(String.format("%s resource with name %s has been successfully created",
                                 ResourceModel.TYPE_NAME, model.getDestinationName()));
                     } catch (AwsServiceException e) {
+                        logger.log(String.format(
+                                "Exception while invoking the putDestination API for the destination ID %s. %s ",
+                                model.getDestinationName(), e));
                         Translator.translateException(e);
                     }
                     return putDestinationResponse;
@@ -100,6 +101,9 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                                 "Destination policy successfully updated for the resource with name %s has been " +
                                         "successfully created", model.getDestinationName()));
                     } catch (AwsServiceException e) {
+                        logger.log(String.format(
+                                "Exception while invoking the putDestinationPolicy API for the destination ID %s. %s ",
+                                model.getDestinationName(), e));
                         Translator.translateException(e);
                     }
                     return response;
