@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 public class Translator {
 
-    static PutDestinationRequest translateToCreateRequest(final ResourceModel model) {
+    static PutDestinationRequest translateToPutDestinationRequest(final ResourceModel model) {
 
         return PutDestinationRequest.builder()
                 .destinationName(model.getDestinationName())
@@ -36,7 +36,9 @@ public class Translator {
 
     static DescribeDestinationsRequest translateToReadRequest(final ResourceModel model) {
 
-        return DescribeDestinationsRequest.builder().destinationNamePrefix(model.getDestinationName()).build();
+        return DescribeDestinationsRequest.builder()
+                .destinationNamePrefix(model.getDestinationName())
+                .build();
     }
 
     static ResourceModel translateFromReadResponse(final DescribeDestinationsResponse awsResponse) {
@@ -48,7 +50,9 @@ public class Translator {
 
     static DeleteDestinationRequest translateToDeleteRequest(final ResourceModel model) {
 
-        return DeleteDestinationRequest.builder().destinationName(model.getDestinationName()).build();
+        return DeleteDestinationRequest.builder()
+                .destinationName(model.getDestinationName())
+                .build();
     }
 
     static PutDestinationPolicyRequest translateToPutDestinationPolicyRequest(final ResourceModel model) {
@@ -61,7 +65,10 @@ public class Translator {
 
     static DescribeDestinationsRequest translateToListRequest(final String nextToken) {
 
-        return DescribeDestinationsRequest.builder().limit(50).nextToken(nextToken).build();
+        return DescribeDestinationsRequest.builder()
+                .limit(50)
+                .nextToken(nextToken)
+                .build();
     }
 
     static List<ResourceModel> translateFromListResponse(final DescribeDestinationsResponse awsResponse) {
@@ -71,7 +78,8 @@ public class Translator {
                 .destinationPolicy(destination.accessPolicy())
                 .roleArn(destination.roleArn())
                 .targetArn(destination.targetArn())
-                .build()).collect(Collectors.toList());
+                .build())
+                .collect(Collectors.toList());
     }
 
     private static ResourceModel translateLogDestination(
@@ -88,7 +96,9 @@ public class Translator {
 
     private static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {
 
-        return Optional.ofNullable(collection).map(Collection::stream).orElseGet(Stream::empty);
+        return Optional.ofNullable(collection)
+                .map(Collection::stream)
+                .orElseGet(Stream::empty);
     }
 
     static void translateException(AwsServiceException exception) {

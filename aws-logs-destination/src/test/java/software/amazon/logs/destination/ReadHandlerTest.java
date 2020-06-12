@@ -43,7 +43,8 @@ public class ReadHandlerTest extends AbstractTestBase {
     @BeforeEach
     public void setup() {
 
-        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
+        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600)
+                .toMillis());
         proxyClient = MOCK_PROXY(proxy, sdkClient);
         testResourceModel = getTestResourceModel();
         handler = new ReadHandler();
@@ -54,38 +55,51 @@ public class ReadHandlerTest extends AbstractTestBase {
 
         final Destination destination = getTestDestination();
 
-        final DescribeDestinationsResponse describeResponse =
-                DescribeDestinationsResponse.builder().destinations(destination).build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destination)
+                .build();
 
-        Mockito.when(proxyClient.client().describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
                 .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
+                        .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response =
                 handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
-        Assertions.assertThat(response).isNotNull();
-        Assertions.assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        Assertions.assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        Assertions.assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
-        Assertions.assertThat(response.getResourceModels()).isNull();
-        Assertions.assertThat(response.getMessage()).isNull();
-        Assertions.assertThat(response.getErrorCode()).isNull();
+        Assertions.assertThat(response)
+                .isNotNull();
+        Assertions.assertThat(response.getStatus())
+                .isEqualTo(OperationStatus.SUCCESS);
+        Assertions.assertThat(response.getCallbackDelaySeconds())
+                .isEqualTo(0);
+        Assertions.assertThat(response.getResourceModel())
+                .isEqualTo(request.getDesiredResourceState());
+        Assertions.assertThat(response.getResourceModels())
+                .isNull();
+        Assertions.assertThat(response.getMessage())
+                .isNull();
+        Assertions.assertThat(response.getErrorCode())
+                .isNull();
     }
 
     @Test
     public void handleRequest_Should_ThrowCfnNotFoundException_When_DestinationsIsEmpty() {
 
-        final DescribeDestinationsResponse describeResponse =
-                DescribeDestinationsResponse.builder().destinations(Collections.emptyList()).build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(Collections.emptyList())
+                .build();
 
-        Mockito.when(proxyClient.client().describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
                 .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
+                        .build();
 
         Assertions.assertThatThrownBy(
                 () -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
@@ -95,13 +109,16 @@ public class ReadHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ThrowCfnNotFoundException_When_ResponseIsNull() {
 
-        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder().build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .build();
 
-        Mockito.when(proxyClient.client().describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
                 .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
+                        .build();
 
         Assertions.assertThatThrownBy(
                 () -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
@@ -111,11 +128,13 @@ public class ReadHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ThrowCfnInvalidRequestException__When_InvalidDestinationIsPassed() {
 
-        Mockito.when(proxyClient.client().describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
                 .thenThrow(InvalidParameterException.class);
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
+                        .build();
         assertThrows(CfnInvalidRequestException.class,
                 () -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
     }

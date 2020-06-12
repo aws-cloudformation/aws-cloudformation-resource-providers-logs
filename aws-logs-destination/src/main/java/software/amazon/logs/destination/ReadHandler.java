@@ -16,33 +16,31 @@ public class ReadHandler extends BaseHandlerStd {
     private Logger logger;
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request, final CallbackContext callbackContext,
-            final ProxyClient<CloudWatchLogsClient> proxyClient, final Logger logger) {
+            final ResourceHandlerRequest<ResourceModel> request,
+            final CallbackContext callbackContext,
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final Logger logger) {
 
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
-        ProgressEvent<ResourceModel, CallbackContext> progressEvent =
-                proxy.initiate("AWS-Logs-Destination::Read", proxyClient, model, callbackContext)
-                        .translateToServiceRequest(Translator::translateToReadRequest)
-                        .makeServiceCall(
-                                (awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient, model))
-                        .done(this::constructResourceModelFromResponse);
+        return proxy.initiate("AWS-Logs-Destination::Read", proxyClient, model, callbackContext)
+                .translateToServiceRequest(Translator::translateToReadRequest)
+                .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient, model))
+                .done(this::constructResourceModelFromResponse);
 
-        logger.log(String.format("%s resource with name %s has been successfully read", ResourceModel.TYPE_NAME,
-                model.getDestinationName()));
-
-        return progressEvent;
     }
 
     private DescribeDestinationsResponse readResource(final DescribeDestinationsRequest awsRequest,
-            final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model) {
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final ResourceModel model) {
 
         DescribeDestinationsResponse awsResponse = null;
         try {
             awsResponse =
                     proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeDestinations);
-            logger.log(String.format("%s has successfully been read.", ResourceModel.TYPE_NAME));
+            logger.log(String.format("%s resource with name %s has been successfully read", ResourceModel.TYPE_NAME,
+                    model.getDestinationName()));
         } catch (AwsServiceException e) {
             logger.log(String.format("Exception while reading the %s with name %s. %s", ResourceModel.TYPE_NAME,
                     model.getDestinationName(), e));
@@ -51,10 +49,10 @@ public class ReadHandler extends BaseHandlerStd {
         return awsResponse;
     }
 
-    private ProgressEvent<ResourceModel, CallbackContext> constructResourceModelFromResponse(
-            DescribeDestinationsRequest describeDestinationsRequest,
+    private ProgressEvent<ResourceModel, CallbackContext> constructResourceModelFromResponse(DescribeDestinationsRequest describeDestinationsRequest,
             DescribeDestinationsResponse describeDestinationsResponse,
-            ProxyClient<CloudWatchLogsClient> cloudWatchLogsClientProxyClient, ResourceModel resourceModel,
+            ProxyClient<CloudWatchLogsClient> cloudWatchLogsClientProxyClient,
+            ResourceModel resourceModel,
             CallbackContext callbackContext) {
 
         ResourceModel translatedResourceModel = Translator.translateFromReadResponse(describeDestinationsResponse);

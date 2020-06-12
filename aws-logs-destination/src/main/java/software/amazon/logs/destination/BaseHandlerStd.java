@@ -58,22 +58,23 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
     protected boolean isDestinationListNullOrEmpty(final DescribeDestinationsResponse response) {
 
-        return ! response.hasDestinations() || response.destinations().isEmpty();
+        return ! response.hasDestinations() || response.destinations()
+                .isEmpty();
     }
 
     protected ProgressEvent<ResourceModel, CallbackContext> putDestination(final AmazonWebServicesClientProxy proxy,
             final CallbackContext callbackContext, final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final ResourceModel model, final String callGraph, final Logger logger) {
+            final ResourceModel model, final String callGraph, final Logger logger, Action handlerAction) {
 
         return proxy.initiate(callGraph, proxyClient, model, callbackContext)
-                .translateToServiceRequest(Translator::translateToCreateRequest)
+                .translateToServiceRequest(Translator::translateToPutDestinationRequest)
                 .makeServiceCall((awsRequest, sdkProxyClient) -> {
                     PutDestinationResponse putDestinationResponse = null;
                     try {
                         putDestinationResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest,
                                 proxyClient.client()::putDestination);
-                        logger.log(String.format("%s resource with name %s has been successfully created",
-                                ResourceModel.TYPE_NAME, model.getDestinationName()));
+                        logger.log(String.format("%s resource with name %s has been successfully %s",
+                                ResourceModel.TYPE_NAME, model.getDestinationName(), handlerAction.name()));
                     } catch (AwsServiceException e) {
                         logger.log(String.format(
                                 "Exception while invoking the putDestination API for the destination ID %s. %s ",
@@ -88,7 +89,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     protected ProgressEvent<ResourceModel, CallbackContext> putDestinationPolicy(
             final AmazonWebServicesClientProxy proxy, final CallbackContext callbackContext,
             final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model, final String callGraph,
-            final Logger logger) {
+            final Logger logger, Action handlerAction) {
 
         return proxy.initiate(callGraph, proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToPutDestinationPolicyRequest)
@@ -99,7 +100,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                                 sdkProxyClient.client()::putDestinationPolicy);
                         logger.log(String.format(
                                 "Destination policy successfully updated for the resource with name %s has been " +
-                                        "successfully created", model.getDestinationName()));
+                                        "successfully %s", model.getDestinationName(), handlerAction.name()));
                     } catch (AwsServiceException e) {
                         logger.log(String.format(
                                 "Exception while invoking the putDestinationPolicy API for the destination ID %s. %s ",

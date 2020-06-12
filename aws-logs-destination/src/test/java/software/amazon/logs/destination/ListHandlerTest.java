@@ -40,9 +40,11 @@ public class ListHandlerTest extends AbstractTestBase {
     public void handleRequest_ShouldReturnSuccess_When_DestinationIsFound() {
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
-        final DescribeDestinationsResponse describeResponse =
-                DescribeDestinationsResponse.builder().destinations(getTestDestination()).build();
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
+                        .build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(getTestDestination())
+                .build();
 
         Mockito.when(proxy.injectCredentialsAndInvokeV2(any(DescribeDestinationsRequest.class), any()))
                 .thenReturn(describeResponse);
@@ -50,21 +52,30 @@ public class ListHandlerTest extends AbstractTestBase {
         final ProgressEvent<ResourceModel, CallbackContext> response =
                 handler.handleRequest(proxy, request, null, logger);
 
-        Assertions.assertThat(response).isNotNull();
-        Assertions.assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        Assertions.assertThat(response.getCallbackContext()).isNull();
-        Assertions.assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        Assertions.assertThat(response.getResourceModel()).isNull();
-        Assertions.assertThat(response.getResourceModels()).isNotNull();
-        Assertions.assertThat(response.getMessage()).isNull();
-        Assertions.assertThat(response.getErrorCode()).isNull();
+        Assertions.assertThat(response)
+                .isNotNull();
+        Assertions.assertThat(response.getStatus())
+                .isEqualTo(OperationStatus.SUCCESS);
+        Assertions.assertThat(response.getCallbackContext())
+                .isNull();
+        Assertions.assertThat(response.getCallbackDelaySeconds())
+                .isEqualTo(0);
+        Assertions.assertThat(response.getResourceModel())
+                .isNull();
+        Assertions.assertThat(response.getResourceModels())
+                .isNotNull();
+        Assertions.assertThat(response.getMessage())
+                .isNull();
+        Assertions.assertThat(response.getErrorCode())
+                .isNull();
     }
 
     @Test
     public void handleRequest_ShouldThrowInternalFailureException_When_ServiceIsUnavailable() {
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel).build();
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
+                        .build();
 
         Mockito.when(proxy.injectCredentialsAndInvokeV2(any(DescribeDestinationsRequest.class), any()))
                 .thenThrow(ServiceUnavailableException.class);

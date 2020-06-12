@@ -44,7 +44,8 @@ public class DeleteHandlerTest extends AbstractTestBase {
     @BeforeEach
     public void setup() {
 
-        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
+        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600)
+                .toMillis());
         proxyClient = MOCK_PROXY(proxy, sdkClient);
         model = getTestResourceModel();
         handler = new DeleteHandler();
@@ -62,10 +63,13 @@ public class DeleteHandlerTest extends AbstractTestBase {
     public void handleRequest_ShouldReturnSuccess_When_DestinationIsDeleted() {
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(model).build();
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(model)
+                        .build();
 
-        Mockito.when(proxyClient.client().deleteDestination(ArgumentMatchers.any(DeleteDestinationRequest.class)))
-                .thenReturn(DeleteDestinationResponse.builder().build());
+        Mockito.when(proxyClient.client()
+                .deleteDestination(ArgumentMatchers.any(DeleteDestinationRequest.class)))
+                .thenReturn(DeleteDestinationResponse.builder()
+                        .build());
         final ProgressEvent<ResourceModel, CallbackContext> response =
                 handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
@@ -82,9 +86,11 @@ public class DeleteHandlerTest extends AbstractTestBase {
     public void handleRequest_ShouldThrowException_When_DestinationIsNotFound() {
 
         final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(model).build();
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(model)
+                        .build();
 
-        Mockito.when(proxyClient.client().deleteDestination(ArgumentMatchers.any(DeleteDestinationRequest.class)))
+        Mockito.when(proxyClient.client()
+                .deleteDestination(ArgumentMatchers.any(DeleteDestinationRequest.class)))
                 .thenThrow(ResourceNotFoundException.class);
         Assertions.assertThrows(CfnNotFoundException.class,
                 () -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));

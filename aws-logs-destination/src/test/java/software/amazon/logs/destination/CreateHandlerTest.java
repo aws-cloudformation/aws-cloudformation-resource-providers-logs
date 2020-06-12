@@ -28,6 +28,7 @@ import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import java.time.Duration;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,7 +52,8 @@ public class CreateHandlerTest extends AbstractTestBase {
     @BeforeEach
     public void setup() {
 
-        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
+        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600)
+                .toMillis());
         proxyClient = MOCK_PROXY(proxy, sdkClient);
         testResourceModel = getTestResourceModel();
         destination = getTestDestination();
@@ -61,20 +63,102 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DestinationNotFound() {
 
-        final DescribeDestinationsResponse describeResponse =
-                DescribeDestinationsResponse.builder().destinations(destination).build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destination)
+                .build();
 
-        Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenThrow(ResourceNotFoundException.class)
                 .thenReturn(describeResponse);
 
-        final PutDestinationResponse putDestinationResponse =
-                PutDestinationResponse.builder().destination(destination).build();
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destination)
+                .build();
 
         final ResourceHandlerRequest<ResourceModel> request =
-                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
 
-        Mockito.when(proxyClient.client().putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+                .thenReturn(putDestinationResponse);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+
+        assertThat(response.getResourceModel()).isNotNull();
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_Should_ReturnSuccess_When_DescribeDestinationsResponseIsNull() {
+
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destination)
+                .build();
+
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenReturn(DescribeDestinationsResponse.builder()
+                        .build())
+                .thenReturn(describeResponse);
+
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destination)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request =
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
+
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+                .thenReturn(putDestinationResponse);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+
+        assertThat(response.getResourceModel()).isNotNull();
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_Should_ReturnSuccess_When_DescribeDestinationsResponseIsEmpty() {
+
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destination)
+                .build();
+
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenReturn(DescribeDestinationsResponse.builder()
+                        .destinations(Collections.emptyList())
+                        .build())
+                .thenReturn(describeResponse);
+
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destination)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request =
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
+
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
                 .thenReturn(putDestinationResponse);
 
         final ProgressEvent<ResourceModel, CallbackContext> response =
@@ -100,14 +184,17 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationIsFound() {
 
-        final DescribeDestinationsResponse describeResponse =
-                DescribeDestinationsResponse.builder().destinations(destination).build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destination)
+                .build();
 
-        Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request =
-                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response =
                 handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
@@ -120,17 +207,21 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ThrowCfnResourceConflictException_When_PutOperationIsAborted() {
 
-        final DescribeDestinationsResponse describeResponse =
-                DescribeDestinationsResponse.builder().destinations(destination).build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destination)
+                .build();
 
-        Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenThrow(ResourceNotFoundException.class)
                 .thenReturn(describeResponse);
-        Mockito.when(proxyClient.client().putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
                 .thenThrow(OperationAbortedException.class);
 
         final ResourceHandlerRequest<ResourceModel> request =
-                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
 
         Assertions.assertThrows(CfnResourceConflictException.class,
                 () -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
@@ -140,22 +231,28 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ThrowCfnNotFoundException_When_PutDestinationPolicyFails() {
 
-        final DescribeDestinationsResponse describeResponse =
-                DescribeDestinationsResponse.builder().destinations(destination).build();
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destination)
+                .build();
 
-        Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenThrow(ResourceNotFoundException.class)
                 .thenReturn(describeResponse);
 
-        final PutDestinationResponse putDestinationResponse =
-                PutDestinationResponse.builder().destination(destination).build();
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destination)
+                .build();
 
         final ResourceHandlerRequest<ResourceModel> request =
-                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
 
-        Mockito.when(proxyClient.client().putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
                 .thenReturn(putDestinationResponse);
-        Mockito.when(proxyClient.client().putDestinationPolicy(ArgumentMatchers.any(PutDestinationPolicyRequest.class)))
+        Mockito.when(proxyClient.client()
+                .putDestinationPolicy(ArgumentMatchers.any(PutDestinationPolicyRequest.class)))
                 .thenThrow(ResourceNotFoundException.class);
 
         Assertions.assertThrows(CfnNotFoundException.class,
@@ -165,10 +262,12 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationReadFails() {
 
-        Mockito.when(proxyClient.client().describeDestinations(any(DescribeDestinationsRequest.class)))
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenThrow(InvalidParameterException.class);
         final ResourceHandlerRequest<ResourceModel> request =
-                getDefaultRequestBuilder().desiredResourceState(testResourceModel).build();
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
 
         ProgressEvent<ResourceModel, CallbackContext> progressEvent =
                 handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);

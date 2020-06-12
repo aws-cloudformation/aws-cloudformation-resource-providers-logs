@@ -15,22 +15,19 @@ public class DeleteHandler extends BaseHandlerStd {
     private Logger logger;
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request, final CallbackContext callbackContext,
-            final ProxyClient<CloudWatchLogsClient> proxyClient, final Logger logger) {
+            final ResourceHandlerRequest<ResourceModel> request,
+            final CallbackContext callbackContext,
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final Logger logger) {
 
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
-        ProgressEvent<ResourceModel, CallbackContext> progressEvent = ProgressEvent.progress(model, callbackContext)
+        return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> proxy.initiate("AWS-Logs-Destination::Delete", proxyClient, model, callbackContext)
                         .translateToServiceRequest(Translator::translateToDeleteRequest)
                         .makeServiceCall(this::deleteResource)
                         .success());
-
-        logger.log(String.format("%s resource with name %s has been successfully deleted", ResourceModel.TYPE_NAME,
-                model.getDestinationName()));
-
-        return progressEvent;
     }
 
     private DeleteDestinationResponse deleteResource(final DeleteDestinationRequest awsRequest,
@@ -44,6 +41,8 @@ public class DeleteHandler extends BaseHandlerStd {
                     awsRequest.destinationName(), e));
             Translator.translateException(e);
         }
+        logger.log(String.format("%s resource with name %s has been successfully deleted", ResourceModel.TYPE_NAME,
+                awsRequest.destinationName()));
         return awsResponse;
     }
 

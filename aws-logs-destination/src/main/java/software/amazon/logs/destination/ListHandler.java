@@ -12,7 +12,8 @@ public class ListHandler extends BaseHandler<CallbackContext> {
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request, final CallbackContext callbackContext,
+            final ResourceHandlerRequest<ResourceModel> request,
+            final CallbackContext callbackContext,
             final Logger logger) {
 
         ProgressEvent<ResourceModel, CallbackContext> progressEvent = null;
