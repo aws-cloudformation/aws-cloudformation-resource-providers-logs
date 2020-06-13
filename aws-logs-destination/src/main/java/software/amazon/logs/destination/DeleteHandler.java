@@ -23,11 +23,10 @@ public class DeleteHandler extends BaseHandlerStd {
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
-        return ProgressEvent.progress(model, callbackContext)
-                .then(progress -> proxy.initiate("AWS-Logs-Destination::Delete", proxyClient, model, callbackContext)
+       return proxy.initiate("AWS-Logs-Destination::Delete", proxyClient, model, callbackContext)
                         .translateToServiceRequest(Translator::translateToDeleteRequest)
                         .makeServiceCall(this::deleteResource)
-                        .success());
+                        .success()
     }
 
     private DeleteDestinationResponse deleteResource(final DeleteDestinationRequest awsRequest,
