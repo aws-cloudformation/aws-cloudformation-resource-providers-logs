@@ -1,14 +1,20 @@
 package software.amazon.logs.loggroup;
 
+import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
+import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 
 import java.util.Objects;
 
@@ -92,7 +98,18 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             proxy.injectCredentialsAndInvokeV2(disassociateKmsKeyRequest,
                     ClientBuilder.getClient()::disassociateKmsKey);
         } catch (final ResourceNotFoundException e) {
+            // The specified resource does not exist.
             throwNotFoundException(model);
+        } catch (final InvalidParameterException e) {
+            // A parameter is specified incorrectly. We should be passing valid parameters.
+            throw new CfnInternalFailureException(e);
+        } catch (final OperationAbortedException e){
+            // Multiple requests to update the same resource were in conflict.
+            throw new CfnResourceConflictException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()), "OperationAborted", e);
+        } catch (final ServiceUnavailableException e) {
+            // The service cannot complete the request.
+            throw new CfnServiceInternalErrorException(e);
         }
 
         final String kmsKeyMessage =
@@ -111,7 +128,18 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             proxy.injectCredentialsAndInvokeV2(associateKmsKeyRequest,
                     ClientBuilder.getClient()::associateKmsKey);
         } catch (final ResourceNotFoundException e) {
+            // The specified resource does not exist.
             throwNotFoundException(model);
+        } catch (final InvalidParameterException e) {
+            // A parameter is specified incorrectly. We should be passing valid parameters.
+            throw new CfnInternalFailureException(e);
+        } catch (final OperationAbortedException e){
+            // Multiple requests to update the same resource were in conflict.
+            throw new CfnResourceConflictException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()), "OperationAborted", e);
+        } catch (final ServiceUnavailableException e) {
+            // The service cannot complete the request.
+            throw new CfnServiceInternalErrorException(e);
         }
 
         final String kmsKeyMessage =
