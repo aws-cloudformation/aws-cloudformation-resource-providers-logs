@@ -27,9 +27,6 @@ public class CreateHandler extends BaseHandlerStd {
 
         final ResourceModel model = request.getDesiredResourceState();
 
-        // Since id is a read only property it must be always set by the handler.
-        model.setId(generateDestinationId(request));
-
         // Verify if a destination is already present with same identifier
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> preCreateCheck(proxy, callbackContext, proxyClient, model).done((response) -> {

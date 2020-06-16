@@ -19,9 +19,6 @@
       "type": "string",
       "minLength": 1
     },
-    "Id": {
-      "type": "string"
-    },
     "RoleArn": {
       "description": "The ARN of an IAM role that permits CloudWatch Logs to send data to the specified AWS resource",
       "type": "string",
@@ -70,13 +67,12 @@
     "RoleArn"
   ],
   "readOnlyProperties": [
-    "/properties/Arn",
-    "/properties/Id"
+    "/properties/Arn"
   ],
   "createOnlyProperties": [
     "/properties/DestinationName"
   ],
   "primaryIdentifier": [
-    "/properties/Id"
+    "/properties/DestinationName"
   ]
 }

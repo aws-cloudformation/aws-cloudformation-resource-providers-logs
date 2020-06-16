@@ -26,7 +26,7 @@ public class DeleteHandler extends BaseHandlerStd {
        return proxy.initiate("AWS-Logs-Destination::Delete", proxyClient, model, callbackContext)
                         .translateToServiceRequest(Translator::translateToDeleteRequest)
                         .makeServiceCall(this::deleteResource)
-                        .success()
+                        .success();
     }
 
     private DeleteDestinationResponse deleteResource(final DeleteDestinationRequest awsRequest,
