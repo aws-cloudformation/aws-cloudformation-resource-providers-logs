@@ -43,7 +43,6 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600)
                 .toMillis());
         proxyClient = MOCK_PROXY(proxy, sdkClient);
@@ -54,14 +53,12 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     @AfterEach
     public void tear_down() {
-
         verify(sdkClient, atLeastOnce()).serviceName();
         verifyNoMoreInteractions(sdkClient);
     }
 
     @Test
     public void handleRequest_ShouldReturnSuccess_When_DestinationIsDeleted() {
-
         final ResourceHandlerRequest<ResourceModel> request =
                 ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(model)
                         .build();
@@ -84,7 +81,6 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_ShouldThrowException_When_DestinationIsNotFound() {
-
         final ResourceHandlerRequest<ResourceModel> request =
                 ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(model)
                         .build();

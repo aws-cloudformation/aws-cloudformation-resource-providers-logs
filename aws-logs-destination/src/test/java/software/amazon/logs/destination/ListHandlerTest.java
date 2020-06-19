@@ -31,14 +31,12 @@ public class ListHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-
         testResourceModel = getTestResourceModel();
         handler = new ListHandler();
     }
 
     @Test
     public void handleRequest_ShouldReturnSuccess_When_DestinationIsFound() {
-
         final ResourceHandlerRequest<ResourceModel> request =
                 ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
                         .build();
@@ -72,7 +70,6 @@ public class ListHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_ShouldThrowInternalFailureException_When_ServiceIsUnavailable() {
-
         final ResourceHandlerRequest<ResourceModel> request =
                 ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
                         .build();

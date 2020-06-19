@@ -42,7 +42,6 @@ public class ReadHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600)
                 .toMillis());
         proxyClient = MOCK_PROXY(proxy, sdkClient);
@@ -52,7 +51,6 @@ public class ReadHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DestinationFound() {
-
         final Destination destination = getTestDestination();
 
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
@@ -88,7 +86,6 @@ public class ReadHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ThrowCfnNotFoundException_When_DestinationsIsEmpty() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(Collections.emptyList())
                 .build();
@@ -108,10 +105,8 @@ public class ReadHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ThrowCfnNotFoundException_When_ResponseIsNull() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .build();
-
         Mockito.when(proxyClient.client()
                 .describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
                 .thenReturn(describeResponse);
@@ -127,7 +122,6 @@ public class ReadHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ThrowCfnInvalidRequestException__When_InvalidDestinationIsPassed() {
-
         Mockito.when(proxyClient.client()
                 .describeDestinations(ArgumentMatchers.any(DescribeDestinationsRequest.class)))
                 .thenThrow(InvalidParameterException.class);

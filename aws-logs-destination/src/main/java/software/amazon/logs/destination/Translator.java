@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 public class Translator {
 
     static PutDestinationRequest translateToPutDestinationRequest(final ResourceModel model) {
-
         return PutDestinationRequest.builder()
                 .destinationName(model.getDestinationName())
                 .roleArn(model.getRoleArn())
@@ -35,28 +34,24 @@ public class Translator {
     }
 
     static DescribeDestinationsRequest translateToReadRequest(final ResourceModel model) {
-
         return DescribeDestinationsRequest.builder()
                 .destinationNamePrefix(model.getDestinationName())
                 .build();
     }
 
     static ResourceModel translateFromReadResponse(final DescribeDestinationsResponse awsResponse) {
-
         return streamOfOrEmpty(awsResponse.destinations()).findAny()
                 .map(Translator::translateLogDestination)
                 .orElse(null);
     }
 
     static DeleteDestinationRequest translateToDeleteRequest(final ResourceModel model) {
-
         return DeleteDestinationRequest.builder()
                 .destinationName(model.getDestinationName())
                 .build();
     }
 
     static PutDestinationPolicyRequest translateToPutDestinationPolicyRequest(final ResourceModel model) {
-
         return PutDestinationPolicyRequest.builder()
                 .destinationName(model.getDestinationName())
                 .accessPolicy(model.getDestinationPolicy())
@@ -64,7 +59,6 @@ public class Translator {
     }
 
     static DescribeDestinationsRequest translateToListRequest(final String nextToken) {
-
         return DescribeDestinationsRequest.builder()
                 .limit(50)
                 .nextToken(nextToken)
@@ -72,7 +66,6 @@ public class Translator {
     }
 
     static List<ResourceModel> translateFromListResponse(final DescribeDestinationsResponse awsResponse) {
-
         return streamOfOrEmpty(awsResponse.destinations()).map(destination -> ResourceModel.builder()
                 .destinationName(destination.destinationName())
                 .destinationPolicy(destination.accessPolicy())
@@ -84,7 +77,6 @@ public class Translator {
 
     private static ResourceModel translateLogDestination(
             final software.amazon.awssdk.services.cloudwatchlogs.model.Destination destination) {
-
         return ResourceModel.builder()
                 .arn(destination.arn())
                 .roleArn(destination.roleArn())
@@ -95,14 +87,12 @@ public class Translator {
     }
 
     private static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {
-
         return Optional.ofNullable(collection)
                 .map(Collection::stream)
                 .orElseGet(Stream::empty);
     }
 
     static void translateException(AwsServiceException exception) {
-
         if (exception instanceof InvalidParameterException) {
             throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, exception);
         } else if (exception instanceof ServiceUnavailableException) {

@@ -47,7 +47,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600)
                 .toMillis());
         proxyClient = MOCK_PROXY(proxy, sdkClient);
@@ -57,9 +56,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnFailureProgressEvent_When_DescribeDestinationsResponseIsNull() {
-
-        final Destination destination = getTestDestination();
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .build();
 
@@ -81,7 +77,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnFailureProgressEvent_When_DescribeDestinationsResponseIsEmpty() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(Collections.emptyList())
                 .build();
@@ -104,7 +99,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ThrowCfnNotFoundException_When_PutDestinationPolicyFails() {
-
         final Destination destination = getTestDestination();
 
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
@@ -137,7 +131,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationReadFails() {
-
         Mockito.when(proxyClient.client()
                 .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenThrow(InvalidParameterException.class);
@@ -153,30 +146,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationIsNotUpdatable() {
-
-        ResourceModel previousResourceModel = ResourceModel.builder()
-                .destinationName("DestinationName2")
-                .roleArn(TEST_ROLE_ARN)
-                .targetArn(TEST_TARGET_ARN)
-                .destinationPolicy(TEST_DESTINATION_INPUT)
-                .build();
-        final ResourceHandlerRequest<ResourceModel> request =
-                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
-                        .previousResourceState(previousResourceModel)
-                        .build();
-
-        ProgressEvent<ResourceModel, CallbackContext> progressEvent =
-                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-        assertThat(progressEvent).isNotNull();
-        assertThat(progressEvent.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(progressEvent.getErrorCode()).isEqualTo(HandlerErrorCode.NotUpdatable);
-    }
-
-
-    @Test
     public void handleRequest_Should_ReturnSuccess_When_DestinationIsFound() {
-
         final Destination destination = getTestDestination();
 
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()

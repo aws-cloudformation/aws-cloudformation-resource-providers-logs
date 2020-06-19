@@ -1,7 +1,7 @@
 package software.amazon.logs.destination;
 
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsResponse;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
@@ -20,7 +20,6 @@ public class ReadHandler extends BaseHandlerStd {
             final CallbackContext callbackContext,
             final ProxyClient<CloudWatchLogsClient> proxyClient,
             final Logger logger) {
-
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
@@ -34,14 +33,14 @@ public class ReadHandler extends BaseHandlerStd {
     private DescribeDestinationsResponse readResource(final DescribeDestinationsRequest awsRequest,
             final ProxyClient<CloudWatchLogsClient> proxyClient,
             final ResourceModel model) {
-
         DescribeDestinationsResponse awsResponse = null;
+
         try {
             awsResponse =
                     proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeDestinations);
             logger.log(String.format("%s resource with name %s has been successfully read", ResourceModel.TYPE_NAME,
                     model.getDestinationName()));
-        } catch (AwsServiceException e) {
+        } catch (CloudWatchLogsException e) {
             logger.log(String.format("Exception while reading the %s with name %s. %s", ResourceModel.TYPE_NAME,
                     model.getDestinationName(), e));
             Translator.translateException(e);
@@ -54,8 +53,8 @@ public class ReadHandler extends BaseHandlerStd {
             ProxyClient<CloudWatchLogsClient> cloudWatchLogsClientProxyClient,
             ResourceModel resourceModel,
             CallbackContext callbackContext) {
-
         ResourceModel translatedResourceModel = Translator.translateFromReadResponse(describeDestinationsResponse);
+
         if (translatedResourceModel == null) {
             logger.log(String.format("%s with name %s Resource does not exist", ResourceModel.TYPE_NAME,
                     resourceModel.getDestinationName()));

@@ -31,13 +31,11 @@ public class TranslatorTests extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-
         resourceModel = getTestResourceModel();
     }
 
     @Test
     public void translateToCreateRequest_Should_ReturnSuccess() {
-
         PutDestinationRequest putDestinationRequest = PutDestinationRequest.builder()
                 .destinationName(TEST_DESTINATION_INPUT)
                 .roleArn(TEST_ROLE_ARN)
@@ -49,7 +47,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateToPutDestinationPolicyRequest_Should_ReturnSuccess() {
-
         PutDestinationPolicyRequest putDestinationPolicyRequest = PutDestinationPolicyRequest.builder()
                 .destinationName(TEST_DESTINATION_INPUT)
                 .accessPolicy(TEST_ACCESS_POLICY)
@@ -60,7 +57,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateToReadRequest_Should_ReturnSuccess() {
-
         DescribeDestinationsRequest describeDestinationsRequest = DescribeDestinationsRequest.builder()
                 .destinationNamePrefix(TEST_DESTINATION_INPUT)
                 .build();
@@ -70,7 +66,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateToDeleteRequest_Should_ReturnSuccess() {
-
         DeleteDestinationRequest deleteDestinationRequest = DeleteDestinationRequest.builder()
                 .destinationName(TEST_DESTINATION_INPUT)
                 .build();
@@ -80,7 +75,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateToReadResponse_Should_ReturnSuccess() {
-
         DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse.builder()
                 .destinations(getTestDestination())
                 .build();
@@ -90,7 +84,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateToReadResponse_Should_ReturnNull_When_DestinationIsNull() {
-
         DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse.builder()
                 .build();
         Assertions.assertThat(Translator.translateFromReadResponse(describeDestinationsResponse))
@@ -99,7 +92,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateToReadResponse_Should_ReturnNull_When_DestinationIsEmpty() {
-
         DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse.builder()
                 .destinations(Collections.emptyList())
                 .build();
@@ -109,7 +101,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateFromListResponse_Should_ReturnSuccess() {
-
         final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
                 .destinations(Collections.singletonList(getTestDestination()))
                 .nextToken("token")
@@ -121,7 +112,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateFromListResponse_Should_ReturnEmptyList_WhenDestinationsIsEmpty() {
-
         final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
                 .destinations(Collections.emptyList())
                 .nextToken("token")
@@ -133,7 +123,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateFromListResponse_Should_ReturnEmptyList_WhenDestinationsIsNull() {
-
         final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
                 .nextToken("token")
                 .build();
@@ -144,7 +133,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateToListRequest_Should_ReturnSuccess() {
-
         final DescribeDestinationsRequest request = DescribeDestinationsRequest.builder()
                 .nextToken("token")
                 .limit(50)
@@ -155,7 +143,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateException_Should_ThrowCfnInvalidRequestException() {
-
         assertThrows(CfnInvalidRequestException.class, () -> Translator.translateException(
                 InvalidParameterException.builder()
                         .build()));
@@ -163,7 +150,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateException_Should_ThrowCfnServiceInternalErrorException() {
-
         assertThrows(CfnServiceInternalErrorException.class, () -> Translator.translateException(
                 ServiceUnavailableException.builder()
                         .build()));
@@ -171,7 +157,6 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateException_Should_ThrowCfnResourceConflictException() {
-
         assertThrows(CfnResourceConflictException.class, () -> Translator.translateException(
                 OperationAbortedException.builder()
                         .build()));
@@ -179,14 +164,12 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateException_Should_ThrowCfnNotFoundException() {
-
         assertThrows(CfnNotFoundException.class, () -> Translator.translateException(ResourceNotFoundException.builder()
                 .build()));
     }
 
     @Test
     public void translateException_Should_ThrowCfnGeneralServiceException() {
-
         assertThrows(CfnGeneralServiceException.class, () -> Translator.translateException(
                 CloudWatchLogsException.builder()
                         .build()));

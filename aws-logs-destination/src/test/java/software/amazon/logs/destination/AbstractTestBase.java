@@ -21,7 +21,7 @@ public class AbstractTestBase {
 
     protected static final LoggerProxy logger;
 
-    protected static final String TEST_DESTINATION_INPUT = "TestDesitinationInput";
+    protected static final String TEST_DESTINATION_INPUT = "TestDestinationInput";
 
     protected static final String TEST_ACCESS_POLICY = "TestAccessPolicy";
 
@@ -36,14 +36,12 @@ public class AbstractTestBase {
 
     static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(final AmazonWebServicesClientProxy proxy,
             final CloudWatchLogsClient sdkClient) {
-
         return new ProxyClient<CloudWatchLogsClient>() {
 
             @Override
             public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseT injectCredentialsAndInvokeV2(
                     RequestT request,
                     Function<RequestT, ResponseT> requestFunction) {
-
                 return proxy.injectCredentialsAndInvokeV2(request, requestFunction);
             }
 
@@ -51,7 +49,6 @@ public class AbstractTestBase {
             public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseInputStream<ResponseT> injectCredentialsAndInvokeV2InputStream(
                     RequestT requestT,
                     Function<RequestT, ResponseInputStream<ResponseT>> function) {
-
                 throw new UnsupportedOperationException();
             }
 
@@ -59,7 +56,6 @@ public class AbstractTestBase {
             public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseBytes<ResponseT> injectCredentialsAndInvokeV2Bytes(
                     RequestT requestT,
                     Function<RequestT, ResponseBytes<ResponseT>> function) {
-
                 throw new UnsupportedOperationException();
             }
 
@@ -67,7 +63,6 @@ public class AbstractTestBase {
             public <RequestT extends AwsRequest, ResponseT extends AwsResponse> CompletableFuture<ResponseT> injectCredentialsAndInvokeV2Async(
                     RequestT request,
                     Function<RequestT, CompletableFuture<ResponseT>> requestFunction) {
-
                 throw new UnsupportedOperationException();
             }
 
@@ -75,13 +70,11 @@ public class AbstractTestBase {
             public <RequestT extends AwsRequest, ResponseT extends AwsResponse, IterableT extends SdkIterable<ResponseT>> IterableT injectCredentialsAndInvokeIterableV2(
                     RequestT request,
                     Function<RequestT, IterableT> requestFunction) {
-
                 return proxy.injectCredentialsAndInvokeIterableV2(request, requestFunction);
             }
 
             @Override
             public CloudWatchLogsClient client() {
-
                 return sdkClient;
             }
 
@@ -89,7 +82,6 @@ public class AbstractTestBase {
     }
 
     protected Destination getTestDestination() {
-
         return Destination.builder()
                 .destinationName(TEST_DESTINATION_INPUT)
                 .accessPolicy(TEST_ACCESS_POLICY)
@@ -99,7 +91,6 @@ public class AbstractTestBase {
     }
 
     protected ResourceModel getTestResourceModel() {
-
         return ResourceModel.builder()
                 .destinationName(TEST_DESTINATION_INPUT)
                 .destinationPolicy(TEST_ACCESS_POLICY)

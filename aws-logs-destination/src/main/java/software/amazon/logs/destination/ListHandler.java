@@ -1,6 +1,6 @@
 package software.amazon.logs.destination;
 
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
@@ -15,8 +15,8 @@ public class ListHandler extends BaseHandler<CallbackContext> {
             final ResourceHandlerRequest<ResourceModel> request,
             final CallbackContext callbackContext,
             final Logger logger) {
-
         ProgressEvent<ResourceModel, CallbackContext> progressEvent = null;
+
         try {
             DescribeDestinationsResponse awsResponse =
                     proxy.injectCredentialsAndInvokeV2(Translator.translateToListRequest(request.getNextToken()),
@@ -26,7 +26,7 @@ public class ListHandler extends BaseHandler<CallbackContext> {
                     .nextToken(awsResponse.nextToken())
                     .status(OperationStatus.SUCCESS)
                     .build();
-        } catch (AwsServiceException e) {
+        } catch (CloudWatchLogsException e) {
             Translator.translateException(e);
         }
         return progressEvent;

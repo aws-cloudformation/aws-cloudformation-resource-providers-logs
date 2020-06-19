@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.Destination;
@@ -51,7 +52,6 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600)
                 .toMillis());
         proxyClient = MOCK_PROXY(proxy, sdkClient);
@@ -62,7 +62,6 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DestinationNotFound() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(destination)
                 .build();
@@ -99,7 +98,6 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DescribeDestinationsResponseIsNull() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(destination)
                 .build();
@@ -137,7 +135,6 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DescribeDestinationsResponseIsEmpty() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(destination)
                 .build();
@@ -175,7 +172,6 @@ public class CreateHandlerTest extends AbstractTestBase {
     }
 
     private ResourceHandlerRequest.ResourceHandlerRequestBuilder<ResourceModel> getDefaultRequestBuilder() {
-
         return ResourceHandlerRequest.<ResourceModel>builder().logicalResourceIdentifier("logicalResourceIdentifier")
                 .clientRequestToken("requestToken");
     }
@@ -183,7 +179,6 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationIsFound() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(destination)
                 .build();
@@ -206,7 +201,6 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ThrowCfnResourceConflictException_When_PutOperationIsAborted() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(destination)
                 .build();
@@ -230,7 +224,6 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ThrowCfnNotFoundException_When_PutDestinationPolicyFails() {
-
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(destination)
                 .build();
@@ -261,7 +254,6 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationReadFails() {
-
         Mockito.when(proxyClient.client()
                 .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenThrow(InvalidParameterException.class);
@@ -274,6 +266,22 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(progressEvent).isNotNull();
         assertThat(progressEvent.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(progressEvent.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+    }
+
+    @Test
+    public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationReadFailsWithCloudWatchLogException() {
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenThrow(CloudWatchLogsException.class);
+        final ResourceHandlerRequest<ResourceModel> request =
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
+
+        ProgressEvent<ResourceModel, CallbackContext> progressEvent =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+        assertThat(progressEvent).isNotNull();
+        assertThat(progressEvent.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(progressEvent.getErrorCode()).isEqualTo(HandlerErrorCode.GeneralServiceException);
     }
 
 }

@@ -1,12 +1,13 @@
 package software.amazon.logs.destination;
 
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationPolicyResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 import software.amazon.cloudformation.Action;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -23,7 +24,6 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     public final ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
             final ResourceHandlerRequest<ResourceModel> request, final CallbackContext callbackContext,
             final Logger logger) {
-
         return handleRequest(proxy, request, callbackContext != null ? callbackContext : new CallbackContext(),
                 proxy.newProxy(ClientBuilder::getClient), logger);
     }
@@ -36,7 +36,6 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     protected CallChain.Completed<DescribeDestinationsRequest, DescribeDestinationsResponse, CloudWatchLogsClient, ResourceModel, CallbackContext> preCreateCheck(
             final AmazonWebServicesClientProxy proxy, final CallbackContext callbackContext,
             final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model) {
-
         return proxy.initiate("AWS-Logs-Destination::Create::PreExistenceCheck", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToReadRequest)
                 .makeServiceCall((awsRequest, sdkProxyClient) -> sdkProxyClient.injectCredentialsAndInvokeV2(awsRequest,
@@ -49,15 +48,20 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                     } else if (exception instanceof ServiceUnavailableException) {
                         progress = ProgressEvent.failed(model, callbackContext, HandlerErrorCode.ServiceInternalError,
                                 exception.getMessage());
-                    } else {
+                    } else if (exception instanceof ResourceNotFoundException) {
                         progress = ProgressEvent.progress(model, callbackContext);
+                    } else if (exception instanceof CloudWatchLogsException) {
+                        progress =
+                                ProgressEvent.failed(model, callbackContext, HandlerErrorCode.GeneralServiceException,
+                                        exception.getMessage());
+                    } else {
+                        throw exception;
                     }
                     return progress;
                 });
     }
 
     protected boolean isDestinationListNullOrEmpty(final DescribeDestinationsResponse response) {
-
         return ! response.hasDestinations() || response.destinations()
                 .isEmpty();
     }
@@ -65,7 +69,6 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     protected ProgressEvent<ResourceModel, CallbackContext> putDestination(final AmazonWebServicesClientProxy proxy,
             final CallbackContext callbackContext, final ProxyClient<CloudWatchLogsClient> proxyClient,
             final ResourceModel model, final String callGraph, final Logger logger, Action handlerAction) {
-
         return proxy.initiate(callGraph, proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToPutDestinationRequest)
                 .makeServiceCall((awsRequest, sdkProxyClient) -> {
@@ -75,7 +78,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                                 proxyClient.client()::putDestination);
                         logger.log(String.format("%s resource with name %s has been successfully %s",
                                 ResourceModel.TYPE_NAME, model.getDestinationName(), handlerAction.name()));
-                    } catch (AwsServiceException e) {
+                    } catch (CloudWatchLogsException e) {
                         logger.log(String.format(
                                 "Exception while invoking the putDestination API for the destination ID %s. %s ",
                                 model.getDestinationName(), e));
@@ -90,7 +93,6 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
             final AmazonWebServicesClientProxy proxy, final CallbackContext callbackContext,
             final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model, final String callGraph,
             final Logger logger, Action handlerAction) {
-
         return proxy.initiate(callGraph, proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToPutDestinationPolicyRequest)
                 .makeServiceCall((awsRequest, sdkProxyClient) -> {
@@ -101,7 +103,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                         logger.log(String.format(
                                 "Destination policy successfully updated for the resource with name %s has been " +
                                         "successfully %s", model.getDestinationName(), handlerAction.name()));
-                    } catch (AwsServiceException e) {
+                    } catch (CloudWatchLogsException e) {
                         logger.log(String.format(
                                 "Exception while invoking the putDestinationPolicy API for the destination ID %s. %s ",
                                 model.getDestinationName(), e));
