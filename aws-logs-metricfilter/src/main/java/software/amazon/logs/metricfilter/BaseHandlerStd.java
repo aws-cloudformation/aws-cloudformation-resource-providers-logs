@@ -1,13 +1,12 @@
 package software.amazon.logs.metricfilter;
 
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.BaseHandlerException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.CallChain;
-import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
@@ -36,23 +35,23 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     final ProxyClient<CloudWatchLogsClient> proxyClient,
     final Logger logger);
 
-  protected CallChain.Completed<DescribeMetricFiltersRequest, DescribeMetricFiltersResponse, CloudWatchLogsClient, ResourceModel, CallbackContext>
-    preCreateCheck(final AmazonWebServicesClientProxy proxy,
-                   final CallbackContext callbackContext,
-                   final ProxyClient<CloudWatchLogsClient> proxyClient,
-                   final ResourceModel model) {
+    /**
+     * We need this check because, despite what the API docs say, create/update SDK APIs do NOT return "resource not found"
+     */
+  protected boolean exists(final ProxyClient<CloudWatchLogsClient> proxyClient,
+                           final ResourceModel model) throws AwsServiceException {
 
-    return proxy.initiate("AWS-Logs-MetricFilter::PreExistenceCheck", proxyClient, model, callbackContext)
-            .translateToServiceRequest(Translator::translateToReadRequest)
-            .makeServiceCall((awsRequest, sdkProxyClient) -> sdkProxyClient.injectCredentialsAndInvokeV2(awsRequest, sdkProxyClient.client()::describeMetricFilters))
-            .handleError((request, exception, client, model1, context1) -> {
-              if (exception instanceof InvalidParameterException) {
-                return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, exception.getMessage());
-              }
-              else if (exception instanceof ServiceUnavailableException) {
-                return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.ServiceInternalError, exception.getMessage());
-              }
-              return ProgressEvent.progress(model, callbackContext);
-            });
+      final DescribeMetricFiltersRequest translateToReadRequest = Translator.translateToReadRequest(model);
+      final DescribeMetricFiltersResponse response;
+      try {
+          response = proxyClient.injectCredentialsAndInvokeV2(translateToReadRequest, proxyClient.client()::describeMetricFilters);
+          return !response.metricFilters().isEmpty();
+      } catch (final AwsServiceException e) {
+          BaseHandlerException newException = Translator.translateException(e);
+          if (newException instanceof CfnNotFoundException) {
+              return false;
+          }
+          throw e;
+      }
   }
 }

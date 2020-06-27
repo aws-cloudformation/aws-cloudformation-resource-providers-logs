@@ -1,29 +1,18 @@
 package software.amazon.logs.metricfilter;
 
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.BaseHandlerException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
-import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
+import software.amazon.cloudformation.exceptions.CfnNotUpdatableException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 public class UpdateHandler extends BaseHandlerStd {
-    private Logger logger;
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
@@ -32,37 +21,33 @@ public class UpdateHandler extends BaseHandlerStd {
         final ProxyClient<CloudWatchLogsClient> proxyClient,
         final Logger logger) {
 
-        this.logger = logger;
-
         final ResourceModel model = request.getDesiredResourceState();
         final ResourceModel previousModel = request.getPreviousResourceState();
 
-        this.logger.log(String.format("Trying to update model %s", model.getPrimaryIdentifier()));
+        logger.log(String.format("Trying to update model %s", model.getPrimaryIdentifier()));
 
-        return ProgressEvent.progress(model, callbackContext)
-            .then(progress -> {
-                if (!isUpdatable(model, previousModel)) {
-                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
-                            .errorCode(HandlerErrorCode.NotUpdatable)
-                            .status(OperationStatus.FAILED)
-                            .build();
-                }
-                return progress;
-            })
-            .then(progress ->
-                preCreateCheck(proxy, callbackContext, proxyClient, model)
-                    .done((response) -> {
-                        if (response.metricFilters().isEmpty()) {
-                            return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(null), HandlerErrorCode.NotFound);
-                        }
-                        return ProgressEvent.progress(model, callbackContext);
-                    })
-            )
-            .then(progress -> proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
-                    .translateToServiceRequest(Translator::translateToUpdateRequest)
-                    .makeServiceCall(this::updateResource)
-                    .progress())
-            .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
+        boolean isUpdatable = isUpdatable(model, previousModel);
+        if (!isUpdatable) {
+            BaseHandlerException error = new CfnNotUpdatableException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString());
+            return ProgressEvent.defaultFailureHandler(error, Translator.translateToErrorCode(error));
+        }
+
+        boolean exists = exists(proxyClient, model);
+        if (!exists) {
+            BaseHandlerException error = new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString());
+            return ProgressEvent.defaultFailureHandler(error, Translator.translateToErrorCode(error));
+        }
+
+        PutMetricFilterRequest updateRequest = Translator.translateToUpdateRequest(model);
+        try {
+            proxyClient.injectCredentialsAndInvokeV2(updateRequest, proxyClient.client()::putMetricFilter);
+        } catch (final AwsServiceException e) {
+            BaseHandlerException error = Translator.translateException(e);
+            return ProgressEvent.defaultFailureHandler(error, Translator.translateToErrorCode(error));
+        }
+
+        logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
+        return ProgressEvent.defaultSuccessHandler(model);
     }
 
     private boolean isUpdatable(final ResourceModel model, final ResourceModel previousModel) {
@@ -74,28 +59,5 @@ public class UpdateHandler extends BaseHandlerStd {
 
         }
         return true;
-    }
-
-    private PutMetricFilterResponse updateResource(
-        final PutMetricFilterRequest awsRequest,
-        final ProxyClient<CloudWatchLogsClient> proxyClient) {
-        PutMetricFilterResponse awsResponse;
-        try {
-            awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putMetricFilter);
-        } catch (final ResourceNotFoundException e) {
-            logger.log("Resource not found. " + e.getMessage());
-            throw new CfnNotFoundException(e);
-        } catch (final InvalidParameterException e) {
-            throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, e);
-        } catch (final LimitExceededException e) {
-            throw new CfnServiceLimitExceededException(e);
-        } catch (final ServiceUnavailableException e) {
-            throw new CfnServiceInternalErrorException(e);
-        } catch (final OperationAbortedException e) {
-            throw new CfnResourceConflictException(e);
-        }
-
-        logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
-        return awsResponse;
     }
 }

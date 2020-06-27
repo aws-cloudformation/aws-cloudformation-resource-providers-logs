@@ -1,9 +1,26 @@
 package software.amazon.logs.metricfilter;
 
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.BaseHandlerException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
+import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnNotUpdatableException;
+import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
+import software.amazon.cloudformation.proxy.HandlerErrorCode;
 
 import java.util.Collection;
 import java.util.List;
@@ -147,5 +164,55 @@ public class Translator {
     return Optional.ofNullable(collection)
         .map(Collection::stream)
         .orElseGet(Stream::empty);
+  }
+
+  public static BaseHandlerException translateException(final AwsServiceException e) {
+    if (e instanceof LimitExceededException) {
+      return new CfnServiceLimitExceededException(e);
+    }
+    if (e instanceof OperationAbortedException) {
+      return new CfnResourceConflictException(e);
+    }
+    if (e instanceof InvalidParameterException) {
+      return new CfnInvalidRequestException(e);
+    }
+    else if (e instanceof ResourceNotFoundException) {
+      return new CfnNotFoundException(e);
+    }
+    else if (e instanceof ServiceUnavailableException) {
+      return new CfnServiceInternalErrorException(e);
+    }
+    return new CfnGeneralServiceException(e);
+  }
+
+  public static HandlerErrorCode translateToErrorCode(final BaseHandlerException e) {
+    if (e instanceof CfnAlreadyExistsException) {
+      return HandlerErrorCode.AlreadyExists;
+    }
+    if (e instanceof CfnServiceLimitExceededException) {
+      return HandlerErrorCode.ServiceLimitExceeded;
+    }
+    if (e instanceof CfnResourceConflictException) {
+      return HandlerErrorCode.ResourceConflict;
+    }
+    if (e instanceof CfnInvalidRequestException) {
+      return HandlerErrorCode.InvalidRequest;
+    }
+    else if (e instanceof CfnNotFoundException) {
+      return HandlerErrorCode.NotFound;
+    }
+    else if (e instanceof CfnNotUpdatableException) {
+      return HandlerErrorCode.NotUpdatable;
+    }
+    else if (e instanceof CfnInternalFailureException) {
+      return HandlerErrorCode.InternalFailure;
+    }
+    else if (e instanceof CfnServiceInternalErrorException) {
+      return HandlerErrorCode.ServiceInternalError;
+    }
+    else if (e instanceof CfnGeneralServiceException) {
+      return HandlerErrorCode.GeneralServiceException;
+    }
+    return HandlerErrorCode.GeneralServiceException;
   }
 }

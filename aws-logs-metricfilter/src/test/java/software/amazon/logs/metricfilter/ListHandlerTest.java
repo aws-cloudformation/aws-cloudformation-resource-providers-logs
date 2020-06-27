@@ -3,7 +3,10 @@ package software.amazon.logs.metricfilter;
 import org.mockito.ArgumentMatchers;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -73,5 +76,32 @@ public class ListHandlerTest {
         assertThat(response.getResourceModels()).isNotNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_SimpleFailure() {
+        final ResourceModel model = ResourceModel.builder()
+                .filterName("filter-name")
+                .logGroupName("log-group-name")
+                .filterPattern("[pattern]")
+                .metricTransformations(Arrays.asList(MetricTransformation.builder()
+                        .metricName("metric-name")
+                        .metricValue("0")
+                        .metricNamespace("namespace")
+                        .build()))
+                .build();
+
+        when(proxy.injectCredentialsAndInvokeV2(ArgumentMatchers.any(DescribeMetricFiltersRequest.class), any()))
+                .thenThrow(InvalidParameterException.class);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), logger);
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
     }
 }
