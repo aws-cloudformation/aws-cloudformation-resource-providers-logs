@@ -85,7 +85,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(2)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
+        verify(proxyClient.client(), times(1)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
         verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
         verify(sdkClient, atLeastOnce()).serviceName();
         verifyNoMoreInteractions(sdkClient);

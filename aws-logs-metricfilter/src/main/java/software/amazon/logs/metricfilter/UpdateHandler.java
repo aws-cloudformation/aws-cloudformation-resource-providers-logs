@@ -62,7 +62,7 @@ public class UpdateHandler extends BaseHandlerStd {
                     .translateToServiceRequest(Translator::translateToUpdateRequest)
                     .makeServiceCall(this::updateResource)
                     .progress())
-            .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
+            .then(progress -> ProgressEvent.defaultSuccessHandler(model));
     }
 
     private boolean isUpdatable(final ResourceModel model, final ResourceModel previousModel) {

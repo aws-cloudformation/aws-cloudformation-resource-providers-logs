@@ -50,6 +50,8 @@ public class CreateHandler extends BaseHandlerStd {
             );
         }
 
+        logger.log("trying with no read handler at the end...");
+
         return ProgressEvent.progress(model, callbackContext)
             .then(progress ->
                 preCreateCheck(proxy, callbackContext, proxyClient, model)
@@ -65,7 +67,7 @@ public class CreateHandler extends BaseHandlerStd {
                     .translateToServiceRequest(Translator::translateToCreateRequest)
                     .makeServiceCall(this::createResource)
                     .progress())
-            .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
+            .then(progress -> ProgressEvent.defaultSuccessHandler(model));
     }
 
 
