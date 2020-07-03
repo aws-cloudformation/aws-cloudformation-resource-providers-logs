@@ -13,6 +13,6 @@ before_script:
 jobs:
   include:
     - script:
-        - for directory in $TRAVIS_BUILD_DIR/aws-*; do (cd "$directory" && mvn clean verify); done
+        - for directory in $TRAVIS_BUILD_DIR/aws-*; do (cd "$directory" && mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B clean verify); done
       after_failure:
-        - cat "$TRAVIS_BUILD_DIR/aws-*/rpdk.log"
+        - cat $TRAVIS_BUILD_DIR/aws-*/rpdk.log
