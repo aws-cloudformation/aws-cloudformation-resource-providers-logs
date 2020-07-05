@@ -4,6 +4,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.CallChain;
@@ -46,13 +47,17 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
             .translateToServiceRequest(Translator::translateToReadRequest)
             .makeServiceCall((awsRequest, sdkProxyClient) -> sdkProxyClient.injectCredentialsAndInvokeV2(awsRequest, sdkProxyClient.client()::describeMetricFilters))
             .handleError((request, exception, client, model1, context1) -> {
-              if (exception instanceof InvalidParameterException) {
+                // Consider ResourceNotFound as successful for pre exist check
+              if(exception instanceof ResourceNotFoundException) {
+                    return ProgressEvent.progress(model, callbackContext);
+                }
+              else if (exception instanceof InvalidParameterException) {
                 return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, exception.getMessage());
               }
               else if (exception instanceof ServiceUnavailableException) {
                 return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.ServiceInternalError, exception.getMessage());
               }
-              return ProgressEvent.progress(model, callbackContext);
+              return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InternalFailure, "Internal Error");
             });
   }
 }

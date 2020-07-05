@@ -57,7 +57,7 @@ public class CreateHandler extends BaseHandlerStd {
                         if (response.metricFilters().isEmpty()) {
                             return ProgressEvent.progress(model, callbackContext);
                         }
-                        return ProgressEvent.defaultFailureHandler(new CfnAlreadyExistsException(null), HandlerErrorCode.AlreadyExists);
+                        return ProgressEvent.defaultFailureHandler(new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString()), HandlerErrorCode.AlreadyExists);
                     })
             )
             .then(progress ->
