@@ -53,7 +53,7 @@ public class UpdateHandler extends BaseHandlerStd {
                 preCreateCheck(proxy, callbackContext, proxyClient, model)
                     .done((response) -> {
                         if (response.metricFilters().isEmpty()) {
-                            return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(null), HandlerErrorCode.NotFound);
+                            return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString()), HandlerErrorCode.NotFound);
                         }
                         return ProgressEvent.progress(model, callbackContext);
                     })
