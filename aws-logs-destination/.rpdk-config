@@ -1,0 +1,16 @@
+{
+    "typeName": "AWS::Logs::Destination",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "software.amazon.logs.destination.HandlerWrapper::handleRequest",
+    "testEntrypoint": "software.amazon.logs.destination.HandlerWrapper::testEntrypoint",
+    "settings": {
+        "namespace": [
+            "software",
+            "amazon",
+            "logs",
+            "destination"
+        ],
+        "codegen_template_path": "guided_aws"
+    }
+}
