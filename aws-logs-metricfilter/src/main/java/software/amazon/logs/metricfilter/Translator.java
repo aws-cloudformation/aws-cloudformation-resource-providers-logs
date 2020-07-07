@@ -1,9 +1,9 @@
 package software.amazon.logs.metricfilter;
 
-import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.cloudformation.exceptions.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -12,6 +12,25 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Translator {
+
+  public static BaseHandlerException translateException(final AwsServiceException e) {
+    if (e instanceof LimitExceededException) {
+      return new CfnServiceLimitExceededException(e);
+    }
+    if (e instanceof OperationAbortedException) {
+      return new CfnResourceConflictException(e);
+    }
+    if (e instanceof InvalidParameterException) {
+      return new CfnInvalidRequestException(e);
+    }
+    else if (e instanceof ResourceNotFoundException) {
+      return new CfnNotFoundException(e);
+    }
+    else if (e instanceof ServiceUnavailableException) {
+      return new CfnServiceInternalErrorException(e);
+    }
+    return new CfnGeneralServiceException(e);
+  }
 
   static software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation translateMetricTransformationToSdk
           (final software.amazon.logs.metricfilter.MetricTransformation metricTransformation) {

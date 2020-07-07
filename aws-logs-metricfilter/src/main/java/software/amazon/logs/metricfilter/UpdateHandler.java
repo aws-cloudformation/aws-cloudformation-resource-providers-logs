@@ -49,18 +49,9 @@ public class UpdateHandler extends BaseHandlerStd {
                 }
                 return progress;
             })
-            .then(progress ->
-                preCreateCheck(proxy, callbackContext, proxyClient, model)
-                    .done((response) -> {
-                        if (response.metricFilters().isEmpty()) {
-                            return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString()), HandlerErrorCode.NotFound);
-                        }
-                        return ProgressEvent.progress(model, callbackContext);
-                    })
-            )
             .then(progress -> proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
                     .translateToServiceRequest(Translator::translateToUpdateRequest)
-                    .makeServiceCall(this::updateResource)
+                    .makeServiceCall((r, c) -> updateResource(model, r, c))
                     .progress())
             .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
     }
@@ -77,11 +68,17 @@ public class UpdateHandler extends BaseHandlerStd {
     }
 
     private PutMetricFilterResponse updateResource(
-        final PutMetricFilterRequest awsRequest,
-        final ProxyClient<CloudWatchLogsClient> proxyClient) {
+            final ResourceModel model,
+            final PutMetricFilterRequest awsRequest,
+            final ProxyClient<CloudWatchLogsClient> proxyClient) {
         PutMetricFilterResponse awsResponse;
         try {
-            awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putMetricFilter);
+            boolean exists = exists(proxyClient, model);
+            if (!exists) {
+                throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString());
+            }
+            logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
+            return proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putMetricFilter);
         } catch (final ResourceNotFoundException e) {
             logger.log("Resource not found. " + e.getMessage());
             throw new CfnNotFoundException(e);
@@ -94,8 +91,5 @@ public class UpdateHandler extends BaseHandlerStd {
         } catch (final OperationAbortedException e) {
             throw new CfnResourceConflictException(e);
         }
-
-        logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
-        return awsResponse;
     }
 }
