@@ -30,8 +30,9 @@ public class CreateHandler extends BaseHandlerStd {
                     if (isDestinationListNullOrEmpty(response)) {
                         return ProgressEvent.progress(model, callbackContext);
                     }
-                    return ProgressEvent.defaultFailureHandler(new CfnAlreadyExistsException(null),
-                            HandlerErrorCode.AlreadyExists);
+                    return ProgressEvent.defaultFailureHandler(new CfnAlreadyExistsException(ResourceModel.TYPE_NAME,
+                            model.getPrimaryIdentifier()
+                                    .toString()), HandlerErrorCode.AlreadyExists);
                 }))
                 .then(progress -> putDestination(proxy, callbackContext, proxyClient, model, DESTINATION_CREATE_GRAPH,
                         logger, Action.CREATE))
