@@ -26,8 +26,9 @@ public class UpdateHandler extends BaseHandlerStd {
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> preCreateCheck(proxy, callbackContext, proxyClient, model).done((response) -> {
                     if (isDestinationListNullOrEmpty(response)) {
-                        return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(null),
-                                HandlerErrorCode.NotFound);
+                        return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(ResourceModel.TYPE_NAME,
+                                model.getPrimaryIdentifier()
+                                        .toString()), HandlerErrorCode.NotFound);
                     }
                     return ProgressEvent.progress(model, callbackContext);
                 }))
