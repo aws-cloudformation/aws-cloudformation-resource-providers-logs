@@ -98,8 +98,8 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(2)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
-        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
+        verify(proxyClient.client()).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
+        verify(proxyClient.client()).putMetricFilter(any(PutMetricFilterRequest.class));
     }
 
     @Test
@@ -110,17 +110,12 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .metricFilters(Collections.emptyList())
                 .build();
 
-        final DescribeMetricFiltersResponse postCreateResponse = DescribeMetricFiltersResponse.builder()
-                .metricFilters(Translator.translateToSDK(model))
-                .build();
-
         final PutMetricFilterResponse createResponse = PutMetricFilterResponse.builder()
                 .build();
 
         // return no existing metrics for pre-create and then success response for create
         when(proxyClient.client().describeMetricFilters(any(DescribeMetricFiltersRequest.class)))
-                .thenReturn(preCreateResponse)
-                .thenReturn(postCreateResponse);
+                .thenReturn(preCreateResponse);
 
         when(proxyClient.client().putMetricFilter(any(PutMetricFilterRequest.class)))
                 .thenReturn(createResponse);
@@ -138,8 +133,8 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(2)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
-        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
+        verify(proxyClient.client()).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
+        verify(proxyClient.client()).putMetricFilter(any(PutMetricFilterRequest.class));
     }
 
     @Test

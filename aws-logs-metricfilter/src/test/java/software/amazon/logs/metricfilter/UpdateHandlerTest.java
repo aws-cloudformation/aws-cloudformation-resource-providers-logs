@@ -86,46 +86,10 @@ public class UpdateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(2)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
-        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
+        verify(proxyClient.client()).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
+        verify(proxyClient.client()).putMetricFilter(any(PutMetricFilterRequest.class));
         verify(sdkClient, atLeastOnce()).serviceName();
         verifyNoMoreInteractions(sdkClient);
-    }
-
-    @Test
-    public void handleRequest_FilterNameDoesNotMatch_NotUpdatable() {
-        final ResourceModel model = buildDefaultModel();
-        final ResourceModel previousModel = buildDefaultModel();
-        previousModel.setFilterName(previousModel.getFilterName() + "a");
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .previousResourceState(previousModel)
-                .build();
-
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotUpdatable);
-    }
-
-    @Test
-    public void handleRequest_LogGroupNameDoesNotMatch_NotUpdatable() {
-        final ResourceModel model = buildDefaultModel();
-        final ResourceModel previousModel = buildDefaultModel();
-        previousModel.setLogGroupName(previousModel.getLogGroupName() + "a");
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .previousResourceState(previousModel)
-                .build();
-
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotUpdatable);
     }
 
     @Test

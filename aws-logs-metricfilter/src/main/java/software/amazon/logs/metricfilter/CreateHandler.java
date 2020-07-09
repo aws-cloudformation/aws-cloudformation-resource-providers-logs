@@ -33,13 +33,10 @@ public class CreateHandler extends BaseHandlerStd {
             model.setFilterName(IdentifierUtils.generateResourceIdentifier(request.getLogicalResourceIdentifier(), request.getClientRequestToken(), MAX_LENGTH_METRIC_FILTER_NAME));
         }
 
-        return ProgressEvent.progress(model, callbackContext)
-            .then(progress ->
-                proxy.initiate("AWS-Logs-MetricFilter::Create", proxyClient, model, callbackContext)
-                    .translateToServiceRequest(Translator::translateToCreateRequest)
-                    .makeServiceCall((r, c) -> createResource(model, r, c))
-                    .progress())
-            .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
+        return proxy.initiate("AWS-Logs-MetricFilter::Create", proxyClient, model, callbackContext)
+                .translateToServiceRequest(Translator::translateToCreateRequest)
+                .makeServiceCall((r, c) -> createResource(model, r, c))
+                .success();
     }
 
     private PutMetricFilterResponse createResource(
