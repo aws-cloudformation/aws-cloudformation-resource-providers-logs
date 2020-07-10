@@ -8,14 +8,12 @@ env:
     - AWS_DEFAULT_REGION=$AWS_REGION
 install:
   - pip3 install --user pre-commit cloudformation-cli-java-plugin
-script:
+before_script:
   - pre-commit run --all-files --verbose
-  - cd "$TRAVIS_BUILD_DIR/aws-logs-loggroup"
-  # from Maven 3.6.1+, should use `--no-transfer-progress` instead of Slf4jMavenTransferListener
-  - >
-      mvn
-      -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
-      -B
-      clean verify
-after_failure:
-  - cat "$TRAVIS_BUILD_DIR/aws-logs-loggroup/rpdk.log"
+jobs:
+  include:
+    - script: |
+        for directory in $TRAVIS_BUILD_DIR/aws-*; do
+          cd "$directory"
+          mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B clean verify || travis_terminate 1
+        done
