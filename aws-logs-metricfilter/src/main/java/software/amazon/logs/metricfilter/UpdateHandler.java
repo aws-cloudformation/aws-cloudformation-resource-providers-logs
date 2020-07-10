@@ -39,49 +39,24 @@ public class UpdateHandler extends BaseHandlerStd {
 
         this.logger.log(String.format("Trying to update model %s", model.getPrimaryIdentifier()));
 
-        return ProgressEvent.progress(model, callbackContext)
-            .then(progress -> {
-                if (!isUpdatable(model, previousModel)) {
-                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
-                            .errorCode(HandlerErrorCode.NotUpdatable)
-                            .status(OperationStatus.FAILED)
-                            .build();
-                }
-                return progress;
-            })
-            .then(progress ->
-                preCreateCheck(proxy, callbackContext, proxyClient, model)
-                    .done((response) -> {
-                        if (response.metricFilters().isEmpty()) {
-                            return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString()), HandlerErrorCode.NotFound);
-                        }
-                        return ProgressEvent.progress(model, callbackContext);
-                    })
-            )
-            .then(progress -> proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
-                    .translateToServiceRequest(Translator::translateToUpdateRequest)
-                    .makeServiceCall(this::updateResource)
-                    .progress())
-            .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
-    }
-
-    private boolean isUpdatable(final ResourceModel model, final ResourceModel previousModel) {
-        // An update request MUST return a NotUpdatable error if the user attempts to change a property
-        // that is defined as create-only in the resource provider schema.
-        if (previousModel != null) {
-            return previousModel.getFilterName().equals(model.getFilterName())
-                    && previousModel.getLogGroupName().equals(model.getLogGroupName());
-
-        }
-        return true;
+        return proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
+                .translateToServiceRequest(Translator::translateToUpdateRequest)
+                .makeServiceCall((r, c) -> updateResource(model, r, c))
+                .success();
     }
 
     private PutMetricFilterResponse updateResource(
-        final PutMetricFilterRequest awsRequest,
-        final ProxyClient<CloudWatchLogsClient> proxyClient) {
+            final ResourceModel model,
+            final PutMetricFilterRequest awsRequest,
+            final ProxyClient<CloudWatchLogsClient> proxyClient) {
         PutMetricFilterResponse awsResponse;
         try {
-            awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putMetricFilter);
+            boolean exists = exists(proxyClient, model);
+            if (!exists) {
+                throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString());
+            }
+            logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
+            return proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putMetricFilter);
         } catch (final ResourceNotFoundException e) {
             logger.log("Resource not found. " + e.getMessage());
             throw new CfnNotFoundException(e);
@@ -94,8 +69,5 @@ public class UpdateHandler extends BaseHandlerStd {
         } catch (final OperationAbortedException e) {
             throw new CfnResourceConflictException(e);
         }
-
-        logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
-        return awsResponse;
     }
 }

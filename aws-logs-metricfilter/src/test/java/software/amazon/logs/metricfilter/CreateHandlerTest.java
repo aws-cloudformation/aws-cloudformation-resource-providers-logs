@@ -98,8 +98,8 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(2)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
-        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
+        verify(proxyClient.client()).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
+        verify(proxyClient.client()).putMetricFilter(any(PutMetricFilterRequest.class));
     }
 
     @Test
@@ -110,17 +110,12 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .metricFilters(Collections.emptyList())
                 .build();
 
-        final DescribeMetricFiltersResponse postCreateResponse = DescribeMetricFiltersResponse.builder()
-                .metricFilters(Translator.translateToSDK(model))
-                .build();
-
         final PutMetricFilterResponse createResponse = PutMetricFilterResponse.builder()
                 .build();
 
         // return no existing metrics for pre-create and then success response for create
         when(proxyClient.client().describeMetricFilters(any(DescribeMetricFiltersRequest.class)))
-                .thenReturn(preCreateResponse)
-                .thenReturn(postCreateResponse);
+                .thenReturn(preCreateResponse);
 
         when(proxyClient.client().putMetricFilter(any(PutMetricFilterRequest.class)))
                 .thenReturn(createResponse);
@@ -138,8 +133,8 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(2)).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
-        verify(proxyClient.client(), times(1)).putMetricFilter(any(PutMetricFilterRequest.class));
+        verify(proxyClient.client()).describeMetricFilters(any(DescribeMetricFiltersRequest.class));
+        verify(proxyClient.client()).putMetricFilter(any(PutMetricFilterRequest.class));
     }
 
     @Test
@@ -154,10 +149,9 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceInternalError);
+
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnServiceInternalErrorException.class);
     }
 
     @Test
@@ -175,10 +169,8 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AlreadyExists);
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnAlreadyExistsException.class);
     }
 
     @Test
