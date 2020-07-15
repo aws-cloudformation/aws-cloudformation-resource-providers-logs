@@ -42,10 +42,12 @@ public class ListHandlerTest {
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                 .build();
         final LogGroup logGroup2 = LogGroup.builder()
                 .logGroupName("LogGroup2")
                 .retentionInDays(2)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
                 .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
                 .logGroups(Arrays.asList(logGroup, logGroup2))
@@ -62,11 +64,13 @@ public class ListHandlerTest {
         final ResourceModel model1 = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                 .build();
 
         final ResourceModel model2 = ResourceModel.builder()
                 .logGroupName("LogGroup2")
                 .retentionInDays(2)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()

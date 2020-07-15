@@ -15,6 +15,11 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolic
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +53,7 @@ public class UpdateHandlerTest {
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                 .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
                 .logGroups(Collections.singletonList(logGroup))
@@ -63,6 +69,7 @@ public class UpdateHandlerTest {
         final ResourceModel model = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -86,6 +93,7 @@ public class UpdateHandlerTest {
         final DeleteRetentionPolicyResponse deleteRetentionPolicyResponse = DeleteRetentionPolicyResponse.builder().build();
         final LogGroup logGroup = LogGroup.builder()
             .logGroupName("LogGroup")
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
             .logGroups(Collections.singletonList(logGroup))
@@ -100,6 +108,7 @@ public class UpdateHandlerTest {
 
         final ResourceModel model = ResourceModel.builder()
             .logGroupName("LogGroup")
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -119,10 +128,50 @@ public class UpdateHandlerTest {
     }
 
     @Test
+    public void handleRequest_Success_KmsKeyIdDeleted() {
+        final DisassociateKmsKeyResponse disassociateKmsKeyResponse = DisassociateKmsKeyResponse.builder().build();
+        final LogGroup logGroup = LogGroup.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .build();
+        final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
+                .logGroups(Collections.singletonList(logGroup))
+                .build();
+
+        doReturn(disassociateKmsKeyResponse, describeResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.any(),
+                        ArgumentMatchers.any()
+                );
+
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isEqualToComparingFieldByField(logGroup);
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
     public void handleRequest_SuccessNoChange() {
         final LogGroup initialLogGroup = LogGroup.builder()
             .logGroupName("LogGroup")
             .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build();
         final DescribeLogGroupsResponse initialDescribeResponse = DescribeLogGroupsResponse.builder()
             .logGroups(Collections.singletonList(initialLogGroup))
@@ -130,6 +179,7 @@ public class UpdateHandlerTest {
         final LogGroup logGroup = LogGroup.builder()
             .logGroupName("LogGroup")
             .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build();
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
             .logGroups(Collections.singletonList(logGroup))
@@ -145,11 +195,48 @@ public class UpdateHandlerTest {
         final ResourceModel model = ResourceModel.builder()
             .logGroupName("LogGroup")
             .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
             .desiredResourceState(model)
             .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isEqualToComparingFieldByField(logGroup);
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_SuccessNoChange_NoAction_WithPreviousModel() {
+        final LogGroup logGroup = LogGroup.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .build();
+        final ResourceModel previousModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .build();
+
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .previousResourceState(previousModel)
+                .desiredResourceState(model)
+                .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
@@ -175,6 +262,7 @@ public class UpdateHandlerTest {
         final ResourceModel model = ResourceModel.builder()
             .logGroupName("LogGroup")
             .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -182,6 +270,286 @@ public class UpdateHandlerTest {
             .build();
 
         assertThrows(software.amazon.cloudformation.exceptions.ResourceNotFoundException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_PutRetention_FailureNotFound_ServiceException() {
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException.class)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                        ArgumentMatchers.any()
+                );
+
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.ResourceNotFoundException.class,
+                () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_DeleteRetention_FailureNotFound_ServiceException() {
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException.class)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(DeleteRetentionPolicyRequest.class),
+                        ArgumentMatchers.any()
+                );
+
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.ResourceNotFoundException.class,
+                () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_AssociateKms_FailureNotFound_ServiceException() {
+        final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
+        doReturn(putRetentionPolicyResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                ArgumentMatchers.any()
+            );
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(AssociateKmsKeyRequest.class),
+                ArgumentMatchers.any()
+        );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.ResourceNotFoundException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_AssociateKms_InvalidParameter_ServiceException() {
+        final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
+        doReturn(putRetentionPolicyResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                ArgumentMatchers.any()
+            );
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(AssociateKmsKeyRequest.class),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.CfnInternalFailureException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_AssociateKms_OperationAborted_ServiceException() {
+        final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
+        doReturn(putRetentionPolicyResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                ArgumentMatchers.any()
+            );
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(AssociateKmsKeyRequest.class),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.CfnResourceConflictException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_AssociateKms_ServiceUnavailable_ServiceException() {
+        final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
+        doReturn(putRetentionPolicyResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                ArgumentMatchers.any()
+            );
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(AssociateKmsKeyRequest.class),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_DisassociateKms_FailureNotFound_ServiceException() {
+        final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
+        doReturn(putRetentionPolicyResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                ArgumentMatchers.any()
+            );
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(DisassociateKmsKeyRequest.class),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.ResourceNotFoundException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_DisassociateKms_InvalidParameter_ServiceException() {
+        final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
+        doReturn(putRetentionPolicyResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                ArgumentMatchers.any()
+            );
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(DisassociateKmsKeyRequest.class),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.CfnInternalFailureException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_DisassociateKms_OperationAborted_ServiceException() {
+        final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
+        doReturn(putRetentionPolicyResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                ArgumentMatchers.any()
+            );
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(DisassociateKmsKeyRequest.class),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.CfnResourceConflictException.class,
+            () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_DisassociateKms_ServiceUnavailable_ServiceException() {
+        final PutRetentionPolicyResponse putRetentionPolicyResponse = PutRetentionPolicyResponse.builder().build();
+        doReturn(putRetentionPolicyResponse)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(PutRetentionPolicyRequest.class),
+                ArgumentMatchers.any()
+            );
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException.class)
+            .when(proxy)
+            .injectCredentialsAndInvokeV2(
+                ArgumentMatchers.isA(DisassociateKmsKeyRequest.class),
+                ArgumentMatchers.any()
+            );
+
+        final ResourceModel model = ResourceModel.builder()
+            .logGroupName("LogGroup")
+            .retentionInDays(1)
+            .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException.class,
             () -> handler.handleRequest(proxy, request, null, logger));
     }
 }

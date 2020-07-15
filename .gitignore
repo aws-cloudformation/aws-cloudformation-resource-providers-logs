@@ -1,3 +1,6 @@
+# Files local to the user
+/overrides.json
+
 # Compiled class file
 *.class
 
@@ -28,6 +31,9 @@ hs_err_pid*
 
 # Build
 target/
+
+# Test
+.hypothesis/
 
 # Generated Files
 .classpath

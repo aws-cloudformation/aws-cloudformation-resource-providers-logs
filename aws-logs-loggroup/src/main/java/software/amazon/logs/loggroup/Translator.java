@@ -6,6 +6,8 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolic
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,6 +41,7 @@ final class Translator {
     static CreateLogGroupRequest translateToCreateRequest(final ResourceModel model) {
         return CreateLogGroupRequest.builder()
                 .logGroupName(model.getLogGroupName())
+                .kmsKeyId(model.getKmsKeyId())
                 .build();
     }
 
@@ -51,8 +54,21 @@ final class Translator {
 
     static DeleteRetentionPolicyRequest translateToDeleteRetentionPolicyRequest(final ResourceModel model) {
         return DeleteRetentionPolicyRequest.builder()
-            .logGroupName(model.getLogGroupName())
-            .build();
+                .logGroupName(model.getLogGroupName())
+                .build();
+    }
+
+    static DisassociateKmsKeyRequest translateToDisassociateKmsKeyRequest(final ResourceModel model) {
+        return DisassociateKmsKeyRequest.builder()
+                .logGroupName(model.getLogGroupName())
+                .build();
+    }
+
+    static AssociateKmsKeyRequest translateToAssociateKmsKeyRequest(final ResourceModel model) {
+        return AssociateKmsKeyRequest.builder()
+                .logGroupName(model.getLogGroupName())
+                .kmsKeyId(model.getKmsKeyId())
+                .build();
     }
 
     static ResourceModel translateForRead(final DescribeLogGroupsResponse response) {
@@ -62,12 +78,17 @@ final class Translator {
                 .findAny()
                 .orElse(null);
         final String logGroupArn = streamOfOrEmpty(response.logGroups())
-            .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::arn)
-            .filter(Objects::nonNull)
-            .findAny()
-            .orElse(null);
+                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::arn)
+                .filter(Objects::nonNull)
+                .findAny()
+                .orElse(null);
         final Integer retentionInDays = streamOfOrEmpty(response.logGroups())
                 .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::retentionInDays)
+                .filter(Objects::nonNull)
+                .findAny()
+                .orElse(null);
+        final String kmsKeyId = streamOfOrEmpty(response.logGroups())
+                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::kmsKeyId)
                 .filter(Objects::nonNull)
                 .findAny()
                 .orElse(null);
@@ -75,6 +96,7 @@ final class Translator {
                 .arn(logGroupArn)
                 .logGroupName(logGroupName)
                 .retentionInDays(retentionInDays)
+                .kmsKeyId(kmsKeyId)
                 .build();
     }
 
@@ -84,6 +106,7 @@ final class Translator {
                         .arn(logGroup.arn())
                         .logGroupName(logGroup.logGroupName())
                         .retentionInDays(logGroup.retentionInDays())
+                        .kmsKeyId(logGroup.kmsKeyId())
                         .build())
                 .collect(Collectors.toList());
     }

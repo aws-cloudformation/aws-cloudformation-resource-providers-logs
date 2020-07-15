@@ -1,12 +1,20 @@
 package software.amazon.logs.loggroup;
 
+import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
+import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 
 import java.util.Objects;
 
@@ -19,13 +27,24 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        // RetentionPolicyInDays is the only attribute that is not createOnly
+        // Everything except RetentionPolicyInDays and KmsKeyId is createOnly
         final ResourceModel model = request.getDesiredResourceState();
-
-        if (model.getRetentionInDays() == null) {
+        final ResourceModel previousModel = request.getPreviousResourceState();
+        final boolean retentionChanged = ! retentionUnchanged(previousModel, model);
+        final boolean kmsKeyChanged = ! kmsKeyUnchanged(previousModel, model);
+        if (retentionChanged && model.getRetentionInDays() == null) {
             deleteRetentionPolicy(proxy, request, logger);
-        } else {
+        } else if (retentionChanged){
             putRetentionPolicy(proxy, request, logger);
+        }
+
+        // It can take up to five minutes for the (dis)associate operation to take effect
+        // It's unclear from the documentation if that state can be checked via the API.
+        // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html
+        if (kmsKeyChanged && model.getKmsKeyId() == null) {
+            disassociateKmsKey(proxy, request, logger);
+        } else if (kmsKeyChanged) {
+            associateKmsKey(proxy, request, logger);
         }
 
         return ProgressEvent.defaultSuccessHandler(model);
@@ -69,8 +88,77 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         logger.log(retentionPolicyMessage);
     }
 
+    private void disassociateKmsKey(final AmazonWebServicesClientProxy proxy,
+                                    final ResourceHandlerRequest<ResourceModel> request,
+                                    final Logger logger) {
+        final ResourceModel model = request.getDesiredResourceState();
+        final DisassociateKmsKeyRequest disassociateKmsKeyRequest =
+                Translator.translateToDisassociateKmsKeyRequest(model);
+        try {
+            proxy.injectCredentialsAndInvokeV2(disassociateKmsKeyRequest,
+                    ClientBuilder.getClient()::disassociateKmsKey);
+        } catch (final ResourceNotFoundException e) {
+            // The specified resource does not exist.
+            throwNotFoundException(model);
+        } catch (final InvalidParameterException e) {
+            // A parameter is specified incorrectly. We should be passing valid parameters.
+            throw new CfnInternalFailureException(e);
+        } catch (final OperationAbortedException e){
+            // Multiple requests to update the same resource were in conflict.
+            throw new CfnResourceConflictException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()), "OperationAborted", e);
+        } catch (final ServiceUnavailableException e) {
+            // The service cannot complete the request.
+            throw new CfnServiceInternalErrorException(e);
+        }
+
+        final String kmsKeyMessage =
+                String.format("%s [%s] successfully disassociated kms key.",
+                        ResourceModel.TYPE_NAME, model.getLogGroupName());
+        logger.log(kmsKeyMessage);
+    }
+
+    private void associateKmsKey(final AmazonWebServicesClientProxy proxy,
+                                 final ResourceHandlerRequest<ResourceModel> request,
+                                 final Logger logger) {
+        final ResourceModel model = request.getDesiredResourceState();
+        final AssociateKmsKeyRequest associateKmsKeyRequest =
+                Translator.translateToAssociateKmsKeyRequest(model);
+        try {
+            proxy.injectCredentialsAndInvokeV2(associateKmsKeyRequest,
+                    ClientBuilder.getClient()::associateKmsKey);
+        } catch (final ResourceNotFoundException e) {
+            // The specified resource does not exist.
+            throwNotFoundException(model);
+        } catch (final InvalidParameterException e) {
+            // A parameter is specified incorrectly. We should be passing valid parameters.
+            throw new CfnInternalFailureException(e);
+        } catch (final OperationAbortedException e){
+            // Multiple requests to update the same resource were in conflict.
+            throw new CfnResourceConflictException(ResourceModel.TYPE_NAME,
+                Objects.toString(model.getPrimaryIdentifier()), "OperationAborted", e);
+        } catch (final ServiceUnavailableException e) {
+            // The service cannot complete the request.
+            throw new CfnServiceInternalErrorException(e);
+        }
+
+        final String kmsKeyMessage =
+                String.format("%s [%s] successfully associated kms key: [%s].",
+                        ResourceModel.TYPE_NAME, model.getLogGroupName(), model.getKmsKeyId());
+        logger.log(kmsKeyMessage);
+    }
+
     private void throwNotFoundException(final ResourceModel model) {
         throw new software.amazon.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
             Objects.toString(model.getPrimaryIdentifier()));
+    }
+
+
+    private static boolean retentionUnchanged(final ResourceModel previousModel, final ResourceModel model) {
+        return (previousModel != null && model.getRetentionInDays().equals(previousModel.getRetentionInDays()));
+    }
+
+    private static boolean kmsKeyUnchanged(final ResourceModel previousModel, final ResourceModel model) {
+        return (previousModel != null && model.getKmsKeyId().equals(previousModel.getKmsKeyId()));
     }
 }
