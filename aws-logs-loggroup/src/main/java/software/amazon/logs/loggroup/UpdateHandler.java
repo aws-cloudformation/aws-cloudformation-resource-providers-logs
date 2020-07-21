@@ -155,10 +155,10 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
 
     private static boolean retentionUnchanged(final ResourceModel previousModel, final ResourceModel model) {
-        return (previousModel != null && model.getRetentionInDays().equals(previousModel.getRetentionInDays()));
+        return (previousModel != null && Objects.equals(model.getRetentionInDays(), previousModel.getRetentionInDays()));
     }
 
     private static boolean kmsKeyUnchanged(final ResourceModel previousModel, final ResourceModel model) {
-        return (previousModel != null && model.getKmsKeyId().equals(previousModel.getKmsKeyId()));
+        return (previousModel != null && Objects.equals(model.getKmsKeyId(), previousModel.getKmsKeyId()));
     }
 }

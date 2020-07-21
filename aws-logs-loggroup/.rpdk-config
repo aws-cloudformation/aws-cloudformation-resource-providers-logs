@@ -10,6 +10,7 @@
             "amazon",
             "logs",
             "loggroup"
-        ]
+        ],
+        "protocolVersion": "2.0.0"
     }
 }
