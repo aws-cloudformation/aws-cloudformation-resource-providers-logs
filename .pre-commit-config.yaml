@@ -17,6 +17,6 @@ repos:
   - id: check-merge-conflict
   - id: check-yaml
     args:
-    # Needed, or !Sub (and other CloudFormation specific tags will not be recognized)
+    # Needed, or !Sub (and other CloudFormation specific tags) will not be recognized
     - --unsafe
     exclude: buildspec.yaml
