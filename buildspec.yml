@@ -1,0 +1,25 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+        java: openjdk8
+        python: 3.7
+    commands:
+      -  pip install pre-commit cloudformation-cli-java-plugin
+  build:
+    commands:
+      - pre-commit run --all-files
+      - |
+        if [ "$(ls -A $CODEBUILD_SRC_DIR)" ]; then
+          cd $CODEBUILD_SRC_DIR
+          # skip hidden folders
+          dirs=$(find . -not -path "\./\.*" -mindepth 1 -maxdepth 1 -type d)
+          echo "Folders to build: $dirs"
+          for directory in $dirs; do
+            cd "$directory"
+            mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B clean verify --no-transfer-progress
+            cd ".."
+          done
+        else
+          echo "$CODEBUILD_SRC_DIR is empty"
+        fi
