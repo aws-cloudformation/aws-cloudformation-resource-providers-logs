@@ -18,7 +18,12 @@ phases:
           for directory in $dirs; do
             cd "$directory"
             mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B clean verify --no-transfer-progress
-            cd ".."
+            if [ "$?" -ne 0 ] ; then
+                echo "Build failed!"
+                exit 1
+            else
+                cd ".." 
+            fi
           done
         else
           echo "$CODEBUILD_SRC_DIR is empty"
