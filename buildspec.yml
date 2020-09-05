@@ -28,4 +28,3 @@ phases:
         else
           echo "$CODEBUILD_SRC_DIR is empty"
         fi
-
