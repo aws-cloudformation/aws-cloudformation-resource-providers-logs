@@ -22,10 +22,10 @@ phases:
                 echo "Build failed!"
                 exit 1
             else
-                cd ".." 
+                cd ".."
             fi
           done
         else
           echo "$CODEBUILD_SRC_DIR is empty"
         fi
-        
+
