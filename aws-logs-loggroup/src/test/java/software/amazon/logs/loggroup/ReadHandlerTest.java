@@ -1,5 +1,6 @@
 package software.amazon.logs.loggroup;
 
+import software.amazon.awssdk.services.cloudwatchlogs.model.ListTagsLogGroupResponse;
 import software.amazon.cloudformation.exceptions.ResourceNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
@@ -15,7 +16,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,11 +51,18 @@ public class ReadHandlerTest {
                 .retentionInDays(1)
                 .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                 .build();
+        final Set<Tag> tags = new HashSet<>(Arrays.asList(
+                Tag.builder().key("key-1").value("value-1").build(),
+                Tag.builder().key("key-2").value("value-2").build()
+        ));
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
                 .logGroups(Collections.singletonList(logGroup))
                 .build();
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(Translator.translateTagsToSdk(tags))
+                .build();
 
-        doReturn(describeResponse)
+        doReturn(describeResponse, tagsResponse)
             .when(proxy)
             .injectCredentialsAndInvokeV2(
                 ArgumentMatchers.any(),
@@ -62,6 +73,7 @@ public class ReadHandlerTest {
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
                 .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .tags(tags)
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -75,7 +87,8 @@ public class ReadHandlerTest {
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getResourceModel()).isEqualToComparingFieldByField(logGroup);
+        assertThat(response.getResourceModel()).isEqualToComparingOnlyGivenFields(logGroup);
+        assertThat(response.getResourceModel().getTags()).isEqualTo(tags);
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
@@ -85,8 +98,11 @@ public class ReadHandlerTest {
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
                 .logGroups(Collections.emptyList())
                 .build();
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(Collections.emptyMap())
+                .build();
 
-        doReturn(describeResponse)
+        doReturn(describeResponse, tagsResponse)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(
                         ArgumentMatchers.any(),

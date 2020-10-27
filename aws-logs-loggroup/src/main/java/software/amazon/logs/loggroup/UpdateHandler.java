@@ -1,5 +1,6 @@
 package software.amazon.logs.loggroup;
 
+import com.google.common.collect.Sets;
 import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
 import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
@@ -16,7 +17,12 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedExce
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
 
@@ -27,11 +33,12 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        // Everything except RetentionPolicyInDays and KmsKeyId is createOnly
+        // Everything except RetentionPolicyInDays, KmsKeyId and Tags is createOnly
         final ResourceModel model = request.getDesiredResourceState();
         final ResourceModel previousModel = request.getPreviousResourceState();
         final boolean retentionChanged = ! retentionUnchanged(previousModel, model);
         final boolean kmsKeyChanged = ! kmsKeyUnchanged(previousModel, model);
+        final boolean tagsChanged = ! tagsUnchanged(previousModel, model);
         if (retentionChanged && model.getRetentionInDays() == null) {
             deleteRetentionPolicy(proxy, request, logger);
         } else if (retentionChanged){
@@ -45,6 +52,10 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             disassociateKmsKey(proxy, request, logger);
         } else if (kmsKeyChanged) {
             associateKmsKey(proxy, request, logger);
+        }
+
+        if (tagsChanged) {
+            updateTags(proxy, previousModel, model, logger);
         }
 
         return ProgressEvent.defaultSuccessHandler(model);
@@ -148,6 +159,39 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         logger.log(kmsKeyMessage);
     }
 
+    private void updateTags(final AmazonWebServicesClientProxy proxy,
+                            final ResourceModel previousModel,
+                            final ResourceModel model,
+                            final Logger logger) {
+        final Set<Tag> previousTags = Optional.ofNullable(previousModel).map(ResourceModel::getTags).orElse(new HashSet<>());
+        final Set<Tag> newTags = Optional.ofNullable(model.getTags()).orElse(new HashSet<>());
+        final Set<Tag> tagsToRemove = Sets.difference(previousTags, newTags);
+        final Set<Tag> tagsToAdd = Sets.difference(newTags, previousTags);
+        try {
+            if (!tagsToRemove.isEmpty()) {
+                final List<String> tagKeys = tagsToRemove.stream().map(Tag::getKey).collect(Collectors.toList());
+                proxy.injectCredentialsAndInvokeV2(Translator.translateToUntagLogGroupRequest(model.getLogGroupName(), tagKeys),
+                        ClientBuilder.getClient()::untagLogGroup);
+
+                final String message =
+                        String.format("%s [%s] successfully removed tags: [%s]",
+                                ResourceModel.TYPE_NAME, model.getLogGroupName(), tagKeys);
+                logger.log(message);
+            }
+            if(!tagsToAdd.isEmpty()) {
+                proxy.injectCredentialsAndInvokeV2(Translator.translateToTagLogGroupRequest(model.getLogGroupName(), tagsToAdd),
+                        ClientBuilder.getClient()::tagLogGroup);
+
+                final String message =
+                        String.format("%s [%s] successfully added tags: [%s]",
+                                ResourceModel.TYPE_NAME, model.getLogGroupName(), tagsToAdd);
+                logger.log(message);
+            }
+        } catch (final ResourceNotFoundException e) {
+            throwNotFoundException(model);
+        }
+    }
+
     private void throwNotFoundException(final ResourceModel model) {
         throw new software.amazon.cloudformation.exceptions.ResourceNotFoundException(ResourceModel.TYPE_NAME,
             Objects.toString(model.getPrimaryIdentifier()));
@@ -160,5 +204,12 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
     private static boolean kmsKeyUnchanged(final ResourceModel previousModel, final ResourceModel model) {
         return (previousModel != null && Objects.equals(model.getKmsKeyId(), previousModel.getKmsKeyId()));
+    }
+
+    private static boolean tagsUnchanged(final ResourceModel previousModel, final ResourceModel model) {
+        if (previousModel == null && model.getTags() == null) {
+            return true;
+        }
+        return (previousModel != null && Objects.equals(model.getTags(), previousModel.getTags()));
     }
 }

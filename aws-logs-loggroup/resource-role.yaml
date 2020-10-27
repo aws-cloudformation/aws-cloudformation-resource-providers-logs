@@ -29,7 +29,10 @@ Resources:
                 - "logs:DeleteRetentionPolicy"
                 - "logs:DescribeLogGroups"
                 - "logs:DisassociateKmsKey"
+                - "logs:ListTagsLogGroup"
                 - "logs:PutRetentionPolicy"
+                - "logs:TagLogGroup"
+                - "logs:UntagLogGroup"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

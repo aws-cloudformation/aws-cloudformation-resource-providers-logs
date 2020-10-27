@@ -18,9 +18,12 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -55,6 +58,10 @@ public class CreateHandlerTest {
                 .retentionInDays(1)
                 .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                 .build();
+        final Set<Tag> tags = new HashSet<>(Arrays.asList(
+                Tag.builder().key("key-1").value("value-1").build(),
+                Tag.builder().key("key-2").value("value-2").build()
+        ));
 
         doReturn(describeResponseInitial, createLogGroupResponse, putRetentionPolicyResponse)
             .when(proxy)
@@ -67,6 +74,7 @@ public class CreateHandlerTest {
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
                 .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .tags(tags)
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -80,7 +88,8 @@ public class CreateHandlerTest {
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getResourceModel()).isEqualToComparingFieldByField(logGroup);
+        assertThat(response.getResourceModel()).isEqualToComparingOnlyGivenFields(logGroup);
+        assertThat(response.getResourceModel().getTags()).isEqualTo(tags);
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
