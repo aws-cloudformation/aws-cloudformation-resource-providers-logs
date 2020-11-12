@@ -33,7 +33,6 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         final CallbackContext callbackContext,
         final Logger logger) {
 
-        // Everything except RetentionPolicyInDays, KmsKeyId and Tags is createOnly
         final ResourceModel model = request.getDesiredResourceState();
         final ResourceModel previousModel = request.getPreviousResourceState();
         final boolean retentionChanged = ! retentionUnchanged(previousModel, model);
@@ -189,6 +188,8 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             }
         } catch (final ResourceNotFoundException e) {
             throwNotFoundException(model);
+        } catch (final InvalidParameterException e) {
+            throw new CfnInternalFailureException(e);
         }
     }
 

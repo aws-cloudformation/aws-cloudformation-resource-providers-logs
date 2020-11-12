@@ -811,6 +811,33 @@ public class UpdateHandlerTest {
     }
 
     @Test
+    public void handleRequest_AddTags_InvalidParameter_ServiceException() {
+        final ResourceModel previousModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException.class)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(TagLogGroupRequest.class),
+                        any()
+                );
+
+        final Set<Tag> tags = Collections.singleton(Tag.builder().key("key-1").value("value-1").build());
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .tags(tags)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .previousResourceState(previousModel)
+                .desiredResourceState(model)
+                .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.CfnInternalFailureException.class,
+                () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
     public void handleRequest_RemoveTags_FailureNotFound_ServiceException() {
         final Set<Tag> previousTags = new HashSet<>(Arrays.asList(
                 Tag.builder().key("key-1").value("value-1").build(),
@@ -837,6 +864,34 @@ public class UpdateHandlerTest {
                 .build();
 
         assertThrows(software.amazon.cloudformation.exceptions.ResourceNotFoundException.class,
+                () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+
+    @Test
+    public void handleRequest_RemoveTags_InvalidParameter_ServiceException() {
+        final Set<Tag> tags = Collections.singleton(Tag.builder().key("key-1").value("value-1").build());
+        final ResourceModel previousModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .tags(tags)
+                .build();
+        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException.class)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(UntagLogGroupRequest.class),
+                        any()
+                );
+
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .previousResourceState(previousModel)
+                .desiredResourceState(model)
+                .build();
+
+        assertThrows(software.amazon.cloudformation.exceptions.CfnInternalFailureException.class,
                 () -> handler.handleRequest(proxy, request, null, logger));
     }
 }
