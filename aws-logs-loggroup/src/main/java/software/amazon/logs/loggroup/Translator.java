@@ -120,7 +120,9 @@ final class Translator {
                 .filter(Objects::nonNull)
                 .findAny()
                 .orElse(null);
-        final Set<Tag> tags = translateSdkToTags(tagsResponse.tags());
+        final Set<Tag> tags = translateSdkToTags(Optional.ofNullable(tagsResponse)
+                .map(ListTagsLogGroupResponse::tags)
+                .orElse(null));
         return ResourceModel.builder()
                 .arn(logGroupArn)
                 .logGroupName(logGroupName)

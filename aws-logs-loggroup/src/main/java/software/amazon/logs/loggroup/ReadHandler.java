@@ -1,5 +1,6 @@
 package software.amazon.logs.loggroup;
 
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ListTagsLogGroupResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
@@ -11,6 +12,8 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundExce
 import java.util.Objects;
 
 public class ReadHandler extends BaseHandler<CallbackContext> {
+
+    private static final String ACCESS_DENIED_ERROR_CODE = "AccessDeniedException";
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -30,8 +33,17 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
         try {
             response = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
                     ClientBuilder.getClient()::describeLogGroups);
-            tagsResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()),
-                    ClientBuilder.getClient()::listTagsLogGroup);
+            try {
+                tagsResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()),
+                        ClientBuilder.getClient()::listTagsLogGroup);
+            } catch (final CloudWatchLogsException e) {
+                if (ACCESS_DENIED_ERROR_CODE.equals(e.awsErrorDetails().errorCode())) {
+                    // fail silently, if there is no permission to list tags
+                    logger.log(e.getMessage());
+                } else {
+                    throw e;
+                }
+            }
         } catch (final ResourceNotFoundException e) {
             throwNotFoundException(model);
         }
