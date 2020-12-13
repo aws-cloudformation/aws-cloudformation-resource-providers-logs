@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRe
 import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.TagLogGroupRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.UntagLogGroupRequest;
+import software.amazon.awssdk.utils.CollectionUtils;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,11 +46,11 @@ final class Translator {
                 .build();
     }
 
-    static CreateLogGroupRequest translateToCreateRequest(final ResourceModel model) {
+    static CreateLogGroupRequest translateToCreateRequest(final ResourceModel model, final Map<String, String> tags) {
         return CreateLogGroupRequest.builder()
                 .logGroupName(model.getLogGroupName())
                 .kmsKeyId(model.getKmsKeyId())
-                .tags(translateTagsToSdk(model.getTags()))
+                .tags(tags)
                 .build();
     }
 
@@ -85,10 +86,10 @@ final class Translator {
                 .build();
     }
 
-    static TagLogGroupRequest translateToTagLogGroupRequest(final String logGroupName, final Set<Tag> tags) {
+    static TagLogGroupRequest translateToTagLogGroupRequest(final String logGroupName, final Map<String, String> tags) {
         return TagLogGroupRequest.builder()
                 .logGroupName(logGroupName)
-                .tags(translateTagsToSdk(tags))
+                .tags(tags)
                 .build();
     }
 
@@ -163,14 +164,14 @@ final class Translator {
     }
 
     static Map<String, String> translateTagsToSdk(final Set<Tag> tags) {
-        if (tags == null || tags.isEmpty()) {
+        if (CollectionUtils.isNullOrEmpty(tags)) {
             return null;
         }
         return tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue));
     }
 
     static Set<Tag> translateSdkToTags(final Map<String, String> tags) {
-        if (tags == null || tags.isEmpty()) {
+        if (CollectionUtils.isNullOrEmpty(tags)) {
             return null;
         }
         return tags.entrySet().stream().map(tag -> new Tag(tag.getKey(), tag.getValue()))

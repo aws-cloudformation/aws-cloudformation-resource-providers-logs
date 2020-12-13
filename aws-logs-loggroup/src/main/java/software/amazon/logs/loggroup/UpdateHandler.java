@@ -1,6 +1,7 @@
 package software.amazon.logs.loggroup;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
 import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
@@ -17,12 +18,14 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedExce
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
 
@@ -35,9 +38,12 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
         final ResourceModel model = request.getDesiredResourceState();
         final ResourceModel previousModel = request.getPreviousResourceState();
+        final Map<String, String> tags = request.getDesiredResourceTags();
+        final Map<String, String> previousTags = request.getPreviousResourceTags();
+
         final boolean retentionChanged = ! retentionUnchanged(previousModel, model);
         final boolean kmsKeyChanged = ! kmsKeyUnchanged(previousModel, model);
-        final boolean tagsChanged = ! tagsUnchanged(previousModel, model);
+        final boolean tagsChanged = ! tagsUnchanged(previousTags, tags);
         if (retentionChanged && model.getRetentionInDays() == null) {
             deleteRetentionPolicy(proxy, request, logger);
         } else if (retentionChanged){
@@ -54,7 +60,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         }
 
         if (tagsChanged) {
-            updateTags(proxy, previousModel, model, logger);
+            updateTags(proxy, model, previousTags, tags, logger);
         }
 
         return ProgressEvent.defaultSuccessHandler(model);
@@ -159,16 +165,21 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
     }
 
     private void updateTags(final AmazonWebServicesClientProxy proxy,
-                            final ResourceModel previousModel,
                             final ResourceModel model,
+                            final Map<String, String> previousTags,
+                            final Map<String, String> tags,
                             final Logger logger) {
-        final Set<Tag> previousTags = Optional.ofNullable(previousModel).map(ResourceModel::getTags).orElse(new HashSet<>());
-        final Set<Tag> newTags = Optional.ofNullable(model.getTags()).orElse(new HashSet<>());
-        final Set<Tag> tagsToRemove = Sets.difference(previousTags, newTags);
-        final Set<Tag> tagsToAdd = Sets.difference(newTags, previousTags);
+        MapDifference<String, String> tagsDifference = Maps.difference(Optional.ofNullable(previousTags).orElse(new HashMap<>()),
+                Optional.ofNullable(tags).orElse(new HashMap<>()));
+        final Map<String, String> tagsToRemove = tagsDifference.entriesOnlyOnLeft();
+        final Map<String, String> tagsToAdd = tagsDifference.entriesOnlyOnRight();
+        final Map<String, String> tagsToDiffer = tagsDifference.entriesDiffering().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, tag -> tag.getValue().rightValue()));
+        final Map<String, String> tagsToUpdate = Stream.concat(tagsToAdd.entrySet().stream(), tagsToDiffer.entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         try {
             if (!tagsToRemove.isEmpty()) {
-                final List<String> tagKeys = tagsToRemove.stream().map(Tag::getKey).collect(Collectors.toList());
+                final List<String> tagKeys = new ArrayList<>(tagsToRemove.keySet());
                 proxy.injectCredentialsAndInvokeV2(Translator.translateToUntagLogGroupRequest(model.getLogGroupName(), tagKeys),
                         ClientBuilder.getClient()::untagLogGroup);
 
@@ -177,13 +188,13 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                                 ResourceModel.TYPE_NAME, model.getLogGroupName(), tagKeys);
                 logger.log(message);
             }
-            if(!tagsToAdd.isEmpty()) {
-                proxy.injectCredentialsAndInvokeV2(Translator.translateToTagLogGroupRequest(model.getLogGroupName(), tagsToAdd),
+            if(!tagsToUpdate.isEmpty()) {
+                proxy.injectCredentialsAndInvokeV2(Translator.translateToTagLogGroupRequest(model.getLogGroupName(), tagsToUpdate),
                         ClientBuilder.getClient()::tagLogGroup);
 
                 final String message =
                         String.format("%s [%s] successfully added tags: [%s]",
-                                ResourceModel.TYPE_NAME, model.getLogGroupName(), tagsToAdd);
+                                ResourceModel.TYPE_NAME, model.getLogGroupName(), tagsToUpdate);
                 logger.log(message);
             }
         } catch (final ResourceNotFoundException e) {
@@ -207,10 +218,10 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         return (previousModel != null && Objects.equals(model.getKmsKeyId(), previousModel.getKmsKeyId()));
     }
 
-    private static boolean tagsUnchanged(final ResourceModel previousModel, final ResourceModel model) {
-        if (previousModel == null && model.getTags() == null) {
+    private static boolean tagsUnchanged(final Map<String, String> previousTags, final Map<String, String> tags) {
+        if (previousTags == null && tags == null) {
             return true;
         }
-        return (previousModel != null && Objects.equals(model.getTags(), previousModel.getTags()));
+        return (previousTags != null && Objects.equals(previousTags, tags));
     }
 }

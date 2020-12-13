@@ -26,7 +26,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         final ResourceModel model = request.getDesiredResourceState();
 
         try {
-            proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model),
+            proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model, request.getDesiredResourceTags()),
                 ClientBuilder.getClient()::createLogGroup);
         } catch (final ResourceAlreadyExistsException e) {
             throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME,

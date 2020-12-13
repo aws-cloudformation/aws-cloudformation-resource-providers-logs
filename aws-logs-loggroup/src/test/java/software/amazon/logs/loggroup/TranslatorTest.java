@@ -79,7 +79,7 @@ public class TranslatorTest {
                 .kmsKeyId(RESOURCE_MODEL.getKmsKeyId())
                 .tags(MAP_TAGS)
                 .build();
-        assertThat(Translator.translateToCreateRequest(RESOURCE_MODEL)).isEqualToComparingFieldByField(request);
+        assertThat(Translator.translateToCreateRequest(RESOURCE_MODEL, MAP_TAGS)).isEqualToComparingFieldByField(request);
     }
 
     @Test
@@ -141,7 +141,7 @@ public class TranslatorTest {
                 .tags(MAP_TAGS)
                 .build();
 
-        assertThat(Translator.translateToTagLogGroupRequest(RESOURCE_MODEL.getLogGroupName(), SET_TAGS))
+        assertThat(Translator.translateToTagLogGroupRequest(RESOURCE_MODEL.getLogGroupName(), MAP_TAGS))
                 .isEqualToComparingFieldByField(request);
     }
 
