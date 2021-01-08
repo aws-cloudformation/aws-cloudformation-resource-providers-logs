@@ -35,7 +35,7 @@ jobs:
         extra_args: --all-files
     - name: Run maven verify for all resources
       run: |
-        for directory in ./aws-*; do
+        for directory in $GITHUB_WORKSPACE/aws-*; do
           cd "$directory"
           mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B clean verify
         done
