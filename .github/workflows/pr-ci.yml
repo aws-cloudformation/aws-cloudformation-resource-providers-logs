@@ -35,7 +35,7 @@ jobs:
       run: |
         for directory in ./aws-*; do
           cd "$directory"
-          mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B clean verify || travis_terminate 1
+          mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B clean verify
         done
     - name: Failure diff
       if: ${{ failure() }}
