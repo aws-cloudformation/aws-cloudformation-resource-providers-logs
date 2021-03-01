@@ -12,8 +12,9 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 {
     "Type" : "AWS::Logs::QueryDefinitions",
     "Properties" : {
-        "<a href="#queryname" title="QueryName">QueryName</a>" : <i>String</i>,
+        "<a href="#name" title="Name">Name</a>" : <i>String</i>,
         "<a href="#querystring" title="QueryString">QueryString</a>" : <i>String</i>,
+        "<a href="#loggroupnames" title="LogGroupNames">LogGroupNames</a>" : <i>[ String, ... ]</i>,
     }
 }
 </pre>
@@ -23,17 +24,19 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 <pre>
 Type: AWS::Logs::QueryDefinitions
 Properties:
-    <a href="#queryname" title="QueryName">QueryName</a>: <i>String</i>
+    <a href="#name" title="Name">Name</a>: <i>String</i>
     <a href="#querystring" title="QueryString">QueryString</a>: <i>String</i>
+    <a href="#loggroupnames" title="LogGroupNames">LogGroupNames</a>: <i>
+      - String</i>
 </pre>
 
 ## Properties
 
-#### QueryName
+#### Name
 
 A name for the saved query definition
 
-_Required_: Yes
+_Required_: No
 
 _Type_: String
 
@@ -49,13 +52,23 @@ _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormati
 
 The query string to use for this definition
 
-_Required_: Yes
+_Required_: No
 
 _Type_: String
 
 _Minimum_: <code>1</code>
 
 _Maximum_: <code>10000</code>
+
+_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+
+#### LogGroupNames
+
+Optionally define specific log groups as part of your query definition
+
+_Required_: No
+
+_Type_: List of String
 
 _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
 
@@ -71,11 +84,6 @@ The `Fn::GetAtt` intrinsic function returns a value for a specified attribute of
 
 For more information about using the `Fn::GetAtt` intrinsic function, see [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
 
-#### LogGroupNames
-
-Optionally define specific log groups as part of your query definition
-
 #### QueryDefinitionId
 
 Unique identifier of a query definition
-
