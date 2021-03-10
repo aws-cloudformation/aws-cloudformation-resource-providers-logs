@@ -29,7 +29,7 @@ public class BaseTests {
     @Test
     public static void handleRequest_ResourceNotFound(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
 
-        final ResourceModel model = ResourceModel.builder().name(name).build();
+        final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
@@ -43,7 +43,7 @@ public class BaseTests {
 
     @Test
     public static void handleRequest_ServiceUnavailable(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
-        final ResourceModel model = ResourceModel.builder().name(name).build();
+        final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
@@ -58,7 +58,7 @@ public class BaseTests {
     @Test
     public static void handleRequest_InvalidParameter(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
 
-        final ResourceModel model = ResourceModel.builder().name(name).build();
+        final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
@@ -69,4 +69,9 @@ public class BaseTests {
 
         assertThrows(CfnInvalidRequestException.class, () -> handler.handleRequest(proxy, request, null, logger));
     }
+
+    private static ResourceModel dummyModel(String name) {
+        return ResourceModel.builder().name(name).policyDocument("{}").build();
+    }
+
 }

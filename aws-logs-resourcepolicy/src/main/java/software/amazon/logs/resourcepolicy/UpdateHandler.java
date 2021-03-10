@@ -28,6 +28,10 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             return ProgressEvent.defaultFailureHandler(new CfnInvalidRequestException(ResourceModel.TYPE_NAME, new NullPointerException()), HandlerErrorCode.InvalidRequest);
         }
 
+        if (model.getPolicyDocument() == null) {
+            return ProgressEvent.defaultFailureHandler(new CfnInvalidRequestException(ResourceModel.TYPE_NAME, new NullPointerException()), HandlerErrorCode.InvalidRequest);
+        }
+
         try {
             proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model), ClientBuilder.getLogsClient()::putResourcePolicy);
         } catch (final InvalidParameterException e) {

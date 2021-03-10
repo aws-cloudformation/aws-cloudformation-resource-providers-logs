@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 @ExtendWith(MockitoExtension.class)
 public class UpdateHandlerTest {
     private static final String MOCK_RESOURCEPOLICY_NAME = "someName";
+    private static final String MOCK_RESOURCEPOLICY_POLICY = "{}";
     private UpdateHandler handler;
 
     @Mock
@@ -40,7 +41,10 @@ public class UpdateHandlerTest {
     @Test
     public void handleRequest_SimpleSuccess() {
 
-        final ResourceModel model = ResourceModel.builder().name(MOCK_RESOURCEPOLICY_NAME).build();
+        final ResourceModel model = ResourceModel.builder().
+                name(MOCK_RESOURCEPOLICY_NAME).
+                policyDocument(MOCK_RESOURCEPOLICY_POLICY).
+                build();
         PutResourcePolicyResponse putResourcePolicyResponse = PutResourcePolicyResponse.builder()
                 .resourcePolicy(ResourcePolicy.builder().policyName(MOCK_RESOURCEPOLICY_NAME).build())
                 .build();
@@ -64,6 +68,38 @@ public class UpdateHandlerTest {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_NameNull_Failure() {
+        software.amazon.logs.resourcepolicy.ResourceModel expectedModel = software.amazon.logs.resourcepolicy.ResourceModel.builder()
+                .name(null)
+                .policyDocument(MOCK_RESOURCEPOLICY_POLICY)
+                .build();
+        final ResourceHandlerRequest<software.amazon.logs.resourcepolicy.ResourceModel> request = ResourceHandlerRequest.<software.amazon.logs.resourcepolicy.ResourceModel>builder()
+                .desiredResourceState(expectedModel)
+                .build();
+        final ProgressEvent<software.amazon.logs.resourcepolicy.ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+    }
+
+    @Test
+    public void handleRequest_PolicyDocumentNull_Failure() {
+        software.amazon.logs.resourcepolicy.ResourceModel expectedModel = software.amazon.logs.resourcepolicy.ResourceModel.builder()
+                .name("someName")
+                .policyDocument(null)
+                .build();
+        final ResourceHandlerRequest<software.amazon.logs.resourcepolicy.ResourceModel> request = ResourceHandlerRequest.<software.amazon.logs.resourcepolicy.ResourceModel>builder()
+                .desiredResourceState(expectedModel)
+                .build();
+        final ProgressEvent<software.amazon.logs.resourcepolicy.ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
     }
 
     @Test
