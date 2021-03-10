@@ -1,0 +1,56 @@
+{
+  "typeName": "AWS::Logs::ResourcePolicy",
+  "description": "The resource schema for AWSLogs ResourcePolicy",
+  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
+  "properties": {
+    "Name": {
+      "description": "A name for resource policy",
+      "type": "string",
+      "pattern": "^([^:*\\/]+\\/?)*[^:*\\/]+$",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "PolicyDocument": {
+      "description": "The policy document",
+      "type": "string",
+      "pattern": "[\\u0009\\u000A\\u000D\\u0020-\\u00FF]+",
+      "minLength": 1,
+      "maxLength": 131072
+    }
+  },
+  "additionalProperties": false,
+  "primaryIdentifier": [
+    "/properties/Name"
+  ],
+  "handlers": {
+    "create": {
+      "permissions": [
+        "logs:PutResourcePolicy",
+        "logs:DescribeResourcePolicies"
+      ]
+    },
+    "read": {
+      "permissions": [
+        "logs:DescribeResourcePolicies"
+      ]
+    },
+    "update": {
+      "permissions": [
+        "logs:PutResourcePolicy",
+        "logs:DescribeResourcePolicies",
+        "logs:DeleteResourcePolicy"
+      ]
+    },
+    "delete": {
+      "permissions": [
+        "logs:DescribeResourcePolicies",
+        "logs:DeleteResourcePolicy"
+      ]
+    },
+    "list": {
+      "permissions": [
+        "logs:DescribeResourcePolicies"
+      ]
+    }
+  }
+}
