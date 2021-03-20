@@ -39,6 +39,10 @@
       "maxLength": 256
     }
   },
+  "required": [
+    "Name",
+    "QueryString"
+  ],
   "additionalProperties": false,
   "readOnlyProperties": [
     "/properties/QueryDefinitionId"
