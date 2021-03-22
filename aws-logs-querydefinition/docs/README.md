@@ -36,7 +36,7 @@ Properties:
 
 A name for the saved query definition
 
-_Required_: No
+_Required_: Yes
 
 _Type_: String
 
@@ -52,7 +52,7 @@ _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormati
 
 The query string to use for this definition
 
-_Required_: No
+_Required_: Yes
 
 _Type_: String
 
