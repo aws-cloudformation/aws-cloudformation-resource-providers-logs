@@ -33,7 +33,7 @@ Properties:
 
 A name for resource policy
 
-_Required_: No
+_Required_: Yes
 
 _Type_: String
 
@@ -43,13 +43,13 @@ _Maximum_: <code>255</code>
 
 _Pattern_: <code>^([^:*\/]+\/?)*[^:*\/]+$</code>
 
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+_Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-replacement)
 
 #### PolicyDocument
 
 The policy document
 
-_Required_: No
+_Required_: Yes
 
 _Type_: String
 

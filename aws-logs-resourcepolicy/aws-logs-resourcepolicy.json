@@ -22,6 +22,9 @@
   "primaryIdentifier": [
     "/properties/PolicyName"
   ],
+  "createOnlyProperties": [
+    "/properties/PolicyName"
+  ],
   "handlers": {
     "create": {
       "permissions": [
@@ -52,5 +55,9 @@
         "logs:DescribeResourcePolicies"
       ]
     }
-  }
+  },
+  "required": [
+    "PolicyName",
+    "PolicyDocument"
+  ]
 }
