@@ -1,15 +1,12 @@
 package software.amazon.logs.resourcepolicy;
 
 import com.google.common.collect.ImmutableList;
+import org.junit.jupiter.api.AfterEach;
 import org.mockito.ArgumentMatchers;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.*;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.HandlerErrorCode;
-import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.OperationStatus;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CreateHandlerTest {
+public class CreateHandlerTest extends AbstractTestBase {
     private static final String MOCK_RESOURCEPOLICY_NAME = "someName";
     private static final String POLICY_DOC = "{\n" +
             "  \"Version\": \"2012-10-17\",\n" +
@@ -47,9 +44,16 @@ public class CreateHandlerTest {
     private AmazonWebServicesClientProxy proxy;
 
     @Mock
+    private ProxyClient<CloudWatchLogsClient> proxyClient;
+
+    @Mock
+    CloudWatchLogsClient sdkClient;
+
+    @Mock
     private Logger logger;
 
     PutResourcePolicyResponse putResourcePolicyResponse;
+    DescribeResourcePoliciesResponse describeResponse;
 
     ImmutableList<ResourceModel> modelsUnderTestValid = ImmutableList.of(
             ResourceModel.builder().policyName("myResourcePolicy").policyDocument(POLICY_DOC).build()
@@ -58,16 +62,28 @@ public class CreateHandlerTest {
     @BeforeEach
     public void setup() {
         proxy = mock(AmazonWebServicesClientProxy.class);
+        sdkClient = mock(CloudWatchLogsClient.class);
+        proxyClient = MOCK_PROXY(proxy, sdkClient);
+
         logger = mock(Logger.class);
         putResourcePolicyResponse = PutResourcePolicyResponse.builder()
                 .resourcePolicy(ResourcePolicy.builder().policyName(MOCK_RESOURCEPOLICY_NAME).build())
                 .build();
+        describeResponse = DescribeResourcePoliciesResponse.builder().build();
         handler = new CreateHandler();
     }
 
+    @AfterEach
+    public void tear_down() {
+        verify(sdkClient, atLeastOnce()).describeResourcePolicies();
+        verifyNoMoreInteractions(sdkClient);
+    }
 
     @Test
     public void handleRequest_Success_ValidCases() {
+        when(proxyClient.client().describeResourcePolicies())
+                .thenReturn(describeResponse);
+
         doReturn(putResourcePolicyResponse)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
@@ -77,7 +93,7 @@ public class CreateHandlerTest {
                     .desiredResourceState(model)
                     .build();
 
-            final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+            final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, proxyClient, logger);
 
             assertThat(response).isNotNull();
             assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -89,38 +105,39 @@ public class CreateHandlerTest {
             assertThat(response.getErrorCode()).isNull();
         }
     }
-//
-//    @Test
-//    public void handleRequest_Failed_AlreadyExists() {
-//        final ResourceModel model = ResourceModel.builder().name("myResourcePolicy").policyDocument(POLICY_DOC).build();
-//
-//        final DescribeResourcePoliciesResponse describeResponse = DescribeResourcePoliciesResponse.builder()
-//                .resourcePolicies(ResourcePolicy.builder().policyName(model.getName()).build())
-//                .build();
-//
-//        when(proxy.injectCredentialsAndInvokeV2(any(DescribeResourcePoliciesRequest.class), ArgumentMatchers.any()))
-//                .thenReturn(describeResponse);
-//
-//        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-//                .desiredResourceState(model)
-//                .build();
-//
-//        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), logger))
-//                .isInstanceOf(CfnAlreadyExistsException.class);
-//    }
 
     @Test
-    public void handleRequest_Failure_InvalidRequest() {
-        BaseTests.handleRequest_InvalidParameter(proxy, handler, logger, null);
+    public void handleRequest_Failed_AlreadyExists() {
+        final ResourceModel model = ResourceModel.builder().policyName("myResourcePolicy").policyDocument(POLICY_DOC).build();
+
+        describeResponse = DescribeResourcePoliciesResponse.builder()
+                .resourcePolicies(ResourcePolicy.builder().policyName(model.getPolicyName()).build())
+                .build();
+
+        when(proxyClient.client().describeResourcePolicies())
+                .thenReturn(describeResponse);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnAlreadyExistsException.class);
     }
 
     @Test
-    public void handleRequest_ResourceNotFound() {
-        BaseTests.handleRequest_ResourceNotFound(proxy, handler, logger, null);
+    public void handleRequest_Failure_InvalidRequest() {
+        when(proxyClient.client().describeResourcePolicies())
+                .thenReturn(describeResponse);
+
+        BaseTests.handleRequest_InvalidParameter(proxy, handler, logger, null, proxyClient);
     }
 
     @Test
     public void handleRequest_ServiceUnavailable() {
-        BaseTests.handleRequest_ServiceUnavailable(proxy, handler, logger, null);
+        when(proxyClient.client().describeResourcePolicies())
+                .thenReturn(describeResponse);
+
+        BaseTests.handleRequest_ServiceUnavailable(proxy, handler, logger, null, proxyClient);
     }
 }

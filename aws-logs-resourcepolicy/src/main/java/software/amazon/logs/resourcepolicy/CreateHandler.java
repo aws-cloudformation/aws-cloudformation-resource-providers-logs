@@ -12,16 +12,21 @@ import software.amazon.cloudformation.proxy.*;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class CreateHandler extends BaseHandler<CallbackContext> {
+public class CreateHandler extends BaseHandlerStd {
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
         final ResourceHandlerRequest<ResourceModel> request,
         final CallbackContext callbackContext,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
         final Logger logger) {
 
         final ResourceModel model = request.getDesiredResourceState();
+
+        if (policyExists(proxyClient.client(), model)) {
+            throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString());
+        }
 
         PutResourcePolicyResponse putResourcePolicyResponse = invokePutResourcePolicyCall(proxy, model);
 
@@ -33,13 +38,18 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             .build();
     }
 
+    private boolean policyExists(CloudWatchLogsClient client, ResourceModel model) {
+        DescribeResourcePoliciesResponse response = client.describeResourcePolicies();
+        return response.resourcePolicies().stream().anyMatch(
+                policy -> (policy.policyName().equals(model.getPolicyName()))
+        );
+    }
+
     private PutResourcePolicyResponse invokePutResourcePolicyCall(AmazonWebServicesClientProxy proxy, ResourceModel model) {
         try {
             return proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model), ClientBuilder.getLogsClient()::putResourcePolicy);
         } catch (InvalidParameterException ex) {
             throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, ex);
-        } catch (ResourceNotFoundException ex) {
-            throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPolicyName());
         } catch (ServiceUnavailableException ex) {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, ex);
         }
