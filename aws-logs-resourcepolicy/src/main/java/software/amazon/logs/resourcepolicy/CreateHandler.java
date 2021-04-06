@@ -1,16 +1,11 @@
 package software.amazon.logs.resourcepolicy;
 
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.*;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
-import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.*;
-
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class CreateHandler extends BaseHandlerStd {
 
@@ -38,16 +33,9 @@ public class CreateHandler extends BaseHandlerStd {
             .build();
     }
 
-    private boolean policyExists(CloudWatchLogsClient client, ResourceModel model) {
-        DescribeResourcePoliciesResponse response = client.describeResourcePolicies();
-        return response.resourcePolicies().stream().anyMatch(
-                policy -> (policy.policyName().equals(model.getPolicyName()))
-        );
-    }
-
     private PutResourcePolicyResponse invokePutResourcePolicyCall(AmazonWebServicesClientProxy proxy, ResourceModel model) {
         try {
-            return proxy.injectCredentialsAndInvokeV2(Translator.translateToCreateRequest(model), ClientBuilder.getLogsClient()::putResourcePolicy);
+            return proxy.injectCredentialsAndInvokeV2(Translator.translateToPutRequest(model), ClientBuilder.getLogsClient()::putResourcePolicy);
         } catch (InvalidParameterException ex) {
             throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, ex);
         } catch (ServiceUnavailableException ex) {

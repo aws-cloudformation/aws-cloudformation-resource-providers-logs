@@ -6,7 +6,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutResourcePolicyReq
 
 final class Translator {
 
-    static PutResourcePolicyRequest translateToCreateRequest(final ResourceModel model) {
+    static PutResourcePolicyRequest translateToPutRequest(final ResourceModel model) {
         return PutResourcePolicyRequest.builder()
                 .policyName(model.getPolicyName())
                 .policyDocument(model.getPolicyDocument())

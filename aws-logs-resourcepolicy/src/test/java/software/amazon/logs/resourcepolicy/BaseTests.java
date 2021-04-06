@@ -6,10 +6,8 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
@@ -27,8 +25,6 @@ import static org.mockito.Mockito.doThrow;
 public class BaseTests {
     private static final String MOCK_ERROR = "someError";
 
-
-    @Test
     public static void handleRequest_ResourceNotFound(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
 
         final ResourceModel model = dummyModel(name);
@@ -43,7 +39,15 @@ public class BaseTests {
         assertThrows(CfnNotFoundException.class, () -> handler.handleRequest(proxy, request, null, logger));
     }
 
-    @Test
+    public static void handleRequest_ResourceNotFound(AmazonWebServicesClientProxy proxy, BaseHandlerStd handler, Logger logger, @Nullable String name, ProxyClient<CloudWatchLogsClient> proxyClient) {
+        final ResourceModel model = dummyModel(name);
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThrows(CfnNotFoundException.class, () -> handler.handleRequest(proxy, request, null, proxyClient, logger));
+    }
+
     public static void handleRequest_ServiceUnavailable(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
         final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -57,7 +61,6 @@ public class BaseTests {
         assertThrows(CfnServiceInternalErrorException.class, () -> handler.handleRequest(proxy, request, null, logger));
     }
 
-    @Test
     public static void handleRequest_ServiceUnavailable(AmazonWebServicesClientProxy proxy, BaseHandlerStd handler, Logger logger, @Nullable String name, ProxyClient<CloudWatchLogsClient> proxyClient) {
         final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -71,7 +74,6 @@ public class BaseTests {
         assertThrows(CfnServiceInternalErrorException.class, () -> handler.handleRequest(proxy, request, null, proxyClient, logger));
     }
 
-    @Test
     public static void handleRequest_InvalidParameter(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
 
         final ResourceModel model = dummyModel(name);
@@ -86,7 +88,6 @@ public class BaseTests {
         assertThrows(CfnInvalidRequestException.class, () -> handler.handleRequest(proxy, request, null, logger));
     }
 
-    @Test
     public static void handleRequest_InvalidParameter(AmazonWebServicesClientProxy proxy, BaseHandlerStd handler, Logger logger, @Nullable String name, ProxyClient<CloudWatchLogsClient> proxyClient) {
 
         final ResourceModel model = dummyModel(name);
