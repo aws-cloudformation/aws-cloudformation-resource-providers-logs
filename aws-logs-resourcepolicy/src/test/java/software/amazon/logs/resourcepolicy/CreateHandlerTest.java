@@ -52,7 +52,7 @@ public class CreateHandlerTest {
     PutResourcePolicyResponse putResourcePolicyResponse;
 
     ImmutableList<ResourceModel> modelsUnderTestValid = ImmutableList.of(
-            ResourceModel.builder().name("myResourcePolicy").policyDocument(POLICY_DOC).build()
+            ResourceModel.builder().policyName("myResourcePolicy").policyDocument(POLICY_DOC).build()
     );
 
     @BeforeEach

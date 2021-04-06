@@ -38,7 +38,7 @@ public class DeleteHandlerTest {
 
     @Test
     public void handleRequest_SimpleSuccess() {
-        final ResourceModel model = ResourceModel.builder().name(MOCK_RESOURCEPOLICY_NAME).build();
+        final ResourceModel model = ResourceModel.builder().policyName(MOCK_RESOURCEPOLICY_NAME).build();
 
         final DeleteResourcePolicyResponse deleteResponse = DeleteResourcePolicyResponse.builder().build();
 

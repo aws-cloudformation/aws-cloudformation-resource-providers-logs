@@ -71,7 +71,7 @@ public class BaseTests {
     }
 
     private static ResourceModel dummyModel(String name) {
-        return ResourceModel.builder().name(name).policyDocument("{}").build();
+        return ResourceModel.builder().policyName(name).policyDocument("{}").build();
     }
 
 }

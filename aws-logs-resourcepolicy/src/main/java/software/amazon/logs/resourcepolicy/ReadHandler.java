@@ -31,7 +31,7 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                         ClientBuilder.getLogsClient()::describeResourcePolicies);
                 nextToken = describeResourcePoliciesResponse.nextToken();
                 Optional<ResourcePolicy> queryDefinition = describeResourcePoliciesResponse.resourcePolicies().stream()
-                        .filter(qd -> qd.policyName().equals(model.getName()))
+                        .filter(qd -> qd.policyName().equals(model.getPolicyName()))
                         .findAny();
                 if (queryDefinition.isPresent()) {
                     return ProgressEvent.<ResourceModel, CallbackContext>builder()

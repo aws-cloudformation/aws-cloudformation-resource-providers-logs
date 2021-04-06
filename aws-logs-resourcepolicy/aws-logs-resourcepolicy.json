@@ -3,7 +3,7 @@
   "description": "The resource schema for AWSLogs ResourcePolicy",
   "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
   "properties": {
-    "Name": {
+    "PolicyName": {
       "description": "A name for resource policy",
       "type": "string",
       "pattern": "^([^:*\\/]+\\/?)*[^:*\\/]+$",
@@ -20,7 +20,7 @@
   },
   "additionalProperties": false,
   "primaryIdentifier": [
-    "/properties/Name"
+    "/properties/PolicyName"
   ],
   "handlers": {
     "create": {

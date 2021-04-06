@@ -8,14 +8,14 @@ final class Translator {
 
     static PutResourcePolicyRequest translateToCreateRequest(final ResourceModel model) {
         return PutResourcePolicyRequest.builder()
-                .policyName(model.getName())
+                .policyName(model.getPolicyName())
                 .policyDocument(model.getPolicyDocument())
                 .build();
     }
 
     static DeleteResourcePolicyRequest translateToDeleteRequest(final ResourceModel model) {
         return DeleteResourcePolicyRequest.builder()
-                .policyName(model.getName())
+                .policyName(model.getPolicyName())
                 .build();
     }
 

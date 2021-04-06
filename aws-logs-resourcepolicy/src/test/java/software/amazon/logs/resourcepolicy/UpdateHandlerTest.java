@@ -42,7 +42,7 @@ public class UpdateHandlerTest {
     public void handleRequest_SimpleSuccess() {
 
         final ResourceModel model = ResourceModel.builder().
-                name(MOCK_RESOURCEPOLICY_NAME).
+                policyName(MOCK_RESOURCEPOLICY_NAME).
                 policyDocument(MOCK_RESOURCEPOLICY_POLICY).
                 build();
         PutResourcePolicyResponse putResourcePolicyResponse = PutResourcePolicyResponse.builder()
@@ -73,7 +73,7 @@ public class UpdateHandlerTest {
     @Test
     public void handleRequest_NameNull_Failure() {
         software.amazon.logs.resourcepolicy.ResourceModel expectedModel = software.amazon.logs.resourcepolicy.ResourceModel.builder()
-                .name(null)
+                .policyName(null)
                 .policyDocument(MOCK_RESOURCEPOLICY_POLICY)
                 .build();
         final ResourceHandlerRequest<software.amazon.logs.resourcepolicy.ResourceModel> request = ResourceHandlerRequest.<software.amazon.logs.resourcepolicy.ResourceModel>builder()
@@ -89,7 +89,7 @@ public class UpdateHandlerTest {
     @Test
     public void handleRequest_PolicyDocumentNull_Failure() {
         software.amazon.logs.resourcepolicy.ResourceModel expectedModel = software.amazon.logs.resourcepolicy.ResourceModel.builder()
-                .name("someName")
+                .policyName("someName")
                 .policyDocument(null)
                 .build();
         final ResourceHandlerRequest<software.amazon.logs.resourcepolicy.ResourceModel> request = ResourceHandlerRequest.<software.amazon.logs.resourcepolicy.ResourceModel>builder()

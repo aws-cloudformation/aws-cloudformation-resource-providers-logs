@@ -36,7 +36,7 @@ public class ListHandler extends BaseHandler<CallbackContext> {
                 nextToken = describeResourcePoliciesResponse.nextToken();
                 models.addAll(describeResourcePoliciesResponse.resourcePolicies().stream()
                         .map(qd -> ResourceModel.builder()
-                                .name(qd.policyName())
+                                .policyName(qd.policyName())
                                 .policyDocument(qd.policyDocument())
                                 .build())
                         .collect(Collectors.toList()));

@@ -47,7 +47,7 @@ public class ReadHandlerTest {
         final DescribeResourcePoliciesResponse describeResourcePoliciesResponse = DescribeResourcePoliciesResponse.builder()
                 .resourcePolicies(ImmutableList.of(ResourcePolicy.builder().policyName(MOCK_RESOURCEPOLICY_NAME).build()))
                 .build();
-        final ResourceModel model = ResourceModel.builder().name(MOCK_RESOURCEPOLICY_NAME).build();
+        final ResourceModel model = ResourceModel.builder().policyName(MOCK_RESOURCEPOLICY_NAME).build();
         doReturn(describeResourcePoliciesResponse)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
@@ -76,7 +76,7 @@ public class ReadHandlerTest {
         final DescribeResourcePoliciesResponse describeResourcePoliciesResponse = DescribeResourcePoliciesResponse.builder()
                 .resourcePolicies(ImmutableList.of(ResourcePolicy.builder().policyName("WrongQueryID").build()))
                 .build();
-        final ResourceModel model = ResourceModel.builder().name(MOCK_RESOURCEPOLICY_NAME).build();
+        final ResourceModel model = ResourceModel.builder().policyName(MOCK_RESOURCEPOLICY_NAME).build();
         doReturn(describeResourcePoliciesResponse)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());

@@ -25,7 +25,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
         PutResourcePolicyResponse putResourcePolicyResponse = invokePutResourcePolicyCall(proxy, model);
 
-        logger.log(String.format("%s [%s] successfully created.", ResourceModel.TYPE_NAME, model.getName()));
+        logger.log(String.format("%s [%s] successfully created.", ResourceModel.TYPE_NAME, model.getPolicyName()));
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()
             .resourceModel(model)
@@ -39,7 +39,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         } catch (InvalidParameterException ex) {
             throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, ex);
         } catch (ResourceNotFoundException ex) {
-            throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getName());
+            throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPolicyName());
         } catch (ServiceUnavailableException ex) {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, ex);
         }

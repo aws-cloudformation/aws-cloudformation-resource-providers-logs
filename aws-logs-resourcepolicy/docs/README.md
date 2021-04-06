@@ -12,7 +12,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 {
     "Type" : "AWS::Logs::ResourcePolicy",
     "Properties" : {
-        "<a href="#name" title="Name">Name</a>" : <i>String</i>,
+        "<a href="#policyname" title="PolicyName">PolicyName</a>" : <i>String</i>,
         "<a href="#policydocument" title="PolicyDocument">PolicyDocument</a>" : <i>String</i>
     }
 }
@@ -23,13 +23,13 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 <pre>
 Type: AWS::Logs::ResourcePolicy
 Properties:
-    <a href="#name" title="Name">Name</a>: <i>String</i>
+    <a href="#policyname" title="PolicyName">PolicyName</a>: <i>String</i>
     <a href="#policydocument" title="PolicyDocument">PolicyDocument</a>: <i>String</i>
 </pre>
 
 ## Properties
 
-#### Name
+#### PolicyName
 
 A name for resource policy
 
@@ -65,4 +65,4 @@ _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormati
 
 ### Ref
 
-When you pass the logical ID of this resource to the intrinsic `Ref` function, Ref returns the Name.
+When you pass the logical ID of this resource to the intrinsic `Ref` function, Ref returns the PolicyName.

@@ -24,7 +24,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
         final ResourceModel model = request.getDesiredResourceState();
 
-        if (model.getName() == null) {
+        if (model.getPolicyName() == null) {
             return ProgressEvent.defaultFailureHandler(new CfnInvalidRequestException(ResourceModel.TYPE_NAME, new NullPointerException()), HandlerErrorCode.InvalidRequest);
         }
 
@@ -42,7 +42,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, e);
         }
 
-        logger.log(String.format("%s [%s] successfully updated.", ResourceModel.TYPE_NAME, model.getName()));
+        logger.log(String.format("%s [%s] successfully updated.", ResourceModel.TYPE_NAME, model.getPolicyName()));
 
 
         return ProgressEvent.<ResourceModel, CallbackContext>builder()

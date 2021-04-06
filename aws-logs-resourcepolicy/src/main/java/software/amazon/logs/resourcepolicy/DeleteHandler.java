@@ -34,7 +34,7 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
         } catch (ServiceUnavailableException ex) {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, ex);
         }
-        logger.log(String.format("%s [%s] successfully deleted.", ResourceModel.TYPE_NAME, model.getName()));
+        logger.log(String.format("%s [%s] successfully deleted.", ResourceModel.TYPE_NAME, model.getPolicyName()));
         return ProgressEvent.defaultSuccessHandler(null);
     }
 }
