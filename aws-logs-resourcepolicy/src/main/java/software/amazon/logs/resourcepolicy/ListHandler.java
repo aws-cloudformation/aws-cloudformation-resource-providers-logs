@@ -34,9 +34,9 @@ public class ListHandler extends BaseHandler<CallbackContext> {
                         ClientBuilder.getLogsClient()::describeResourcePolicies);
                 nextToken = describeResourcePoliciesResponse.nextToken();
                 models.addAll(describeResourcePoliciesResponse.resourcePolicies().stream()
-                        .map(qd -> ResourceModel.builder()
-                                .policyName(qd.policyName())
-                                .policyDocument(qd.policyDocument())
+                        .map(rp -> ResourceModel.builder()
+                                .policyName(rp.policyName())
+                                .policyDocument(rp.policyDocument())
                                 .build())
                         .collect(Collectors.toList()));
             } catch (InvalidParameterException ex) {

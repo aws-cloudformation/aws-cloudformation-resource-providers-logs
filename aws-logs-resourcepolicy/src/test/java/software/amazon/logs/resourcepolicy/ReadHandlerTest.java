@@ -72,7 +72,7 @@ public class ReadHandlerTest {
     public void handleRequest_SimpleFailure() {
 
         final DescribeResourcePoliciesResponse describeResourcePoliciesResponse = DescribeResourcePoliciesResponse.builder()
-                .resourcePolicies(ImmutableList.of(ResourcePolicy.builder().policyName("WrongQueryID").build()))
+                .resourcePolicies(ImmutableList.of(ResourcePolicy.builder().policyName("WrongResourceName").build()))
                 .build();
         final ResourceModel model = ResourceModel.builder().policyName(MOCK_RESOURCEPOLICY_NAME).build();
         doReturn(describeResourcePoliciesResponse)

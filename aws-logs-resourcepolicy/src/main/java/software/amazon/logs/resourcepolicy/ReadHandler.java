@@ -33,10 +33,10 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                 describeResourcePoliciesResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListRequest(nextToken),
                         ClientBuilder.getLogsClient()::describeResourcePolicies);
                 nextToken = describeResourcePoliciesResponse.nextToken();
-                Optional<ResourcePolicy> queryDefinition = describeResourcePoliciesResponse.resourcePolicies().stream()
-                        .filter(qd -> qd.policyName().equals(model.getPolicyName()))
+                Optional<ResourcePolicy> resourcePolicy = describeResourcePoliciesResponse.resourcePolicies().stream()
+                        .filter(rp -> rp.policyName().equals(model.getPolicyName()))
                         .findAny();
-                if (queryDefinition.isPresent()) {
+                if (resourcePolicy.isPresent()) {
                     return ProgressEvent.<ResourceModel, CallbackContext>builder()
                             .resourceModel(model)
                             .status(OperationStatus.SUCCESS)
