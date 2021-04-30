@@ -15,14 +15,11 @@
       "type": "string",
       "pattern": "[\\u0009\\u000A\\u000D\\u0020-\\u00FF]+",
       "minLength": 1,
-      "maxLength": 131072
+      "maxLength": 5120
     }
   },
   "additionalProperties": false,
   "primaryIdentifier": [
-    "/properties/PolicyName"
-  ],
-  "createOnlyProperties": [
     "/properties/PolicyName"
   ],
   "handlers": {

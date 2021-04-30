@@ -1,6 +1,5 @@
 package software.amazon.logs.resourcepolicy;
 
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeQueryDefinitionsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;

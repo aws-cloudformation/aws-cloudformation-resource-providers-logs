@@ -2,7 +2,6 @@ package software.amazon.logs.resourcepolicy;
 
 import com.google.common.collect.ImmutableList;
 import org.mockito.ArgumentMatchers;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourcePolicy;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;

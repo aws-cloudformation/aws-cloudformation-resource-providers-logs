@@ -2,9 +2,7 @@ package software.amazon.logs.resourcepolicy;
 
 import com.google.common.collect.ImmutableList;
 import org.mockito.ArgumentMatchers;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeQueryDefinitionsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.QueryDefinition;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourcePolicy;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
