@@ -5,11 +5,13 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProxyClient;
@@ -71,6 +73,19 @@ public class BaseTests {
                 .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
 
         assertThrows(CfnServiceInternalErrorException.class, () -> handler.handleRequest(proxy, request, null, proxyClient, logger));
+    }
+
+    public static void handleRequest_LimitExceeded(AmazonWebServicesClientProxy proxy, BaseHandlerStd handler, Logger logger, @Nullable String name, ProxyClient<CloudWatchLogsClient> proxyClient) {
+        final ResourceModel model = dummyModel(name);
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        doThrow(LimitExceededException.builder().message(MOCK_ERROR).build())
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
+
+        assertThrows(CfnServiceLimitExceededException.class, () -> handler.handleRequest(proxy, request, null, proxyClient, logger));
     }
 
     public static void handleRequest_InvalidParameter(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {

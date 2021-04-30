@@ -145,10 +145,18 @@ public class CreateHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_ServiceUnavailable() {
+    public void handleRequest_Failure_ServiceUnavailable() {
         when(proxyClient.client().describeResourcePolicies())
                 .thenReturn(describeResponse);
 
         BaseTests.handleRequest_ServiceUnavailable(proxy, handler, logger, null, proxyClient);
+    }
+
+    @Test
+    public void handleRequest_Failure_LimitExceeded() {
+        when(proxyClient.client().describeResourcePolicies())
+                .thenReturn(describeResponse);
+
+        BaseTests.handleRequest_LimitExceeded(proxy, handler, logger, null, proxyClient);
     }
 }
