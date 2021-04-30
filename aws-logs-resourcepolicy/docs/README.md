@@ -55,7 +55,7 @@ _Type_: String
 
 _Minimum_: <code>1</code>
 
-_Maximum_: <code>131072</code>
+_Maximum_: <code>5120</code>
 
 _Pattern_: <code>[\u0009\u000A\u000D\u0020-\u00FF]+</code>
 
