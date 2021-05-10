@@ -1,6 +1,9 @@
 package software.amazon.logs.loggroup;
 
 import com.google.common.collect.Maps;
+import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
@@ -835,6 +838,80 @@ public class UpdateHandlerTest {
     }
 
     @Test
+    public void handleRequest_AddTags_AccessDenied_NoException() {
+        final ResourceModel previousModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final AwsServiceException exception = CloudWatchLogsException.builder()
+                .awsErrorDetails(AwsErrorDetails.builder()
+                        .errorCode("AccessDeniedException")
+                        .build())
+                .build();
+        doThrow(exception)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(TagLogGroupRequest.class),
+                        any()
+                );
+
+        final Map<String, String> tags = Collections.singletonMap("key-1", "value-1");
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .previousResourceState(previousModel)
+                .desiredResourceState(model)
+                .desiredResourceTags(tags)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isEqualToComparingOnlyGivenFields(model);
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_AddTags_InternalFailure_WithException() {
+        final ResourceModel previousModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final AwsServiceException exception = CloudWatchLogsException.builder()
+                .awsErrorDetails(AwsErrorDetails.builder()
+                        .errorCode("InternalFailure")
+                        .build())
+                .build();
+        doThrow(exception)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(TagLogGroupRequest.class),
+                        any()
+                );
+
+        final Map<String, String> tags = Collections.singletonMap("key-1", "value-1");
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .previousResourceState(previousModel)
+                .desiredResourceState(model)
+                .desiredResourceTags(tags)
+                .build();
+
+        assertThrows(AwsServiceException.class,
+                () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
     public void handleRequest_RemoveTags_FailureNotFound_ServiceException() {
         final Map<String, String> previousTags = new HashMap<String, String>() {{
             put("key-1", "value-1");
@@ -889,6 +966,81 @@ public class UpdateHandlerTest {
                 .build();
 
         assertThrows(software.amazon.cloudformation.exceptions.CfnInternalFailureException.class,
+                () -> handler.handleRequest(proxy, request, null, logger));
+    }
+
+    @Test
+    public void handleRequest_RemoveTags_AccessDenied_NoException() {
+        final Map<String, String> previousTags = Collections.singletonMap("key-1", "value-1");
+        final ResourceModel previousModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final AwsServiceException exception = CloudWatchLogsException.builder()
+                .awsErrorDetails(AwsErrorDetails.builder()
+                        .errorCode("AccessDeniedException")
+                        .build())
+                .build();
+        doThrow(exception)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(UntagLogGroupRequest.class),
+                        any()
+                );
+
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .previousResourceState(previousModel)
+                .desiredResourceState(model)
+                .previousResourceTags(previousTags)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isEqualToComparingOnlyGivenFields(model);
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_RemoveTags_InternalFailure_WithException() {
+        final Map<String, String> previousTags = Collections.singletonMap("key-1", "value-1");
+        final ResourceModel previousModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final AwsServiceException exception = CloudWatchLogsException.builder()
+                .awsErrorDetails(AwsErrorDetails.builder()
+                        .errorCode("InternalFailure")
+                        .build())
+                .build();
+        doThrow(exception)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(UntagLogGroupRequest.class),
+                        any()
+                );
+
+        final Map<String, String> tags = Collections.singletonMap("key-1", "value-1");
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .previousResourceState(previousModel)
+                .desiredResourceState(model)
+                .previousResourceTags(previousTags)
+                .build();
+
+        assertThrows(AwsServiceException.class,
                 () -> handler.handleRequest(proxy, request, null, logger));
     }
 }

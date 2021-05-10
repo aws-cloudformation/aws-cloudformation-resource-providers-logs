@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class Translator {
+
+    static final String ACCESS_DENIED_ERROR_CODE = "AccessDeniedException";
+
     private Translator() {}
 
     static DescribeLogGroupsRequest translateToReadRequest(final ResourceModel model) {

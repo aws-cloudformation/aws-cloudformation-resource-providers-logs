@@ -9,6 +9,7 @@ import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
@@ -201,6 +202,13 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             throwNotFoundException(model);
         } catch (final InvalidParameterException e) {
             throw new CfnInternalFailureException(e);
+        } catch (final CloudWatchLogsException e) {
+            if (Translator.ACCESS_DENIED_ERROR_CODE.equals(e.awsErrorDetails().errorCode())) {
+                // fail silently, if there is no permission to list tags
+                logger.log(e.getMessage());
+            } else {
+                throw e;
+            }
         }
     }
 

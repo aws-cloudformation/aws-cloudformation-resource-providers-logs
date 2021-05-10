@@ -13,8 +13,6 @@ import java.util.Objects;
 
 public class ReadHandler extends BaseHandler<CallbackContext> {
 
-    private static final String ACCESS_DENIED_ERROR_CODE = "AccessDeniedException";
-
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
@@ -37,7 +35,7 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                 tagsResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()),
                         ClientBuilder.getClient()::listTagsLogGroup);
             } catch (final CloudWatchLogsException e) {
-                if (ACCESS_DENIED_ERROR_CODE.equals(e.awsErrorDetails().errorCode())) {
+                if (Translator.ACCESS_DENIED_ERROR_CODE.equals(e.awsErrorDetails().errorCode())) {
                     // fail silently, if there is no permission to list tags
                     logger.log(e.getMessage());
                 } else {
