@@ -1,5 +1,9 @@
 package software.amazon.logs.loggroup;
 
+import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CreateLogGroupRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
@@ -55,6 +59,10 @@ public class CreateHandlerTest {
                 .retentionInDays(1)
                 .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                 .build();
+        final Map<String, String> tags = new HashMap<String, String>() {{
+            put("key-1", "value-1");
+            put("key-2", "value-2");
+        }};
 
         doReturn(describeResponseInitial, createLogGroupResponse, putRetentionPolicyResponse)
             .when(proxy)
@@ -70,17 +78,30 @@ public class CreateHandlerTest {
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
+                .desiredResourceState(model)
+                .desiredResourceTags(tags)
+                .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        ArgumentCaptor<CloudWatchLogsRequest> requests = ArgumentCaptor.forClass(CloudWatchLogsRequest.class);
+        verify(proxy, times(2)).injectCredentialsAndInvokeV2(requests.capture(), any());
+        assertThat(requests.getAllValues().get(0)).isEqualTo(CreateLogGroupRequest.builder()
+                .logGroupName("LogGroup")
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .tags(tags)
+                .build());
+        assertThat(requests.getAllValues().get(1)).isEqualTo(PutRetentionPolicyRequest.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .build());
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
         assertThat(response.getCallbackContext()).isNull();
         assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getResourceModel()).isEqualToComparingFieldByField(logGroup);
+        assertThat(response.getResourceModel()).isEqualToComparingOnlyGivenFields(logGroup);
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
