@@ -1,6 +1,7 @@
 package software.amazon.logs.resourcepolicy;
 
 import org.mockito.ArgumentMatchers;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteResourcePolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteResourcePolicyResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
@@ -66,16 +67,16 @@ public class DeleteHandlerTest {
 
     @Test
     public void handleRequest_InvalidParameter() {
-        BaseTests.handleRequest_InvalidParameter(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME);
+        BaseTests.handleRequest_InvalidParameter(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME, DeleteResourcePolicyRequest.class);
     }
 
     @Test
     public void handleRequest_ResourceNotFound() {
-        BaseTests.handleRequest_ResourceNotFound(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME);
+        BaseTests.handleRequest_ResourceNotFound(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME, DeleteResourcePolicyRequest.class);
     }
 
     @Test
     public void handleRequest_ServiceUnavailable() {
-        BaseTests.handleRequest_ServiceUnavailable(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME);
+        BaseTests.handleRequest_ServiceUnavailable(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME, DeleteResourcePolicyRequest.class);
     }
 }

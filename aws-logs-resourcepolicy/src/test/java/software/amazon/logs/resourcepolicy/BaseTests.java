@@ -3,7 +3,9 @@ package software.amazon.logs.resourcepolicy;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
@@ -14,19 +16,19 @@ import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorExceptio
 import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import javax.annotation.Nullable;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(MockitoExtension.class)
 public class BaseTests {
     private static final String MOCK_ERROR = "someError";
 
-    public static void handleRequest_ResourceNotFound(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
+    public static void handleRequest_ResourceNotFound(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name, Class<? extends CloudWatchLogsRequest> requestClass) {
 
         final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -35,21 +37,12 @@ public class BaseTests {
 
         doThrow(ResourceNotFoundException.builder().message(MOCK_ERROR).build())
                 .when(proxy)
-                .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
+                .injectCredentialsAndInvokeV2(ArgumentMatchers.isA(requestClass), ArgumentMatchers.any());
 
         assertThrows(CfnNotFoundException.class, () -> handler.handleRequest(proxy, request, null, logger));
     }
 
-    public static void handleRequest_ResourceNotFound(AmazonWebServicesClientProxy proxy, BaseHandlerStd handler, Logger logger, @Nullable String name, ProxyClient<CloudWatchLogsClient> proxyClient) {
-        final ResourceModel model = dummyModel(name);
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
-
-        assertThrows(CfnNotFoundException.class, () -> handler.handleRequest(proxy, request, null, proxyClient, logger));
-    }
-
-    public static void handleRequest_ServiceUnavailable(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
+    public static void handleRequest_ServiceUnavailable(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name, Class<? extends CloudWatchLogsRequest> requestClass) {
         final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
@@ -57,25 +50,12 @@ public class BaseTests {
 
         doThrow(ServiceUnavailableException.builder().message(MOCK_ERROR).build())
                 .when(proxy)
-                .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
+                .injectCredentialsAndInvokeV2(ArgumentMatchers.isA(requestClass), ArgumentMatchers.any());
 
         assertThrows(CfnServiceInternalErrorException.class, () -> handler.handleRequest(proxy, request, null, logger));
     }
 
-    public static void handleRequest_ServiceUnavailable(AmazonWebServicesClientProxy proxy, BaseHandlerStd handler, Logger logger, @Nullable String name, ProxyClient<CloudWatchLogsClient> proxyClient) {
-        final ResourceModel model = dummyModel(name);
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
-
-        doThrow(ServiceUnavailableException.builder().message(MOCK_ERROR).build())
-                .when(proxy)
-                .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
-
-        assertThrows(CfnServiceInternalErrorException.class, () -> handler.handleRequest(proxy, request, null, proxyClient, logger));
-    }
-
-    public static void handleRequest_LimitExceeded(AmazonWebServicesClientProxy proxy, BaseHandlerStd handler, Logger logger, @Nullable String name, ProxyClient<CloudWatchLogsClient> proxyClient) {
+    public static void handleRequest_LimitExceeded(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name, Class<? extends CloudWatchLogsRequest> requestClass) {
         final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
@@ -83,12 +63,12 @@ public class BaseTests {
 
         doThrow(LimitExceededException.builder().message(MOCK_ERROR).build())
                 .when(proxy)
-                .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
+                .injectCredentialsAndInvokeV2(ArgumentMatchers.isA(requestClass), ArgumentMatchers.any());
 
-        assertThrows(CfnServiceLimitExceededException.class, () -> handler.handleRequest(proxy, request, null, proxyClient, logger));
+        assertThrows(CfnServiceLimitExceededException.class, () -> handler.handleRequest(proxy, request, null, logger));
     }
 
-    public static void handleRequest_InvalidParameter(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name) {
+    public static void handleRequest_InvalidParameter(AmazonWebServicesClientProxy proxy, BaseHandler<?> handler, Logger logger, @Nullable String name, Class<? extends CloudWatchLogsRequest> requestClass) {
 
         final ResourceModel model = dummyModel(name);
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -97,23 +77,18 @@ public class BaseTests {
 
         doThrow(InvalidParameterException.builder().message(MOCK_ERROR).build())
                 .when(proxy)
-                .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
+                .injectCredentialsAndInvokeV2(ArgumentMatchers.isA(requestClass), ArgumentMatchers.any());
 
         assertThrows(CfnInvalidRequestException.class, () -> handler.handleRequest(proxy, request, null, logger));
     }
 
-    public static void handleRequest_InvalidParameter(AmazonWebServicesClientProxy proxy, BaseHandlerStd handler, Logger logger, @Nullable String name, ProxyClient<CloudWatchLogsClient> proxyClient) {
-
-        final ResourceModel model = dummyModel(name);
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
-
-        doThrow(InvalidParameterException.builder().message(MOCK_ERROR).build())
+    public static void stubDescribeResponse(DescribeResourcePoliciesResponse response, AmazonWebServicesClientProxy proxy) {
+        doReturn(response)
                 .when(proxy)
-                .injectCredentialsAndInvokeV2(ArgumentMatchers.any(), ArgumentMatchers.any());
-
-        assertThrows(CfnInvalidRequestException.class, () -> handler.handleRequest(proxy, request, null, proxyClient, logger));
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(DescribeResourcePoliciesRequest.class),
+                        ArgumentMatchers.any()
+                );
     }
 
     private static ResourceModel dummyModel(String name) {

@@ -1,6 +1,5 @@
 package software.amazon.logs.resourcepolicy;
 
-import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 

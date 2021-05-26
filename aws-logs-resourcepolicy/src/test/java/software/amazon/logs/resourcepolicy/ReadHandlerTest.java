@@ -2,6 +2,7 @@ package software.amazon.logs.resourcepolicy;
 
 import com.google.common.collect.ImmutableList;
 import org.mockito.ArgumentMatchers;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeResourcePoliciesResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourcePolicy;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
@@ -88,11 +89,11 @@ public class ReadHandlerTest {
 
     @Test
     public void handleRequest_ServiceUnavailable() {
-        BaseTests.handleRequest_ServiceUnavailable(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME);
+        BaseTests.handleRequest_ServiceUnavailable(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME, DescribeResourcePoliciesRequest.class);
     }
 
     @Test
     public void handleRequest_InvalidParameter() {
-        BaseTests.handleRequest_InvalidParameter(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME);
+        BaseTests.handleRequest_InvalidParameter(proxy, handler, logger, MOCK_RESOURCEPOLICY_NAME, DescribeResourcePoliciesRequest.class);
     }
 }
