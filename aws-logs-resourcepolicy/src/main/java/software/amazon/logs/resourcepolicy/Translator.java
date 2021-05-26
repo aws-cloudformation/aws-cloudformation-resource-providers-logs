@@ -6,6 +6,8 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutResourcePolicyReq
 
 final class Translator {
 
+    public static final int RESOURCE_POLICIES_LIMIT = 10;
+
     static PutResourcePolicyRequest translateToPutRequest(final ResourceModel model) {
         return PutResourcePolicyRequest.builder()
                 .policyName(model.getPolicyName())
@@ -22,6 +24,7 @@ final class Translator {
     static DescribeResourcePoliciesRequest translateToListRequest(final String nextToken) {
         return DescribeResourcePoliciesRequest.builder()
                 .nextToken(nextToken)
+                .limit(RESOURCE_POLICIES_LIMIT)
                 .build();
     }
 }
