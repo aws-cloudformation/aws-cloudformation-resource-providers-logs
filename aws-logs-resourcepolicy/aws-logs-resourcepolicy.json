@@ -46,7 +46,6 @@
     },
     "delete": {
       "permissions": [
-        "logs:DescribeResourcePolicies",
         "logs:DeleteResourcePolicy"
       ]
     },
