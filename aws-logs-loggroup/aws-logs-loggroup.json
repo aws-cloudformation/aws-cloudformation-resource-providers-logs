@@ -6,6 +6,7 @@
     "Tag": {
       "description": "A key-value pair to associate with a resource.",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "Key": {
           "type": "string",

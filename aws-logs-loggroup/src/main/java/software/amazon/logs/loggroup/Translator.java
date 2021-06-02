@@ -50,11 +50,19 @@ final class Translator {
     }
 
     static CreateLogGroupRequest translateToCreateRequest(final ResourceModel model, final Map<String, String> tags) {
-        return CreateLogGroupRequest.builder()
-                .logGroupName(model.getLogGroupName())
-                .kmsKeyId(model.getKmsKeyId())
-                .tags(tags)
-                .build();
+        if(tags == null || tags.size() == 0){
+            return CreateLogGroupRequest.builder()
+                    .logGroupName(model.getLogGroupName())
+                    .kmsKeyId(model.getKmsKeyId())
+                    .build();
+        }
+        else {
+            return CreateLogGroupRequest.builder()
+                    .logGroupName(model.getLogGroupName())
+                    .kmsKeyId(model.getKmsKeyId())
+                    .tags(tags)
+                    .build();
+        }
     }
 
     static PutRetentionPolicyRequest translateToPutRetentionPolicyRequest(final ResourceModel model) {

@@ -64,6 +64,14 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             updateTags(proxy, model, previousTags, tags, logger);
         }
 
+        if(!tagsChanged && !kmsKeyChanged && !retentionChanged){
+            try{
+                proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()), ClientBuilder.getClient()::listTagsLogGroup);
+            }catch (final ResourceNotFoundException e){
+                throwNotFoundException(model);
+            }
+        }
+
         return ProgressEvent.defaultSuccessHandler(model);
     }
 

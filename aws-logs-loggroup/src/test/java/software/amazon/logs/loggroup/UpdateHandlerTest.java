@@ -265,7 +265,7 @@ public class UpdateHandlerTest {
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
         ArgumentCaptor<CloudWatchLogsRequest> requests = ArgumentCaptor.forClass(CloudWatchLogsRequest.class);
-        verify(proxy, times(0)).injectCredentialsAndInvokeV2(requests.capture(), any());
+        verify(proxy, times(1)).injectCredentialsAndInvokeV2(requests.capture(), any());
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);

@@ -1,4 +1,5 @@
 {
+    "artifact_type": "RESOURCE",
     "typeName": "AWS::Logs::LogGroup",
     "language": "java",
     "runtime": "java8",
@@ -12,5 +13,6 @@
             "loggroup"
         ],
         "protocolVersion": "2.0.0"
-    }
+    },
+    "executableEntrypoint": "software.amazon.logs.loggroup.HandlerWrapperExecutable"
 }
