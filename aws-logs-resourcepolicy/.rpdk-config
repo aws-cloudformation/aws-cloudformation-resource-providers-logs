@@ -1,0 +1,25 @@
+{
+    "artifact_type": "RESOURCE",
+    "typeName": "AWS::Logs::ResourcePolicy",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "software.amazon.logs.resourcepolicy.HandlerWrapper::handleRequest",
+    "testEntrypoint": "software.amazon.logs.resourcepolicy.HandlerWrapper::testEntrypoint",
+    "settings": {
+        "version": false,
+        "subparser_name": null,
+        "verbose": 0,
+        "force": false,
+        "type_name": null,
+        "artifact_type": null,
+        "namespace": [
+            "software",
+            "amazon",
+            "logs",
+            "resourcepolicy"
+        ],
+        "codegen_template_path": "default",
+        "protocolVersion": "2.0.0"
+    },
+    "executableEntrypoint": "software.amazon.logs.resourcepolicy.HandlerWrapperExecutable"
+}
