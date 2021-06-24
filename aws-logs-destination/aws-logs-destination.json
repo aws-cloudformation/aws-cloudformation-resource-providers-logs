@@ -74,5 +74,6 @@
   ],
   "primaryIdentifier": [
     "/properties/DestinationName"
-  ]
+  ],
+  "taggable": false
 }
