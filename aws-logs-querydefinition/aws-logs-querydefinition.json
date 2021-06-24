@@ -27,6 +27,7 @@
     "LogGroupNames": {
       "description": "Optionally define specific log groups as part of your query definition",
       "type": "array",
+      "insertionOrder": false,
       "items": {
         "description": "LogGroup name",
         "$ref": "#/definitions/LogGroup"
@@ -76,5 +77,6 @@
         "logs:DescribeQueryDefinition"
       ]
     }
-  }
+  },
+  "taggable": false
 }
