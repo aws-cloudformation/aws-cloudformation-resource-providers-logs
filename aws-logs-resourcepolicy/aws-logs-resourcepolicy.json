@@ -19,6 +19,7 @@
     }
   },
   "additionalProperties": false,
+  "taggable": false,
   "primaryIdentifier": [
     "/properties/PolicyName"
   ],
