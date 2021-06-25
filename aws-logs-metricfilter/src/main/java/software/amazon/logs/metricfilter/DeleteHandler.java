@@ -39,7 +39,6 @@ public class DeleteHandler extends BaseHandlerStd {
                 .makeServiceCall(this::deleteResource)
                 .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                     .status(OperationStatus.SUCCESS)
-                    .resourceModel(model)
                     .build());
     }
 

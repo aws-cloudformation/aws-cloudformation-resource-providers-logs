@@ -5,12 +5,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.*;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.cloudformation.exceptions.*;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.HandlerErrorCode;
-import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ProxyClient;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.*;
 import software.amazon.cloudformation.resource.IdentifierUtils;
 
 public class CreateHandler extends BaseHandlerStd {
@@ -36,7 +31,8 @@ public class CreateHandler extends BaseHandlerStd {
         return proxy.initiate("AWS-Logs-MetricFilter::Create", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToCreateRequest)
                 .makeServiceCall((r, c) -> createResource(model, r, c))
-                .success();
+                .success().then((x)-> ProgressEvent.<ResourceModel, CallbackContext>builder().resourceModel(model).status(OperationStatus.SUCCESS).build());
+
     }
 
     private PutMetricFilterResponse createResource(

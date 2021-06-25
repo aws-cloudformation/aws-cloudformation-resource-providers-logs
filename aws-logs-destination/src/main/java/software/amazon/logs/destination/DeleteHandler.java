@@ -4,11 +4,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteDestinationRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteDestinationResponse;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ProxyClient;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.*;
 
 public class DeleteHandler extends BaseHandlerStd {
 
@@ -25,7 +21,7 @@ public class DeleteHandler extends BaseHandlerStd {
         return proxy.initiate("AWS-Logs-Destination::Delete", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
                 .makeServiceCall(this::deleteResource)
-                .success();
+                .done((x)-> ProgressEvent.<ResourceModel, CallbackContext>builder().status(OperationStatus.SUCCESS).build());
     }
 
     private DeleteDestinationResponse deleteResource(final DeleteDestinationRequest awsRequest,

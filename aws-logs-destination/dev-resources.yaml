@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  AWSServiceRoleForLogs:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: logs.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: logs_anything
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "*"
+                Resource: "*"
+
+
+  KinesisStreamDestination:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: CanaryStream
+      ShardCount: 1
+
+Outputs:
+  KinesisStreamName:
+    Value: !GetAtt KinesisStreamDestination.Arn
+    Export:
+      Name: KinesisStreamForDestination
+
+  KinesisStreamRole:
+    Value: !GetAtt AWSServiceRoleForLogs.Arn
+    Export:
+      Name: KinesisStreamRoleForDestination
+
+  AccountArn:
+    Value: !Ref AWS::AccountId
+    Export:
+      Name: MyAWSAccountId
