@@ -2,6 +2,15 @@ package software.amazon.logs.loggroup;
 
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
 import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
@@ -9,15 +18,6 @@ import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,14 +62,6 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
         if (tagsChanged) {
             updateTags(proxy, model, previousTags, tags, logger);
-        }
-
-        if(!tagsChanged && !kmsKeyChanged && !retentionChanged){
-            try{
-                proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()), ClientBuilder.getClient()::listTagsLogGroup);
-            }catch (final ResourceNotFoundException e){
-                throwNotFoundException(model);
-            }
         }
 
         return ProgressEvent.defaultSuccessHandler(model);

@@ -1,0 +1,11 @@
+{
+  "LogGroupName": "ContractTestLogGroup",
+  "Tags": [
+    {
+      "Key": "ContractTestKey",
+      "Value": "ContractTestValue"
+    }
+  ],
+  "KmsKeyId": "{{KmsKeyForLogGroup}}",
+  "RetentionInDays": 1
+}

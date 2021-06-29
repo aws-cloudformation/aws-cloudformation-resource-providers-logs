@@ -126,5 +126,6 @@
   "primaryIdentifier": [
     "/properties/LogGroupName"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "taggable": true
 }
