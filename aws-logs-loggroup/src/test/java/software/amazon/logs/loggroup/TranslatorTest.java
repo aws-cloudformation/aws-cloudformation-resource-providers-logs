@@ -52,7 +52,7 @@ public class TranslatorTest {
         final DescribeLogGroupsRequest request = DescribeLogGroupsRequest.builder()
             .logGroupNamePrefix(RESOURCE_MODEL.getLogGroupName())
             .build();
-        assertThat(Translator.translateToReadRequest(RESOURCE_MODEL)).isEqualToComparingFieldByField(request);
+        assertThat(Translator.translateToReadRequest(RESOURCE_MODEL, null)).isEqualToComparingFieldByField(request);
     }
 
     @Test
@@ -171,7 +171,28 @@ public class TranslatorTest {
         final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
                 .tags(MAP_TAGS)
                 .build();
-        assertThat(Translator.translateForRead(response, tagsResponse)).isEqualToComparingFieldByField(RESOURCE_MODEL);
+        assertThat(Translator.translateForRead(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(RESOURCE_MODEL);
+    }
+
+    @Test
+    public void testTranslateForRead_ExactLogGroupName() {
+        final LogGroup logGroup = LogGroup.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .build();
+        final LogGroup logGroup2 = LogGroup.builder()
+                .logGroupName("LogGroup2")
+                .retentionInDays(2)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+                .build();
+        final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
+                .logGroups(Arrays.asList(logGroup2, logGroup))
+                .build();
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(MAP_TAGS)
+                .build();
+        assertThat(Translator.translateForRead(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(RESOURCE_MODEL);
     }
 
     @Test
@@ -187,7 +208,7 @@ public class TranslatorTest {
                 .logGroupName(null)
                 .tags(null)
                 .build();
-        assertThat(Translator.translateForRead(response, tagsResponse)).isEqualToComparingFieldByField(emptyModel);
+        assertThat(Translator.translateForRead(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
     }
 
     @Test
@@ -203,7 +224,7 @@ public class TranslatorTest {
                 .logGroupName(null)
                 .tags(null)
                 .build();
-        assertThat(Translator.translateForRead(response, tagsResponse)).isEqualToComparingFieldByField(emptyModel);
+        assertThat(Translator.translateForRead(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
     }
 
     @Test

@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRe
 import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.TagLogGroupRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.UntagLogGroupRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.utils.CollectionUtils;
 
 import java.util.Collection;
@@ -30,9 +31,10 @@ final class Translator {
 
     private Translator() {}
 
-    static DescribeLogGroupsRequest translateToReadRequest(final ResourceModel model) {
+    static DescribeLogGroupsRequest translateToReadRequest(final ResourceModel model, final String nextToken) {
         return DescribeLogGroupsRequest.builder()
                 .logGroupNamePrefix(model.getLogGroupName())
+                .nextToken(nextToken)
                 .build();
     }
 
@@ -111,35 +113,22 @@ final class Translator {
                 .build();
     }
 
-    static ResourceModel translateForRead(final DescribeLogGroupsResponse response, final ListTagsLogGroupResponse tagsResponse) {
-        final String logGroupName = streamOfOrEmpty(response.logGroups())
-                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::logGroupName)
-                .filter(Objects::nonNull)
-                .findAny()
-                .orElse(null);
-        final String logGroupArn = streamOfOrEmpty(response.logGroups())
-                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::arn)
-                .filter(Objects::nonNull)
-                .findAny()
-                .orElse(null);
-        final Integer retentionInDays = streamOfOrEmpty(response.logGroups())
-                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::retentionInDays)
-                .filter(Objects::nonNull)
-                .findAny()
-                .orElse(null);
-        final String kmsKeyId = streamOfOrEmpty(response.logGroups())
-                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::kmsKeyId)
-                .filter(Objects::nonNull)
+    static ResourceModel translateForRead(final DescribeLogGroupsResponse response, final ListTagsLogGroupResponse tagsResponse, final String requestLogGroupName) {
+        LogGroup matchedLogGroup = streamOfOrEmpty(response.logGroups())
+                .filter(logGroup -> logGroup.logGroupName() != null && logGroup.logGroupName().equals(requestLogGroupName))
                 .findAny()
                 .orElse(null);
         final Set<Tag> tags = translateSdkToTags(Optional.ofNullable(tagsResponse)
                 .map(ListTagsLogGroupResponse::tags)
                 .orElse(null));
+        if (matchedLogGroup == null) return ResourceModel.builder()
+                .tags(tags)
+                .build();
         return ResourceModel.builder()
-                .arn(logGroupArn)
-                .logGroupName(logGroupName)
-                .retentionInDays(retentionInDays)
-                .kmsKeyId(kmsKeyId)
+                .arn(matchedLogGroup.arn())
+                .logGroupName(matchedLogGroup.logGroupName())
+                .retentionInDays(matchedLogGroup.retentionInDays())
+                .kmsKeyId(matchedLogGroup.kmsKeyId())
                 .tags(tags)
                 .build();
     }

@@ -28,25 +28,41 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
 
         DescribeLogGroupsResponse response = null;
         ListTagsLogGroupResponse tagsResponse = null;
-        try {
-            response = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model),
-                    ClientBuilder.getClient()::describeLogGroups);
+        ResourceModel modelFromReadResult = null;
+        String nextToken = null;
+        // Keep paginating until requested log group is found
+        do {
             try {
-                tagsResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()),
-                        ClientBuilder.getClient()::listTagsLogGroup);
-            } catch (final CloudWatchLogsException e) {
-                if (Translator.ACCESS_DENIED_ERROR_CODE.equals(e.awsErrorDetails().errorCode())) {
-                    // fail silently, if there is no permission to list tags
-                    logger.log(e.getMessage());
-                } else {
-                    throw e;
+                response = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model, nextToken),
+                        ClientBuilder.getClient()::describeLogGroups);
+                if (tagsResponse == null) {
+                    try {
+                        tagsResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()),
+                                ClientBuilder.getClient()::listTagsLogGroup);
+                    } catch (final CloudWatchLogsException e) {
+                        if (Translator.ACCESS_DENIED_ERROR_CODE.equals(e.awsErrorDetails().errorCode())) {
+                            // fail silently, if there is no permission to list tags
+                            logger.log(e.getMessage());
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
+            } catch (final ResourceNotFoundException e) {
+                throwNotFoundException(model);
             }
-        } catch (final ResourceNotFoundException e) {
-            throwNotFoundException(model);
-        }
 
-        final ResourceModel modelFromReadResult = Translator.translateForRead(response, tagsResponse);
+            modelFromReadResult = Translator.translateForRead(response, tagsResponse, model.getLogGroupName());
+
+            // If log group found, break out of loop
+            if (modelFromReadResult.getLogGroupName() != null) {
+                break;
+            }
+
+            nextToken = response.nextToken();
+        } while (nextToken != null);
+
+        // If paginated all log groups, still cannot find it
         if (modelFromReadResult.getLogGroupName() == null) {
             throwNotFoundException(model);
         }

@@ -99,6 +99,64 @@ public class ReadHandlerTest {
     }
 
     @Test
+    public void handleRequest_Success_Paginate() {
+        final LogGroup logGroup = LogGroup.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .build();
+        final LogGroup logGroup2 = LogGroup.builder()
+                .logGroupName("LogGroup2")
+                .retentionInDays(2)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+                .build();
+        final Set<Tag> tags = new HashSet<>(Arrays.asList(
+                Tag.builder().key("key-1").value("value-1").build(),
+                Tag.builder().key("key-2").value("value-2").build()
+        ));
+        final DescribeLogGroupsResponse describeResponse1 = DescribeLogGroupsResponse.builder()
+                .logGroups(Collections.nCopies(50, logGroup2))
+                .nextToken("token")
+                .build();
+        final DescribeLogGroupsResponse describeResponse2 = DescribeLogGroupsResponse.builder()
+                .logGroups(Collections.singletonList(logGroup))
+                .build();
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(Translator.translateTagsToSdk(tags))
+                .build();
+
+        doReturn(describeResponse1, tagsResponse, describeResponse2, tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.any(),
+                        ArgumentMatchers.any()
+                );
+
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                .tags(tags)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isEqualToComparingOnlyGivenFields(logGroup);
+        assertThat(response.getResourceModel().getTags()).isEqualTo(tags);
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
     public void handleRequest_FailureNotFound_EmptyLogGroupResponse() {
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
                 .logGroups(Collections.emptyList())
