@@ -113,17 +113,17 @@ final class Translator {
                 .build();
     }
 
-    static ResourceModel translateForRead(final DescribeLogGroupsResponse response, final ListTagsLogGroupResponse tagsResponse, final String requestLogGroupName) {
+    // Translates for the read response that is retrieved
+    static ResourceModel translateForReadResponse(final DescribeLogGroupsResponse response, final ListTagsLogGroupResponse tagsResponse, final String requestLogGroupName) {
         LogGroup matchedLogGroup = streamOfOrEmpty(response.logGroups())
+                .filter(Objects::nonNull)
                 .filter(logGroup -> logGroup.logGroupName() != null && logGroup.logGroupName().equals(requestLogGroupName))
                 .findAny()
                 .orElse(null);
         final Set<Tag> tags = translateSdkToTags(Optional.ofNullable(tagsResponse)
                 .map(ListTagsLogGroupResponse::tags)
                 .orElse(null));
-        if (matchedLogGroup == null) return ResourceModel.builder()
-                .tags(tags)
-                .build();
+        if (matchedLogGroup == null) return ResourceModel.builder().build();
         return ResourceModel.builder()
                 .arn(matchedLogGroup.arn())
                 .logGroupName(matchedLogGroup.logGroupName())

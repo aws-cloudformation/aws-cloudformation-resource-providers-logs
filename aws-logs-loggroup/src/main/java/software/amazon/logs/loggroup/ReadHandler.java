@@ -52,7 +52,7 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                 throwNotFoundException(model);
             }
 
-            modelFromReadResult = Translator.translateForRead(response, tagsResponse, model.getLogGroupName());
+            modelFromReadResult = Translator.translateForReadResponse(response, tagsResponse, model.getLogGroupName());
 
             // If log group found, break out of loop
             if (modelFromReadResult.getLogGroupName() != null) {

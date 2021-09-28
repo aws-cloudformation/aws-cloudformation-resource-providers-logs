@@ -158,7 +158,7 @@ public class TranslatorTest {
     }
 
     @Test
-    public void testTranslateForRead() {
+    public void testTranslateForReadResponse() {
         final LogGroup logGroup = LogGroup.builder()
             .logGroupName("LogGroup")
             .retentionInDays(1)
@@ -171,11 +171,11 @@ public class TranslatorTest {
         final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
                 .tags(MAP_TAGS)
                 .build();
-        assertThat(Translator.translateForRead(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(RESOURCE_MODEL);
+        assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(RESOURCE_MODEL);
     }
 
     @Test
-    public void testTranslateForRead_ExactLogGroupName() {
+    public void testTranslateForReadResponse_ExactLogGroupName() {
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
@@ -192,11 +192,11 @@ public class TranslatorTest {
         final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
                 .tags(MAP_TAGS)
                 .build();
-        assertThat(Translator.translateForRead(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(RESOURCE_MODEL);
+        assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(RESOURCE_MODEL);
     }
 
     @Test
-    public void testTranslateForRead_logGroupEmpty() {
+    public void testTranslateForReadResponse_logGroupEmpty() {
         final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
             .logGroups(Collections.emptyList())
             .build();
@@ -208,11 +208,11 @@ public class TranslatorTest {
                 .logGroupName(null)
                 .tags(null)
                 .build();
-        assertThat(Translator.translateForRead(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
+        assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
     }
 
     @Test
-    public void testTranslateForRead_LogGroupHasNullMembers() {
+    public void testTranslateForReadResponse_LogGroupHasNullMembers() {
         final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
                 .logGroups(Collections.singletonList(LogGroup.builder().build()))
                 .build();
@@ -224,7 +224,7 @@ public class TranslatorTest {
                 .logGroupName(null)
                 .tags(null)
                 .build();
-        assertThat(Translator.translateForRead(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
+        assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
     }
 
     @Test
