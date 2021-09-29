@@ -117,7 +117,7 @@ final class Translator {
     static ResourceModel translateForReadResponse(final DescribeLogGroupsResponse response, final ListTagsLogGroupResponse tagsResponse, final String requestLogGroupName) {
         LogGroup matchedLogGroup = streamOfOrEmpty(response.logGroups())
                 .filter(Objects::nonNull)
-                .filter(logGroup -> logGroup.logGroupName() != null && logGroup.logGroupName().equals(requestLogGroupName))
+                .filter(lg -> lg.logGroupName().equals(requestLogGroupName))
                 .findAny()
                 .orElse(null);
         final Set<Tag> tags = translateSdkToTags(Optional.ofNullable(tagsResponse)

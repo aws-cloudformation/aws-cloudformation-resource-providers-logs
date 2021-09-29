@@ -214,14 +214,14 @@ public class TranslatorTest {
     @Test
     public void testTranslateForReadResponse_LogGroupHasNullMembers() {
         final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
-                .logGroups(Collections.singletonList(LogGroup.builder().build()))
+                .logGroups(Collections.singletonList(LogGroup.builder().logGroupName("LogGroup").build()))
                 .build();
         final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
                 .tags(Collections.emptyMap())
                 .build();
         final ResourceModel emptyModel = ResourceModel.builder()
                 .retentionInDays(null)
-                .logGroupName(null)
+                .logGroupName("LogGroup")
                 .tags(null)
                 .build();
         assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
