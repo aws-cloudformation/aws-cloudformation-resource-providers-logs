@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRe
 import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.TagLogGroupRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.UntagLogGroupRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.utils.CollectionUtils;
 
 import java.util.Collection;
@@ -30,9 +31,10 @@ final class Translator {
 
     private Translator() {}
 
-    static DescribeLogGroupsRequest translateToReadRequest(final ResourceModel model) {
+    static DescribeLogGroupsRequest translateToReadRequest(final ResourceModel model, final String nextToken) {
         return DescribeLogGroupsRequest.builder()
                 .logGroupNamePrefix(model.getLogGroupName())
+                .nextToken(nextToken)
                 .build();
     }
 
@@ -111,37 +113,22 @@ final class Translator {
                 .build();
     }
 
-    static ResourceModel translateForRead(final DescribeLogGroupsResponse response, final ListTagsLogGroupResponse tagsResponse) {
-        final String logGroupName = streamOfOrEmpty(response.logGroups())
-                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::logGroupName)
-                .filter(Objects::nonNull)
-                .findAny()
-                .orElse(null);
-        final String logGroupArn = streamOfOrEmpty(response.logGroups())
-                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::arn)
-                .filter(Objects::nonNull)
-                .findAny()
-                .orElse(null);
-        final Integer retentionInDays = streamOfOrEmpty(response.logGroups())
-                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::retentionInDays)
-                .filter(Objects::nonNull)
-                .findAny()
-                .orElse(null);
-        final String kmsKeyId = streamOfOrEmpty(response.logGroups())
-                .map(software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup::kmsKeyId)
-                .filter(Objects::nonNull)
-                .findAny()
-                .orElse(null);
+    // Translates for the read response that is retrieved
+    static ResourceModel translateForReadResponse(final LogGroup logGroup, final ListTagsLogGroupResponse tagsResponse) {
         final Set<Tag> tags = translateSdkToTags(Optional.ofNullable(tagsResponse)
                 .map(ListTagsLogGroupResponse::tags)
                 .orElse(null));
-        return ResourceModel.builder()
-                .arn(logGroupArn)
-                .logGroupName(logGroupName)
-                .retentionInDays(retentionInDays)
-                .kmsKeyId(kmsKeyId)
-                .tags(tags)
-                .build();
+        if (logGroup == null) {
+            return ResourceModel.builder().build();
+        } else {
+            return ResourceModel.builder()
+                    .arn(logGroup.arn())
+                    .logGroupName(logGroup.logGroupName())
+                    .retentionInDays(logGroup.retentionInDays())
+                    .kmsKeyId(logGroup.kmsKeyId())
+                    .tags(tags)
+                    .build();
+        }
     }
 
     static List<ResourceModel> translateForList(final DescribeLogGroupsResponse response, final Map<String, ListTagsLogGroupResponse> tagResponses) {
@@ -154,6 +141,15 @@ final class Translator {
                         .tags(translateSdkToTags(tagResponses.get(logGroup.logGroupName()).tags()))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    static LogGroup getMatchingLogGroup(final DescribeLogGroupsResponse response, final String requestLogGroupName) {
+        LogGroup matchedLogGroup = streamOfOrEmpty(response.logGroups())
+                .filter(Objects::nonNull)
+                .filter(lg -> lg.logGroupName().equals(requestLogGroupName))
+                .findAny()
+                .orElse(null);
+        return matchedLogGroup;
     }
 
     static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {
