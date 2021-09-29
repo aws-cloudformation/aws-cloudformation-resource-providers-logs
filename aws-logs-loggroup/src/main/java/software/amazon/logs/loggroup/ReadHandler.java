@@ -8,6 +8,7 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 
 import java.util.Objects;
 
@@ -27,35 +28,21 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
         }
 
         DescribeLogGroupsResponse response = null;
-        ListTagsLogGroupResponse tagsResponse = null;
-        ResourceModel modelFromReadResult = null;
+        LogGroup matchingLogGroup = null;
         String nextToken = null;
         // Keep paginating until requested log group is found
         do {
             try {
                 response = proxy.injectCredentialsAndInvokeV2(Translator.translateToReadRequest(model, nextToken),
                         ClientBuilder.getClient()::describeLogGroups);
-                if (tagsResponse == null) {
-                    try {
-                        tagsResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()),
-                                ClientBuilder.getClient()::listTagsLogGroup);
-                    } catch (final CloudWatchLogsException e) {
-                        if (Translator.ACCESS_DENIED_ERROR_CODE.equals(e.awsErrorDetails().errorCode())) {
-                            // fail silently, if there is no permission to list tags
-                            logger.log(e.getMessage());
-                        } else {
-                            throw e;
-                        }
-                    }
-                }
             } catch (final ResourceNotFoundException e) {
                 throwNotFoundException(model);
             }
 
-            modelFromReadResult = Translator.translateForReadResponse(response, tagsResponse, model.getLogGroupName());
+            matchingLogGroup = Translator.getMatchingLogGroup(response, model.getLogGroupName());
 
             // If log group found, break out of loop
-            if (modelFromReadResult.getLogGroupName() != null) {
+            if (matchingLogGroup != null) {
                 break;
             }
 
@@ -63,9 +50,24 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
         } while (nextToken != null);
 
         // If paginated all log groups, still cannot find it
-        if (modelFromReadResult.getLogGroupName() == null) {
+        if (matchingLogGroup == null) {
             throwNotFoundException(model);
         }
+
+        ListTagsLogGroupResponse tagsResponse = null;
+        try {
+            tagsResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()),
+                    ClientBuilder.getClient()::listTagsLogGroup);
+        } catch (final CloudWatchLogsException e) {
+            if (Translator.ACCESS_DENIED_ERROR_CODE.equals(e.awsErrorDetails().errorCode())) {
+                // fail silently, if there is no permission to list tags
+                logger.log(e.getMessage());
+            } else {
+                throw e;
+            }
+        }
+
+        ResourceModel modelFromReadResult = Translator.translateForReadResponse(matchingLogGroup, tagsResponse);
 
         return ProgressEvent.defaultSuccessHandler(modelFromReadResult);
     }

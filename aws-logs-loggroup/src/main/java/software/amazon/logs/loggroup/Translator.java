@@ -114,23 +114,21 @@ final class Translator {
     }
 
     // Translates for the read response that is retrieved
-    static ResourceModel translateForReadResponse(final DescribeLogGroupsResponse response, final ListTagsLogGroupResponse tagsResponse, final String requestLogGroupName) {
-        LogGroup matchedLogGroup = streamOfOrEmpty(response.logGroups())
-                .filter(Objects::nonNull)
-                .filter(lg -> lg.logGroupName().equals(requestLogGroupName))
-                .findAny()
-                .orElse(null);
+    static ResourceModel translateForReadResponse(final LogGroup logGroup, final ListTagsLogGroupResponse tagsResponse) {
         final Set<Tag> tags = translateSdkToTags(Optional.ofNullable(tagsResponse)
                 .map(ListTagsLogGroupResponse::tags)
                 .orElse(null));
-        if (matchedLogGroup == null) return ResourceModel.builder().build();
-        return ResourceModel.builder()
-                .arn(matchedLogGroup.arn())
-                .logGroupName(matchedLogGroup.logGroupName())
-                .retentionInDays(matchedLogGroup.retentionInDays())
-                .kmsKeyId(matchedLogGroup.kmsKeyId())
-                .tags(tags)
-                .build();
+        if (logGroup == null) {
+            return ResourceModel.builder().build();
+        } else {
+            return ResourceModel.builder()
+                    .arn(logGroup.arn())
+                    .logGroupName(logGroup.logGroupName())
+                    .retentionInDays(logGroup.retentionInDays())
+                    .kmsKeyId(logGroup.kmsKeyId())
+                    .tags(tags)
+                    .build();
+        }
     }
 
     static List<ResourceModel> translateForList(final DescribeLogGroupsResponse response, final Map<String, ListTagsLogGroupResponse> tagResponses) {
@@ -143,6 +141,15 @@ final class Translator {
                         .tags(translateSdkToTags(tagResponses.get(logGroup.logGroupName()).tags()))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    static LogGroup getMatchingLogGroup(final DescribeLogGroupsResponse response, final String requestLogGroupName) {
+        LogGroup matchedLogGroup = streamOfOrEmpty(response.logGroups())
+                .filter(Objects::nonNull)
+                .filter(lg -> lg.logGroupName().equals(requestLogGroupName))
+                .findAny()
+                .orElse(null);
+        return matchedLogGroup;
     }
 
     static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {

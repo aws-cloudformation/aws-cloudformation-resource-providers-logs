@@ -164,18 +164,45 @@ public class TranslatorTest {
             .retentionInDays(1)
             .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build();
-
-        final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
-                .logGroups(Collections.singletonList(logGroup))
-                .build();
         final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
                 .tags(MAP_TAGS)
                 .build();
-        assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(RESOURCE_MODEL);
+        assertThat(Translator.translateForReadResponse(logGroup, tagsResponse)).isEqualToComparingFieldByField(RESOURCE_MODEL);
     }
 
     @Test
-    public void testTranslateForReadResponse_ExactLogGroupName() {
+    public void testTranslateForReadResponse_logGroupNull() {
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(Collections.emptyMap())
+                .build();
+        final ResourceModel emptyModel = ResourceModel.builder()
+                .retentionInDays(null)
+                .logGroupName(null)
+                .tags(null)
+                .build();
+        assertThat(Translator.translateForReadResponse(null, tagsResponse)).isEqualToComparingFieldByField(emptyModel);
+    }
+
+    @Test
+    public void testTranslateForReadResponse_LogGroupHasNullMembers() {
+        final LogGroup logGroup = LogGroup.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(null)
+                .kmsKeyId(null)
+                .build();
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(Collections.emptyMap())
+                .build();
+        final ResourceModel emptyModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .retentionInDays(null)
+                .tags(null)
+                .build();
+        assertThat(Translator.translateForReadResponse(logGroup, tagsResponse)).isEqualToComparingFieldByField(emptyModel);
+    }
+
+    @Test
+    public void testGetMatchingLogGroup() {
         final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
                 .retentionInDays(1)
@@ -189,42 +216,20 @@ public class TranslatorTest {
         final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
                 .logGroups(Arrays.asList(logGroup2, logGroup))
                 .build();
-        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
-                .tags(MAP_TAGS)
-                .build();
-        assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(RESOURCE_MODEL);
+        assertThat(Translator.getMatchingLogGroup(response, "LogGroup")).isEqualToComparingFieldByField(logGroup);
     }
 
     @Test
-    public void testTranslateForReadResponse_logGroupEmpty() {
-        final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
-            .logGroups(Collections.emptyList())
-            .build();
-        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
-                .tags(Collections.emptyMap())
-                .build();
-        final ResourceModel emptyModel = ResourceModel.builder()
-                .retentionInDays(null)
-                .logGroupName(null)
-                .tags(null)
-                .build();
-        assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
-    }
-
-    @Test
-    public void testTranslateForReadResponse_LogGroupHasNullMembers() {
-        final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
-                .logGroups(Collections.singletonList(LogGroup.builder().logGroupName("LogGroup").build()))
-                .build();
-        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
-                .tags(Collections.emptyMap())
-                .build();
-        final ResourceModel emptyModel = ResourceModel.builder()
-                .retentionInDays(null)
+    public void testGetMatchingLogGroup_Null() {
+        final LogGroup logGroup = LogGroup.builder()
                 .logGroupName("LogGroup")
-                .tags(null)
+                .retentionInDays(1)
+                .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                 .build();
-        assertThat(Translator.translateForReadResponse(response, tagsResponse, "LogGroup")).isEqualToComparingFieldByField(emptyModel);
+        final DescribeLogGroupsResponse response = DescribeLogGroupsResponse.builder()
+                .logGroups(Collections.singleton(logGroup))
+                .build();
+        assertThat(Translator.getMatchingLogGroup(response, "NonexistentLogGroup")).isNull();
     }
 
     @Test

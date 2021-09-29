@@ -125,7 +125,7 @@ public class ReadHandlerTest {
                 .tags(Translator.translateTagsToSdk(tags))
                 .build();
 
-        doReturn(describeResponse1, tagsResponse, describeResponse2, tagsResponse)
+        doReturn(describeResponse1, describeResponse2, tagsResponse)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(
                         ArgumentMatchers.any(),
