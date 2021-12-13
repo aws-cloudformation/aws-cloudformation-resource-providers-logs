@@ -37,7 +37,7 @@ public class CreateHandler extends BaseHandlerStd {
                 }))
                 .then(progress -> putDestination(proxy, callbackContext, proxyClient, model, DESTINATION_CREATE_GRAPH,
                         logger, Action.CREATE))
-                .then(progress -> model.getDestinationPolicy()!=null ? putDestinationPolicy(proxy, callbackContext, proxyClient, model,
+                .then(progress -> model.getDestinationPolicy() != null ? putDestinationPolicy(proxy, callbackContext, proxyClient, model,
                         DESTINATION_POLICY_CREATE_GRAPH, logger, Action.CREATE) : progress)
                 .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient,
                         logger));

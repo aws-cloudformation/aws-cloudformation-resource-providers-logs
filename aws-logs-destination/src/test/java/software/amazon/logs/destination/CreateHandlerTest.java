@@ -48,7 +48,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     private Destination destination;
 
-    private Destination destination_without_policy;
+    private Destination destinationWithoutPolicy;
 
     private CreateHandler handler;
 
@@ -59,7 +59,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         proxyClient = MOCK_PROXY(proxy, sdkClient);
         testResourceModel = getTestResourceModel();
         destination = getTestDestination();
-        destination_without_policy = getTestDestination(false);
+        destinationWithoutPolicy = getTestDestination(false);
         handler = new CreateHandler();
     }
 
@@ -286,11 +286,11 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(progressEvent.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(progressEvent.getErrorCode()).isEqualTo(HandlerErrorCode.GeneralServiceException);
     }
-    // tests for optional parameter destination policy not provided tests
+    // tests for optional parameter, destination policy not provided tests
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DestinationNotFound_and_DestinationPolicyNotProvided() {
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
-                .destinations(destination_without_policy)
+                .destinations(destinationWithoutPolicy)
                 .build();
         Mockito.when(proxyClient.client()
                 .describeDestinations(any(DescribeDestinationsRequest.class)))
@@ -298,7 +298,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .thenReturn(describeResponse);
 
         final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
-                .destination(destination_without_policy)
+                .destination(destinationWithoutPolicy)
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request =
@@ -329,7 +329,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DescribeDestinationsResponseIsNull_and_DestinationPolicyNotProvided() {
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
-                .destinations(destination_without_policy)
+                .destinations(destinationWithoutPolicy)
                 .build();
 
         Mockito.when(proxyClient.client()
@@ -339,7 +339,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .thenReturn(describeResponse);
 
         final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
-                .destination(destination_without_policy)
+                .destination(destinationWithoutPolicy)
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request =
@@ -368,7 +368,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DescribeDestinationsResponseIsEmpty_and_DestinationPolicyNotProvided() {
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
-                .destinations(destination_without_policy)
+                .destinations(destinationWithoutPolicy)
                 .build();
 
         Mockito.when(proxyClient.client()
@@ -379,7 +379,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .thenReturn(describeResponse);
 
         final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
-                .destination(destination_without_policy)
+                .destination(destinationWithoutPolicy)
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request =
@@ -408,7 +408,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ReturnFailureProgressEvent_When_DestinationIsFound_and_DestinationPolicyNotProvided() {
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
-                .destinations(destination_without_policy)
+                .destinations(destinationWithoutPolicy)
                 .build();
 
         Mockito.when(proxyClient.client()
@@ -432,7 +432,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     @Test
     public void handleRequest_Should_ThrowCfnResourceConflictException_When_PutOperationIsAborted_and_DestinationPolicyNotProvided() {
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
-                .destinations(destination_without_policy)
+                .destinations(destinationWithoutPolicy)
                 .build();
 
         Mockito.when(proxyClient.client()
