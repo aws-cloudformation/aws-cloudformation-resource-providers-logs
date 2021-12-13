@@ -25,6 +25,7 @@ public class CreateHandler extends BaseHandlerStd {
         final ResourceModel model = request.getDesiredResourceState();
 
         // Verify if a destination is already present with same identifier
+        // Create destination policy command checks to see if optional destination/access policy is passed in before attempting create
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> preCreateCheck(proxy, callbackContext, proxyClient, model).done((response) -> {
                     if (isDestinationListNullOrEmpty(response)) {
@@ -36,8 +37,8 @@ public class CreateHandler extends BaseHandlerStd {
                 }))
                 .then(progress -> putDestination(proxy, callbackContext, proxyClient, model, DESTINATION_CREATE_GRAPH,
                         logger, Action.CREATE))
-                .then(progress -> putDestinationPolicy(proxy, callbackContext, proxyClient, model,
-                        DESTINATION_POLICY_CREATE_GRAPH, logger, Action.CREATE))
+                .then(progress -> model.getDestinationPolicy()!=null ? putDestinationPolicy(proxy, callbackContext, proxyClient, model,
+                        DESTINATION_POLICY_CREATE_GRAPH, logger, Action.CREATE) : progress)
                 .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient,
                         logger));
     }

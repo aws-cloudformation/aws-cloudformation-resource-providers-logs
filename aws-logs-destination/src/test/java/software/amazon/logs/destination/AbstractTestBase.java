@@ -82,9 +82,13 @@ public class AbstractTestBase {
     }
 
     protected Destination getTestDestination() {
+        return getTestDestination(true);
+    }
+
+    protected Destination getTestDestination(boolean withPolicy) {
         return Destination.builder()
                 .destinationName(TEST_DESTINATION_INPUT)
-                .accessPolicy(TEST_ACCESS_POLICY)
+                .accessPolicy(withPolicy ? TEST_ACCESS_POLICY : null)
                 .roleArn(TEST_ROLE_ARN)
                 .targetArn(TEST_TARGET_ARN)
                 .build();
