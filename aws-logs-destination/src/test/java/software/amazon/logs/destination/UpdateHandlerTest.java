@@ -223,7 +223,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     }
 
     public void handleRequest_Should_ReturnSuccess_When_DestinationIsFound_and_DestinationPolicyNotProvided_PolicyExistsInOriginalDestination() {
-        final Destination destinationWithoutPolicy = getTestDestination(true);
+        final Destination destinationWithPolicy = getTestDestination(true);
 
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(destinationWithoutPolicy)
