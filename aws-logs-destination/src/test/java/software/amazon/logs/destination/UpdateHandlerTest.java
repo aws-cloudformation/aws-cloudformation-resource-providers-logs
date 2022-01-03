@@ -182,4 +182,83 @@ public class UpdateHandlerTest extends AbstractTestBase {
         assertThat(response.getErrorCode()).isNull();
     }
 
+    // tests for optional parameter destination policy not provided tests
+    @Test
+    public void handleRequest_Should_ReturnSuccess_When_DestinationIsFound_and_DestinationPolicyNotProvided_PolicyDoesNotExistInOriginalDestination() {
+        final Destination destinationWithoutPolicy = getTestDestination(false);
+
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destinationWithoutPolicy)
+                .build();
+
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenThrow(ResourceNotFoundException.class)
+                .thenReturn(describeResponse);
+
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destinationWithoutPolicy)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request =
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
+                        .build();
+
+        request.getDesiredResourceState().setDestinationPolicy(null);
+
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+                .thenReturn(putDestinationResponse);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    public void handleRequest_Should_ReturnSuccess_When_DestinationIsFound_and_DestinationPolicyNotProvided_PolicyExistsInOriginalDestination() {
+        final Destination destinationWithPolicy = getTestDestination(true);
+
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destinationWithoutPolicy)
+                .build();
+
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenThrow(ResourceNotFoundException.class)
+                .thenReturn(describeResponse);
+
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destinationWithoutPolicy)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request =
+                ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(testResourceModel)
+                        .build();
+
+        request.getDesiredResourceState().setDestinationPolicy(null);
+
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+                .thenReturn(putDestinationResponse);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+    
+
 }

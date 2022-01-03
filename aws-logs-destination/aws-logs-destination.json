@@ -63,7 +63,6 @@
   "required": [
     "DestinationName",
     "TargetArn",
-    "DestinationPolicy",
     "RoleArn"
   ],
   "readOnlyProperties": [

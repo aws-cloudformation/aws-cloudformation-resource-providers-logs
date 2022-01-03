@@ -48,6 +48,8 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     private Destination destination;
 
+    private Destination destinationWithoutPolicy;
+
     private CreateHandler handler;
 
     @BeforeEach
@@ -57,6 +59,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         proxyClient = MOCK_PROXY(proxy, sdkClient);
         testResourceModel = getTestResourceModel();
         destination = getTestDestination();
+        destinationWithoutPolicy = getTestDestination(false);
         handler = new CreateHandler();
     }
 
@@ -282,6 +285,124 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(progressEvent).isNotNull();
         assertThat(progressEvent.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(progressEvent.getErrorCode()).isEqualTo(HandlerErrorCode.GeneralServiceException);
+    }
+    // tests for optional parameter, destination policy not provided tests
+    @Test
+    public void handleRequest_Should_ReturnSuccess_When_DestinationNotFound_and_DestinationPolicyNotProvided() {
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destinationWithoutPolicy)
+                .build();
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenThrow(ResourceNotFoundException.class)
+                .thenReturn(describeResponse);
+
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destinationWithoutPolicy)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request =
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
+
+        //set destination policy to "" to mimick not being provided
+        request.getDesiredResourceState().setDestinationPolicy(null);
+
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+                .thenReturn(putDestinationResponse);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+
+        //following line causes error, response doesn't include value for dest.policy it seems, but desiredResourceState does include it
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_Should_ReturnSuccess_When_DescribeDestinationsResponseIsNull_and_DestinationPolicyNotProvided() {
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destinationWithoutPolicy)
+                .build();
+
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenReturn(DescribeDestinationsResponse.builder()
+                        .build())
+                .thenReturn(describeResponse);
+
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destinationWithoutPolicy)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request =
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
+
+        request.getDesiredResourceState().setDestinationPolicy(null);
+
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+                .thenReturn(putDestinationResponse);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_Should_ReturnSuccess_When_DescribeDestinationsResponseIsEmpty_and_DestinationPolicyNotProvided() {
+        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
+                .destinations(destinationWithoutPolicy)
+                .build();
+
+        Mockito.when(proxyClient.client()
+                .describeDestinations(any(DescribeDestinationsRequest.class)))
+                .thenReturn(DescribeDestinationsResponse.builder()
+                        .destinations(Collections.emptyList())
+                        .build())
+                .thenReturn(describeResponse);
+
+        final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
+                .destination(destinationWithoutPolicy)
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request =
+                getDefaultRequestBuilder().desiredResourceState(testResourceModel)
+                        .build();
+
+        request.getDesiredResourceState().setDestinationPolicy(null);
+
+        Mockito.when(proxyClient.client()
+                .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
+                .thenReturn(putDestinationResponse);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
     }
 
 }
