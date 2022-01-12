@@ -15,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.HashSet;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +42,8 @@ public class ListHandlerTest {
 
     @Test
     public void handleRequest_SimpleSuccess() {
+        Dimension dimension1 = Dimension.builder().key("key1").value("value1").build();
+        Dimension dimension2 = Dimension.builder().key("key2").value("value2").build();
         final ResourceModel model = ResourceModel.builder()
                 .filterName("filter-name")
                 .logGroupName("log-group-name")
@@ -48,6 +52,8 @@ public class ListHandlerTest {
                         .metricName("metric-name")
                         .metricValue("0")
                         .metricNamespace("namespace")
+                        .metricUnit("Count")
+                        .metricDimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
                         .build()))
                 .build();
 
@@ -59,11 +65,11 @@ public class ListHandlerTest {
                 .thenReturn(describeResponse);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-            .desiredResourceState(model)
-            .build();
+                .desiredResourceState(model)
+                .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response =
-            handler.handleRequest(proxy, request, null, logger);
+                handler.handleRequest(proxy, request, null, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);

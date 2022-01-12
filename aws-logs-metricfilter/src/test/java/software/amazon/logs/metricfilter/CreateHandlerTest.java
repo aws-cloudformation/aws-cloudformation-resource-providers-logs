@@ -68,6 +68,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Success() {
+        // by default the model contains dimensions and units, pass in false to the function below to remove dimensions/units, see AbstractTestBase for more details
         final ResourceModel model = buildDefaultModel();
 
         final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()

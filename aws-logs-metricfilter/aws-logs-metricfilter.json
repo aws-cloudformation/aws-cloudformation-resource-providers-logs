@@ -10,6 +10,29 @@
   "description": "Specifies a metric filter that describes how CloudWatch Logs extracts information from logs and transforms it into Amazon CloudWatch metrics.",
   "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
   "definitions": {
+    "Dimension": {
+      "description": "the key-value pairs that further define a metric.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Key": {
+          "type": "string",
+          "description": "The key of the dimension. Maximum length of 255.",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "Value": {
+          "type": "string",
+          "description": "The value of the dimension. Maximum length of 255.",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "Key",
+        "Value"
+      ]
+    },
     "MetricTransformation": {
       "type": "object",
       "properties": {
@@ -38,6 +61,22 @@
           "pattern": ".{1,100}",
           "minLength": 1,
           "maxLength": 100
+        },
+        "MetricUnit": {
+          "description": "The unit to assign to the metric. If you omit this, the unit is set as None.",
+          "type": "string",
+          "enum":["Seconds", "Microseconds", "Milliseconds", "Bytes", "Kilobytes", "Megabytes", "Gigabytes", "Terabytes", "Bits", "Kilobits", "Megabits", "Gigabits", "Terabits", "Percent", "Count", "Bytes/Second", "Kilobytes/Second", "Megabytes/Second", "Gigabytes/Second", "Terabytes/Second", "Bits/Second", "Kilobits/Second", "Megabits/Second", "Gigabits/Second", "Terabits/Second", "Count/Second", "None"]
+        },
+        "MetricDimensions": {
+          "description": "Dimensions are the key-value pairs that further define a metric",
+          "type": "array",
+          "uniqueItems": true,
+          "insertionOrder": false,
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/definitions/Dimension"
+          }
         }
       },
       "required": [
