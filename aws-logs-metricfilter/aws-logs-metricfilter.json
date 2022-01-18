@@ -62,12 +62,12 @@
           "minLength": 1,
           "maxLength": 100
         },
-        "MetricUnit": {
+        "Unit": {
           "description": "The unit to assign to the metric. If you omit this, the unit is set as None.",
           "type": "string",
           "enum":["Seconds", "Microseconds", "Milliseconds", "Bytes", "Kilobytes", "Megabytes", "Gigabytes", "Terabytes", "Bits", "Kilobits", "Megabits", "Gigabits", "Terabits", "Percent", "Count", "Bytes/Second", "Kilobytes/Second", "Megabytes/Second", "Gigabytes/Second", "Terabytes/Second", "Bits/Second", "Kilobits/Second", "Megabits/Second", "Gigabits/Second", "Terabits/Second", "Count/Second", "None"]
         },
-        "MetricDimensions": {
+        "Dimensions": {
           "description": "Dimensions are the key-value pairs that further define a metric",
           "type": "array",
           "uniqueItems": true,
