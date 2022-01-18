@@ -1,6 +1,7 @@
 package software.amazon.logs.metricfilter;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.concurrent.CompletableFuture;
