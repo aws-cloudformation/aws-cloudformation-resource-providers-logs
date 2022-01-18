@@ -36,7 +36,7 @@ public class Translator {
       return null;
     }
 
-    software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation returnObj = software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
+    software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation metricTransformationSDKModel = software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
             .metricName(metricTransformation.getMetricName())
             .metricValue(metricTransformation.getMetricValue())
             .metricNamespace(metricTransformation.getMetricNamespace())
@@ -48,14 +48,14 @@ public class Translator {
       for (Dimension entry: metricTransformation.getMetricDimensions()) {
         dimensionsMap.put(entry.getKey(), entry.getValue());
       }
-      returnObj = returnObj.toBuilder().dimensions(dimensionsMap).build();
+      metricTransformationSDKModel = metricTransformationSDKModel.toBuilder().dimensions(dimensionsMap).build();
     }
 
     if (metricTransformation.getMetricUnit()!=null){
-      returnObj = returnObj.toBuilder().unit(metricTransformation.getMetricUnit()).build();
+      metricTransformationSDKModel = metricTransformationSDKModel.toBuilder().unit(metricTransformation.getMetricUnit()).build();
     }
 
-    return returnObj;
+    return metricTransformationSDKModel;
   }
 
   static software.amazon.logs.metricfilter.MetricTransformation translateMetricTransformationFromSdk
@@ -64,7 +64,7 @@ public class Translator {
       return null;
     }
 
-    software.amazon.logs.metricfilter.MetricTransformation returnObj = software.amazon.logs.metricfilter.MetricTransformation.builder()
+    software.amazon.logs.metricfilter.MetricTransformation metricTransformationLogsModel = software.amazon.logs.metricfilter.MetricTransformation.builder()
             .metricName(metricTransformation.metricName())
             .metricValue(metricTransformation.metricValue())
             .metricNamespace(metricTransformation.metricNamespace())
@@ -79,13 +79,13 @@ public class Translator {
         String value = metricTransformation.dimensions().get(name).toString();
         dimensionsSet.add(Dimension.builder().key(key).value(value).build());
       }
-      returnObj.setMetricDimensions(dimensionsSet);
+      metricTransformationLogsModel.setMetricDimensions(dimensionsSet);
     }
     if (metricTransformation.unit() != null){
-      returnObj.setMetricUnit(metricTransformation.unitAsString());
+      metricTransformationLogsModel.setMetricUnit(metricTransformation.unitAsString());
     }
 
-    return returnObj;
+    return metricTransformationLogsModel;
   }
 
   static List<software.amazon.logs.metricfilter.MetricTransformation> translateMetricTransformationFromSdk
