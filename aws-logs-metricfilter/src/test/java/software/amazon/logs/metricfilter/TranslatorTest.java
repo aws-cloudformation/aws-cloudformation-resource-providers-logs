@@ -9,7 +9,11 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFilter
 import software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
