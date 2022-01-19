@@ -71,8 +71,8 @@ public class AbstractTestBase {
                       .metricName("metric-name")
                       .metricValue("0")
                       .metricNamespace("namespace")
-                      .metricDimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
-                      .metricUnit("Count")
+                      .dimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
+                      .unit("Count")
                       .build()))
               .build();
     }
