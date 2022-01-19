@@ -9,21 +9,33 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFilter
 import software.amazon.awssdk.services.cloudwatchlogs.model.MetricFilter;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
 
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 public class TranslatorTest {
+    private static final Map<String, String> dimensions  = new HashMap<String, String>() {{
+        put("key1", "value");
+        put("key2", "value");
+    }};
     private static final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation METRIC_TRANSFORMATION =
             software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
                     .defaultValue(1.0)
                     .metricName("MetricName")
                     .metricNamespace("MyNamespace")
                     .metricValue("Value")
+                    .dimensions(dimensions)
+                    .unit("Count")
                     .build();
+
+    private static final Dimension dimension1 = Dimension.builder().key("key1").value("value").build();
+    private static final Dimension dimension2 = Dimension.builder().key("key2").value("value").build();
 
     private static final MetricTransformation RPDK_METRIC_TRANSFORMATION =
             MetricTransformation.builder()
@@ -31,6 +43,8 @@ public class TranslatorTest {
                     .metricName("MetricName")
                     .metricNamespace("MyNamespace")
                     .metricValue("Value")
+                    .dimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
+                    .unit("Count")
                     .build();
 
     private static final MetricFilter METRIC_FILTER = MetricFilter.builder()

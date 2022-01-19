@@ -1,8 +1,12 @@
 package software.amazon.logs.metricfilter;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+
 import software.amazon.awssdk.awscore.AwsRequest;
 import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.core.pagination.sync.SdkIterable;
@@ -21,8 +25,8 @@ public class AbstractTestBase {
     logger = new LoggerProxy();
   }
   static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(
-    final AmazonWebServicesClientProxy proxy,
-    final CloudWatchLogsClient sdkClient) {
+          final AmazonWebServicesClientProxy proxy,
+          final CloudWatchLogsClient sdkClient) {
     return new ProxyClient<CloudWatchLogsClient>() {
       @Override
       public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseT
@@ -51,16 +55,38 @@ public class AbstractTestBase {
     };
   }
 
-  static ResourceModel buildDefaultModel() {
-    return ResourceModel.builder()
-            .filterName("filter-name")
-            .logGroupName("log-group-name")
-            .filterPattern("[pattern]")
-            .metricTransformations(Arrays.asList(MetricTransformation.builder()
-                    .metricName("metric-name")
-                    .metricValue("0")
-                    .metricNamespace("namespace")
-            .build()))
-            .build();
+  static ResourceModel buildDefaultModel(){
+    return buildDefaultModel(true);
+  }
+
+  static ResourceModel buildDefaultModel(boolean hasDimensionsUnit) {
+    if (hasDimensionsUnit){
+      Dimension dimension1 = Dimension.builder().key("key1").value("value1").build();
+      Dimension dimension2 = Dimension.builder().key("key2").value("value2").build();
+      return ResourceModel.builder()
+              .filterName("filter-name")
+              .logGroupName("log-group-name")
+              .filterPattern("[pattern]")
+              .metricTransformations(Arrays.asList(MetricTransformation.builder()
+                      .metricName("metric-name")
+                      .metricValue("0")
+                      .metricNamespace("namespace")
+                      .dimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
+                      .unit("Count")
+                      .build()))
+              .build();
+    }
+    else {
+      return ResourceModel.builder()
+              .filterName("filter-name")
+              .logGroupName("log-group-name")
+              .filterPattern("[pattern]")
+              .metricTransformations(Arrays.asList(MetricTransformation.builder()
+                      .metricName("metric-name")
+                      .metricValue("0")
+                      .metricNamespace("namespace")
+                      .build()))
+              .build();
+    }
   }
 }
