@@ -5,7 +5,12 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.*;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.cloudformation.exceptions.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
