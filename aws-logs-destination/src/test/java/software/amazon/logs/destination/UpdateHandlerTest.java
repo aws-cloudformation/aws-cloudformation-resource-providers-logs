@@ -226,7 +226,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
         final Destination destinationWithPolicy = getTestDestination(true);
 
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
-                .destinations(destinationWithPolicy)
+                .destinations(destinationWithoutPolicy)
                 .build();
 
         Mockito.when(proxyClient.client()
@@ -235,7 +235,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
                 .thenReturn(describeResponse);
 
         final PutDestinationResponse putDestinationResponse = PutDestinationResponse.builder()
-                .destination(destinationWithPolicy)
+                .destination(destinationWithoutPolicy)
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request =

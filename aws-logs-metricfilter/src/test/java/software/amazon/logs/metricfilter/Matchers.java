@@ -16,8 +16,6 @@ public class Matchers {
         assertThat(model.getFilterName()).isEqualTo(sdkModel.filterName());
         assertThat(model.getFilterPattern()).isEqualTo(sdkModel.filterPattern());
         assertThat(model.getLogGroupName()).isEqualTo(sdkModel.logGroupName());
-        assertThat(model.getMetricTransformations()).isEqualTo(sdkModel.metricTransformations());
-
 
         List<MetricTransformation> mts = sdkModel.metricTransformations()
                 .stream()

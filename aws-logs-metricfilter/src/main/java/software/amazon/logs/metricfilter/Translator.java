@@ -8,9 +8,6 @@ import software.amazon.cloudformation.exceptions.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,61 +33,29 @@ public class Translator {
   }
 
   static software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation translateMetricTransformationToSdk
-  (final software.amazon.logs.metricfilter.MetricTransformation metricTransformation) {
+          (final software.amazon.logs.metricfilter.MetricTransformation metricTransformation) {
     if (metricTransformation == null) {
       return null;
     }
-
-    software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation metricTransformationSDKModel = software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
+    return software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation.builder()
             .metricName(metricTransformation.getMetricName())
             .metricValue(metricTransformation.getMetricValue())
             .metricNamespace(metricTransformation.getMetricNamespace())
             .defaultValue(metricTransformation.getDefaultValue())
             .build();
-
-    if (metricTransformation.getDimensions() != null && !metricTransformation.getDimensions().isEmpty()){
-      HashMap<String, String> dimensionsMap = new HashMap<String, String>();
-      for (Dimension entry: metricTransformation.getDimensions()) {
-        dimensionsMap.put(entry.getKey(), entry.getValue());
-      }
-      metricTransformationSDKModel = metricTransformationSDKModel.toBuilder().dimensions(dimensionsMap).build();
-    }
-
-    if (metricTransformation.getUnit()!=null){
-      metricTransformationSDKModel = metricTransformationSDKModel.toBuilder().unit(metricTransformation.getUnit()).build();
-    }
-
-    return metricTransformationSDKModel;
   }
 
   static software.amazon.logs.metricfilter.MetricTransformation translateMetricTransformationFromSdk
-  (final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation metricTransformation) {
+          (final software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation metricTransformation) {
     if (metricTransformation == null) {
       return null;
     }
-
-    software.amazon.logs.metricfilter.MetricTransformation metricTransformationLogsModel = software.amazon.logs.metricfilter.MetricTransformation.builder()
+    return software.amazon.logs.metricfilter.MetricTransformation.builder()
             .metricName(metricTransformation.metricName())
             .metricValue(metricTransformation.metricValue())
             .metricNamespace(metricTransformation.metricNamespace())
             .defaultValue(metricTransformation.defaultValue())
             .build();
-
-    if (metricTransformation.hasDimensions()){
-      Set<Dimension> dimensionsSet = new HashSet<Dimension>();
-
-      for (String name: metricTransformation.dimensions().keySet()) {
-        String key = name.toString();
-        String value = metricTransformation.dimensions().get(name).toString();
-        dimensionsSet.add(Dimension.builder().key(key).value(value).build());
-      }
-      metricTransformationLogsModel.setDimensions(dimensionsSet);
-    }
-    if (metricTransformation.unit() != null){
-      metricTransformationLogsModel.setUnit(metricTransformation.unitAsString());
-    }
-
-    return metricTransformationLogsModel;
   }
 
   static List<software.amazon.logs.metricfilter.MetricTransformation> translateMetricTransformationFromSdk
@@ -193,13 +158,13 @@ public class Translator {
 
   static List<ResourceModel> translateFromListResponse(final DescribeMetricFiltersResponse awsResponse) {
     return streamOfOrEmpty(awsResponse.metricFilters())
-            .map(Translator::translateMetricFilter)
-            .collect(Collectors.toList());
+        .map(Translator::translateMetricFilter)
+        .collect(Collectors.toList());
   }
 
   private static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {
     return Optional.ofNullable(collection)
-            .map(Collection::stream)
-            .orElseGet(Stream::empty);
+        .map(Collection::stream)
+        .orElseGet(Stream::empty);
   }
 }
