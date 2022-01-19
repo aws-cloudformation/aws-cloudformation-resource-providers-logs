@@ -48,16 +48,16 @@ public class Translator {
             .defaultValue(metricTransformation.getDefaultValue())
             .build();
 
-    if (metricTransformation.getMetricDimensions() != null && !metricTransformation.getMetricDimensions().isEmpty()){
+    if (metricTransformation.getDimensions() != null && !metricTransformation.getDimensions().isEmpty()){
       HashMap<String, String> dimensionsMap = new HashMap<String, String>();
-      for (Dimension entry: metricTransformation.getMetricDimensions()) {
+      for (Dimension entry: metricTransformation.getDimensions()) {
         dimensionsMap.put(entry.getKey(), entry.getValue());
       }
       metricTransformationSDKModel = metricTransformationSDKModel.toBuilder().dimensions(dimensionsMap).build();
     }
 
-    if (metricTransformation.getMetricUnit()!=null){
-      metricTransformationSDKModel = metricTransformationSDKModel.toBuilder().unit(metricTransformation.getMetricUnit()).build();
+    if (metricTransformation.getUnit()!=null){
+      metricTransformationSDKModel = metricTransformationSDKModel.toBuilder().unit(metricTransformation.getUnit()).build();
     }
 
     return metricTransformationSDKModel;
@@ -84,10 +84,10 @@ public class Translator {
         String value = metricTransformation.dimensions().get(name).toString();
         dimensionsSet.add(Dimension.builder().key(key).value(value).build());
       }
-      metricTransformationLogsModel.setMetricDimensions(dimensionsSet);
+      metricTransformationLogsModel.setDimensions(dimensionsSet);
     }
     if (metricTransformation.unit() != null){
-      metricTransformationLogsModel.setMetricUnit(metricTransformation.unitAsString());
+      metricTransformationLogsModel.setUnit(metricTransformation.unitAsString());
     }
 
     return metricTransformationLogsModel;
