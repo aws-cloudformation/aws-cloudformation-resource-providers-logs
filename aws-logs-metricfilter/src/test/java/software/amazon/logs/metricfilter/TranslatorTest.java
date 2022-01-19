@@ -42,8 +42,8 @@ public class TranslatorTest {
                     .metricName("MetricName")
                     .metricNamespace("MyNamespace")
                     .metricValue("Value")
-                    .metricDimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
-                    .metricUnit("Count")
+                    .dimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
+                    .unit("Count")
                     .build();
 
     private static final MetricFilter METRIC_FILTER = MetricFilter.builder()
