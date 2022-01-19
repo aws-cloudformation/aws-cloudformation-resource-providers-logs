@@ -52,8 +52,8 @@ public class ListHandlerTest {
                         .metricName("metric-name")
                         .metricValue("0")
                         .metricNamespace("namespace")
-                        .metricUnit("Count")
-                        .metricDimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
+                        .unit("Count")
+                        .dimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
                         .build()))
                 .build();
 
