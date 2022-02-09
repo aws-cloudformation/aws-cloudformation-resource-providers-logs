@@ -1,7 +1,9 @@
 package software.amazon.logs.loggroup;
+import software.amazon.logs.loggroup.Tag;
 
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ListTagsLogGroupResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
@@ -20,9 +22,11 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,12 +43,9 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
         final ResourceModel model = request.getDesiredResourceState();
         final ResourceModel previousModel = request.getPreviousResourceState();
-        final Map<String, String> tags = request.getDesiredResourceTags();
-        final Map<String, String> previousTags = request.getPreviousResourceTags();
-
         final boolean retentionChanged = ! retentionUnchanged(previousModel, model);
         final boolean kmsKeyChanged = ! kmsKeyUnchanged(previousModel, model);
-        final boolean tagsChanged = ! tagsUnchanged(previousTags, tags);
+        final boolean tagsChanged =  TagHelper.shouldUpdateTags(model, request);
         if (retentionChanged && model.getRetentionInDays() == null) {
             deleteRetentionPolicy(proxy, request, logger);
         } else if (retentionChanged){
@@ -61,7 +62,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         }
 
         if (tagsChanged) {
-            updateTags(proxy, model, previousTags, tags, logger);
+            updateTags(proxy, model, request, logger);
         }
 
         return ProgressEvent.defaultSuccessHandler(model);
@@ -167,35 +168,40 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
     private void updateTags(final AmazonWebServicesClientProxy proxy,
                             final ResourceModel model,
-                            final Map<String, String> previousTags,
-                            final Map<String, String> tags,
+                            final ResourceHandlerRequest<ResourceModel> request,
                             final Logger logger) {
-        MapDifference<String, String> tagsDifference = Maps.difference(Optional.ofNullable(previousTags).orElse(new HashMap<>()),
-                Optional.ofNullable(tags).orElse(new HashMap<>()));
-        final Map<String, String> tagsToRemove = tagsDifference.entriesOnlyOnLeft();
-        final Map<String, String> tagsToAdd = tagsDifference.entriesOnlyOnRight();
-        final Map<String, String> tagsToDiffer = tagsDifference.entriesDiffering().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, tag -> tag.getValue().rightValue()));
-        final Map<String, String> tagsToUpdate = Stream.concat(tagsToAdd.entrySet().stream(), tagsToDiffer.entrySet().stream())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        
         try {
-            if (!tagsToRemove.isEmpty()) {
-                final List<String> tagKeys = new ArrayList<>(tagsToRemove.keySet());
-                proxy.injectCredentialsAndInvokeV2(Translator.translateToUntagLogGroupRequest(model.getLogGroupName(), tagKeys),
-                        ClientBuilder.getClient()::untagLogGroup);
+            // Need to make a ListTagsLogGroup request here
+            // Since we launched tag support for LogGroup late, existing stack tags will not
+            // propagate to the LogGroup resource using getPreviouslyAttachedTags() which returns
+            // previous stack tags regardless if they are propagated to the resource or not.
+            final ListTagsLogGroupResponse listTagsResponse = proxy.injectCredentialsAndInvokeV2(Translator.translateToListTagsLogGroupRequest(model.getLogGroupName()),
+                    ClientBuilder.getClient()::listTagsLogGroup);
 
+            final Map<String, String> currentTags = listTagsResponse != null ? listTagsResponse.tags() : Collections.emptyMap();
+            final Map<String, String> desiredTags = TagHelper.getNewDesiredTags(model, request);
+
+            final Map<String, String> tagsToAdd = TagHelper.generateTagsToAdd(currentTags, desiredTags);
+            final Set<String> tagsToRemove = TagHelper.generateTagsToRemove(currentTags, desiredTags);
+            
+            if (!tagsToRemove.isEmpty()) {
+                final List<String> tagKeys = new ArrayList<>(tagsToRemove);
+                proxy.injectCredentialsAndInvokeV2(Translator.translateToUntagLogGroupRequest(model.getLogGroupName(), tagKeys),
+                    ClientBuilder.getClient()::untagLogGroup);
+                
                 final String message =
-                        String.format("%s [%s] successfully removed tags: [%s]",
-                                ResourceModel.TYPE_NAME, model.getLogGroupName(), tagKeys);
+                    String.format("%s [%s] successfully removed tags: [%s]",
+                            ResourceModel.TYPE_NAME, model.getLogGroupName(), tagKeys);
                 logger.log(message);
             }
-            if(!tagsToUpdate.isEmpty()) {
-                proxy.injectCredentialsAndInvokeV2(Translator.translateToTagLogGroupRequest(model.getLogGroupName(), tagsToUpdate),
-                        ClientBuilder.getClient()::tagLogGroup);
-
+            if(!tagsToAdd.isEmpty()) {
+                proxy.injectCredentialsAndInvokeV2(Translator.translateToTagLogGroupRequest(model.getLogGroupName(), tagsToAdd),
+                    ClientBuilder.getClient()::tagLogGroup);
+                
                 final String message =
-                        String.format("%s [%s] successfully added tags: [%s]",
-                                ResourceModel.TYPE_NAME, model.getLogGroupName(), tagsToUpdate);
+                    String.format("%s [%s] successfully added tags: [%s]",
+                        ResourceModel.TYPE_NAME, model.getLogGroupName(), tagsToAdd);
                 logger.log(message);
             }
         } catch (final ResourceNotFoundException e) {
@@ -224,12 +230,5 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
     private static boolean kmsKeyUnchanged(final ResourceModel previousModel, final ResourceModel model) {
         return (previousModel != null && Objects.equals(model.getKmsKeyId(), previousModel.getKmsKeyId()));
-    }
-
-    private static boolean tagsUnchanged(final Map<String, String> previousTags, final Map<String, String> tags) {
-        if (previousTags == null && tags == null) {
-            return true;
-        }
-        return (previousTags != null && Objects.equals(previousTags, tags));
     }
 }
