@@ -10,12 +10,14 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRes
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ListTagsLogGroupResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteRetentionPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.AssociateKmsKeyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DisassociateKmsKeyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.TagLogGroupRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.UntagLogGroupRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ListTagsLogGroupRequest;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -78,8 +80,8 @@ public class UpdateHandlerTest {
         final DescribeLogGroupsResponse describeResponse = DescribeLogGroupsResponse.builder()
                 .logGroups(Collections.singletonList(logGroup))
                 .build();
-
-        doReturn(putRetentionPolicyResponse, describeResponse)
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder().build();
+        doReturn(putRetentionPolicyResponse, describeResponse, tagsResponse)
             .when(proxy)
             .injectCredentialsAndInvokeV2(
                 any(),
@@ -94,7 +96,7 @@ public class UpdateHandlerTest {
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
             .desiredResourceState(model)
-                .desiredResourceTags(tags)
+            .desiredResourceTags(tags)
             .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
@@ -307,7 +309,7 @@ public class UpdateHandlerTest {
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
         ArgumentCaptor<CloudWatchLogsRequest> requests = ArgumentCaptor.forClass(CloudWatchLogsRequest.class);
-        verify(proxy, times(3)).injectCredentialsAndInvokeV2(requests.capture(), any());
+        verify(proxy, times(4)).injectCredentialsAndInvokeV2(requests.capture(), any());
         assertThat(requests.getAllValues().get(0)).isEqualTo(PutRetentionPolicyRequest.builder()
             .logGroupName("LogGroup")
             .retentionInDays(2)
@@ -318,7 +320,11 @@ public class UpdateHandlerTest {
             .kmsKeyId("arn:aws:kms:us-east-1:$123456789012:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
             .build());
 
-        assertThat(requests.getAllValues().get(2)).isEqualTo(TagLogGroupRequest.builder()
+        assertThat(requests.getAllValues().get(2)).isEqualTo(ListTagsLogGroupRequest.builder()
+            .logGroupName("LogGroup")
+            .build());
+
+        assertThat(requests.getAllValues().get(3)).isEqualTo(TagLogGroupRequest.builder()
                 .logGroupName("LogGroup")
                 .tags(tags)
                 .build());
@@ -352,10 +358,21 @@ public class UpdateHandlerTest {
         }};
         final Map<String, String> tags = Stream.concat(previousTags.entrySet().stream(), newTags.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // Mock ListTagsLogGroup response since LogGroup cdk does not contain tags yet
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(previousTags)
+                .build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
+
         final ResourceModel model = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
-
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .previousResourceState(previousModel)
                 .desiredResourceState(model)
@@ -366,8 +383,79 @@ public class UpdateHandlerTest {
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
         ArgumentCaptor<CloudWatchLogsRequest> requests = ArgumentCaptor.forClass(CloudWatchLogsRequest.class);
-        verify(proxy, times(1)).injectCredentialsAndInvokeV2(requests.capture(), any());
-        assertThat(requests.getAllValues().get(0)).isEqualTo(TagLogGroupRequest.builder()
+        verify(proxy, times(2)).injectCredentialsAndInvokeV2(requests.capture(), any());
+        assertThat(requests.getAllValues().get(0)).isEqualTo(ListTagsLogGroupRequest.builder()
+                .logGroupName("LogGroup")
+                .build());
+        assertThat(requests.getAllValues().get(1)).isEqualTo(TagLogGroupRequest.builder()
+                .logGroupName("LogGroup")
+                .tags(newTags)
+                .build());
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackContext()).isNull();
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isEqualToComparingOnlyGivenFields(logGroup);
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_Success_AddTags_WhenStackTagsNotPropagated() {
+        final LogGroup logGroup = LogGroup.builder()
+                .logGroupName("LogGroup")
+                .build();
+        final Map<String, String> previousTags = new HashMap<String, String>() {{
+            put("key-1", "value-1");
+            put("key-2", "value-2");
+        }};
+        final ResourceModel previousModel = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+
+        final Map<String, String> newTags = new HashMap<String, String>() {{
+            put("key-3", "value-3");
+            put("key-4", "value-4");
+        }};
+        final Map<String, String> tags = Stream.concat(previousTags.entrySet().stream(), newTags.entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        final Map<String, String> currentTags = new HashMap<String, String>() {{
+            put("key-1", "value-1");
+        }};
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(currentTags)
+                .build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
+
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("LogGroup")
+                .build();
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .previousResourceState(previousModel)
+                .desiredResourceState(model)
+                .previousResourceTags(previousTags)
+                .desiredResourceTags(tags)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
+
+        // Expected tags should include missing stack tags
+        newTags.put("key-2", "value-2");
+
+        ArgumentCaptor<CloudWatchLogsRequest> requests = ArgumentCaptor.forClass(CloudWatchLogsRequest.class);
+        verify(proxy, times(2)).injectCredentialsAndInvokeV2(requests.capture(), any());
+        assertThat(requests.getAllValues().get(0)).isEqualTo(ListTagsLogGroupRequest.builder()
+                .logGroupName("LogGroup")
+                .build());
+        assertThat(requests.getAllValues().get(1)).isEqualTo(TagLogGroupRequest.builder()
                 .logGroupName("LogGroup")
                 .tags(newTags)
                 .build());
@@ -399,10 +487,20 @@ public class UpdateHandlerTest {
             put("key-2", "value-2-new");
             put("key-3", "value-3");
         }};
+
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(previousTags)
+                .build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
+
         final ResourceModel model = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
-
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .previousResourceState(previousModel)
                 .desiredResourceState(model)
@@ -413,13 +511,16 @@ public class UpdateHandlerTest {
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
         ArgumentCaptor<CloudWatchLogsRequest> requests = ArgumentCaptor.forClass(CloudWatchLogsRequest.class);
-        verify(proxy, times(2)).injectCredentialsAndInvokeV2(requests.capture(), any());
+        verify(proxy, times(3)).injectCredentialsAndInvokeV2(requests.capture(), any());
         final List<String> removedTagKeys = new ArrayList<>(Maps.difference(previousTags, tags).entriesOnlyOnLeft().keySet());
-        assertThat(requests.getAllValues().get(0)).isEqualTo(UntagLogGroupRequest.builder()
+        assertThat(requests.getAllValues().get(0)).isEqualTo(ListTagsLogGroupRequest.builder()
+                .logGroupName("LogGroup")
+                .build());
+        assertThat(requests.getAllValues().get(1)).isEqualTo(UntagLogGroupRequest.builder()
                 .logGroupName("LogGroup")
                 .tags(removedTagKeys)
                 .build());
-        assertThat(requests.getAllValues().get(1)).isEqualTo(TagLogGroupRequest.builder()
+        assertThat(requests.getAllValues().get(2)).isEqualTo(TagLogGroupRequest.builder()
                 .logGroupName("LogGroup")
                 .tags(tags)
                 .build());
@@ -443,14 +544,21 @@ public class UpdateHandlerTest {
             put("key-1", "value-1");
             put("key-2", "value-2");
         }};
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(previousTags)
+                .build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
         final ResourceModel previousModel = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
-
         final ResourceModel model = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
-
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .previousResourceState(previousModel)
                 .desiredResourceState(model)
@@ -460,9 +568,12 @@ public class UpdateHandlerTest {
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
         ArgumentCaptor<CloudWatchLogsRequest> requests = ArgumentCaptor.forClass(CloudWatchLogsRequest.class);
-        verify(proxy, times(1)).injectCredentialsAndInvokeV2(requests.capture(), any());
+        verify(proxy, times(2)).injectCredentialsAndInvokeV2(requests.capture(), any());
         final List<String> removedTagKeys = new ArrayList<>(previousTags.keySet());
-        assertThat(requests.getAllValues().get(0)).isEqualTo(UntagLogGroupRequest.builder()
+        assertThat(requests.getAllValues().get(0)).isEqualTo(ListTagsLogGroupRequest.builder()
+                .logGroupName("LogGroup")
+                .build());
+        assertThat(requests.getAllValues().get(1)).isEqualTo(UntagLogGroupRequest.builder()
                 .logGroupName("LogGroup")
                 .tags(removedTagKeys)
                 .build());
@@ -781,14 +892,14 @@ public class UpdateHandlerTest {
     }
 
     @Test
-    public void handleRequest_AddTags_FailureNotFound_ServiceException() {
+    public void handleRequest_UpdateTags_FailureNotFound_ServiceException() {
         final ResourceModel previousModel = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
         doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException.class)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(
-                        ArgumentMatchers.isA(TagLogGroupRequest.class),
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
                         any()
                 );
 
@@ -815,6 +926,13 @@ public class UpdateHandlerTest {
         final ResourceModel previousModel = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder().build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
         doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException.class)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(
@@ -842,7 +960,13 @@ public class UpdateHandlerTest {
         final ResourceModel previousModel = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
-
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder().build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
         final AwsServiceException exception = CloudWatchLogsException.builder()
                 .awsErrorDetails(AwsErrorDetails.builder()
                         .errorCode("AccessDeniedException")
@@ -883,7 +1007,13 @@ public class UpdateHandlerTest {
         final ResourceModel previousModel = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
-
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder().build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
         final AwsServiceException exception = CloudWatchLogsException.builder()
                 .awsErrorDetails(AwsErrorDetails.builder()
                         .errorCode("InternalFailure")
@@ -912,42 +1042,20 @@ public class UpdateHandlerTest {
     }
 
     @Test
-    public void handleRequest_RemoveTags_FailureNotFound_ServiceException() {
-        final Map<String, String> previousTags = new HashMap<String, String>() {{
-            put("key-1", "value-1");
-            put("key-2", "value-2");
-        }};
-        final ResourceModel previousModel = ResourceModel.builder()
-                .logGroupName("LogGroup")
-                .build();
-        doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException.class)
-                .when(proxy)
-                .injectCredentialsAndInvokeV2(
-                        ArgumentMatchers.isA(UntagLogGroupRequest.class),
-                        any()
-                );
-
-        final ResourceModel model = ResourceModel.builder()
-                .logGroupName("LogGroup")
-                .build();
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .previousResourceState(previousModel)
-                .desiredResourceState(model)
-                .previousResourceTags(previousTags)
-                .build();
-
-        assertThrows(software.amazon.cloudformation.exceptions.ResourceNotFoundException.class,
-                () -> handler.handleRequest(proxy, request, null, logger));
-    }
-
-
-    @Test
     public void handleRequest_RemoveTags_InvalidParameter_ServiceException() {
         final Map<String, String> previousTags = Collections.singletonMap("key-1", "value-1");
         final ResourceModel previousModel = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(previousTags)
+                .build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
         doThrow(software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException.class)
                 .when(proxy)
                 .injectCredentialsAndInvokeV2(
@@ -975,6 +1083,15 @@ public class UpdateHandlerTest {
         final ResourceModel previousModel = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(previousTags)
+                .build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
 
         final AwsServiceException exception = CloudWatchLogsException.builder()
                 .awsErrorDetails(AwsErrorDetails.builder()
@@ -1016,7 +1133,15 @@ public class UpdateHandlerTest {
         final ResourceModel previousModel = ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .build();
-
+        final ListTagsLogGroupResponse tagsResponse = ListTagsLogGroupResponse.builder()
+                .tags(previousTags)
+                .build();
+        doReturn(tagsResponse)
+                .when(proxy)
+                .injectCredentialsAndInvokeV2(
+                        ArgumentMatchers.isA(ListTagsLogGroupRequest.class),
+                        any()
+                );
         final AwsServiceException exception = CloudWatchLogsException.builder()
                 .awsErrorDetails(AwsErrorDetails.builder()
                         .errorCode("InternalFailure")
