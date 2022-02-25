@@ -9,9 +9,7 @@
   },
   "description": "Specifies a metric filter that describes how CloudWatch Logs extracts information from logs and transforms it into Amazon CloudWatch metrics.",
   "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs.git",
-  "tagging" : {
-    "taggable" : false
-  },
+  "taggable" : false,
   "definitions": {
     "Dimension": {
       "description": "the key-value pairs that further define a metric.",
@@ -115,6 +113,7 @@
       "type": "array",
       "minItems": 1,
       "maxItems": 1,
+      "insertionOrder": false,
       "items": {
         "$ref": "#/definitions/MetricTransformation"
       }
