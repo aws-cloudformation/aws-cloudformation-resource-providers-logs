@@ -1,0 +1,6 @@
+{
+  "desiredResourceState": {
+    "LogGroupName": "TestLogGroup"
+  },
+  "previousResourceState": {}
+}
