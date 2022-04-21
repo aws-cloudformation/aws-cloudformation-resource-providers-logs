@@ -46,4 +46,9 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
             throw e;
         }
     }
+
+    protected void logExceptionDetails(Exception e, Logger logger, final String stackId) {
+        logger.log(String.format("Stack with ID: %s got exception: %s Message: %s Cause: %s", stackId,
+                e.toString(), e.getMessage(), e.getCause()));
+    }
 }

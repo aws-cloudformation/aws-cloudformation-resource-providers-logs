@@ -30,12 +30,14 @@ public class DeleteHandler extends BaseHandlerStd {
 
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
+        final String callGraphString = "AWS-Logs-SubscriptionFilter::Delete";
+        final String stackId = request.getStackId() == null ? "" : request.getStackId();
 
-        this.logger.log(String.format("Request to delete model %s", model));
+        logger.log(String.format("Invoking %s request for model: %s with StackID: %s", callGraphString, model, stackId));
 
-        return proxy.initiate("AWS-Logs-SubscriptionFilter::Delete", proxyClient, model, callbackContext)
+        return proxy.initiate(callGraphString, proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
-                .makeServiceCall(this::deleteResource)
+                .makeServiceCall((_request, _callbackContext) -> deleteResource(_request, proxyClient, stackId))
                 .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                         .status(OperationStatus.SUCCESS)
                         .build());
@@ -43,18 +45,22 @@ public class DeleteHandler extends BaseHandlerStd {
 
     private DeleteSubscriptionFilterResponse deleteResource(
             final DeleteSubscriptionFilterRequest awsRequest,
-            final ProxyClient<CloudWatchLogsClient> proxyClient) {
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final String stackId) {
         DeleteSubscriptionFilterResponse awsResponse;
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteSubscriptionFilter);
         } catch (ResourceNotFoundException e) {
-            logger.log("Resource does not exist and could not be deleted.");
+            logExceptionDetails(e, logger, stackId);
             throw new CfnNotFoundException(e);
         } catch (InvalidParameterException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnInvalidRequestException(e);
         } catch (OperationAbortedException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnResourceConflictException(e);
         } catch (ServiceUnavailableException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnServiceInternalErrorException(e);
         }
 

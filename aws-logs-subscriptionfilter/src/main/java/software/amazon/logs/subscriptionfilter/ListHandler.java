@@ -6,6 +6,7 @@ import software.amazon.cloudformation.proxy.*;
 import java.util.List;
 
 public class ListHandler extends BaseHandlerStd {
+    private static final String callGraphString = "AWS-Logs-SubscriptionFilter::List";
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,
@@ -15,7 +16,10 @@ public class ListHandler extends BaseHandlerStd {
             final Logger logger) {
 
         final ResourceModel model = request.getDesiredResourceState();
+        final String stackId = request.getStackId() == null ? "" : request.getStackId();
         final String nextToken = request.getNextToken();
+
+        logger.log(String.format("Invoking request for: %s with StackID: %s", callGraphString, stackId));
 
         return proxy.initiate("AWS-Logs-SubscriptionFilter::List", proxyClient, model, callbackContext)
                 .translateToServiceRequest((cbModel) -> Translator.translateToListRequest(cbModel, nextToken))

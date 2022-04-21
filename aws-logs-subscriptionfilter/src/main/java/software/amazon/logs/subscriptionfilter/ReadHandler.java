@@ -20,6 +20,7 @@ import java.util.Objects;
 
 public class ReadHandler extends BaseHandlerStd {
     private Logger logger;
+    private static final String callGraphString = "AWS-Logs-SubscriptionFilter::Read";
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,
@@ -30,10 +31,13 @@ public class ReadHandler extends BaseHandlerStd {
 
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
+        final String stackId = request.getStackId() == null ? "" : request.getStackId();
 
-        return proxy.initiate("AWS-Logs-SubscriptionFilter::Read", proxyClient, model, callbackContext)
+        logger.log(String.format("Invoking request for: %s for stack: %s", callGraphString, stackId));
+
+        return proxy.initiate(callGraphString, proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToReadRequest)
-                .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient , model))
+                .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient , model, stackId))
                 .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                         .status(OperationStatus.SUCCESS)
                         .resourceModel(Translator.translateFromReadResponse(awsResponse))
@@ -43,20 +47,24 @@ public class ReadHandler extends BaseHandlerStd {
     private DescribeSubscriptionFiltersResponse readResource(
             final DescribeSubscriptionFiltersRequest awsRequest,
             final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final ResourceModel model) {
+            final ResourceModel model,
+            final String stackId) {
         DescribeSubscriptionFiltersResponse describeSubscriptionFiltersResponse;
         try {
             describeSubscriptionFiltersResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeSubscriptionFilters);
         } catch (InvalidParameterException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnInvalidRequestException(e);
         } catch (ResourceNotFoundException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnNotFoundException(e);
         } catch (ServiceUnavailableException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnServiceInternalErrorException(e);
         }
 
         if (describeSubscriptionFiltersResponse.subscriptionFilters().isEmpty()) {
-            logger.log("Resource does not exist.");
+            logger.log(String.format("Resource does not exist for request: %s", awsRequest.toString()));
             throw new CfnNotFoundException(ResourceModel.TYPE_NAME,
                     Objects.toString(model.getPrimaryIdentifier()));
         }

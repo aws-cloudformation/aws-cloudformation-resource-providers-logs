@@ -33,37 +33,45 @@ public class UpdateHandler extends BaseHandlerStd {
 
         final ResourceModel model = request.getDesiredResourceState();
         final ResourceModel previousModel = request.getPreviousResourceState();
+        final String stackId = request.getStackId() == null ? "" : request.getStackId();
 
-        this.logger.log(String.format("Trying to update model %s", model.getPrimaryIdentifier()));
+        this.logger.log(String.format("Got request to update model to %s from model %s", model, previousModel));
 
         return proxy.initiate("AWS-Logs-SubscriptionFilter::Update", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToUpdateRequest)
-                .makeServiceCall((r, c) -> updateResource(model, r, c))
+                .makeServiceCall((r, c) -> updateResource(model, r, c, stackId))
                 .success();
     }
 
     private PutSubscriptionFilterResponse updateResource(
             final ResourceModel model,
             final PutSubscriptionFilterRequest awsRequest,
-            final ProxyClient<CloudWatchLogsClient> proxyClient) {
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final String stackId) {
         PutSubscriptionFilterResponse awsResponse;
         try {
             boolean exists = doesResourceExist(proxyClient, model);
             if (!exists) {
+                logger.log(String.format("Resource does not exist for request: %s in stack %s", awsRequest.toString(), stackId));
                 throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString());
             }
-            logger.log(String.format("%s has successfully been updated.", ResourceModel.TYPE_NAME));
+
+            logger.log(String.format("Resource exists; attempting updating for request: %s in stack %s", awsRequest.toString(), stackId));
             return proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putSubscriptionFilter);
         } catch (final ResourceNotFoundException e) {
-            logger.log("Resource not found. " + e.getMessage());
+            logExceptionDetails(e, logger, stackId);
             throw new CfnNotFoundException(e);
         } catch (final InvalidParameterException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, e);
         } catch (final LimitExceededException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnServiceLimitExceededException(e);
         } catch (final ServiceUnavailableException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnServiceInternalErrorException(e);
         } catch (final OperationAbortedException e) {
+            logExceptionDetails(e, logger, stackId);
             throw new CfnResourceConflictException(e);
         }
     }
