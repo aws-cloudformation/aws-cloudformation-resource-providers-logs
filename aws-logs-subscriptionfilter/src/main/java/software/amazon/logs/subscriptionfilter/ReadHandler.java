@@ -49,27 +49,20 @@ public class ReadHandler extends BaseHandlerStd {
             final ProxyClient<CloudWatchLogsClient> proxyClient,
             final ResourceModel model,
             final String stackId) {
-        DescribeSubscriptionFiltersResponse describeSubscriptionFiltersResponse;
+        DescribeSubscriptionFiltersResponse describeSubscriptionFiltersResponse = null;
         try {
             describeSubscriptionFiltersResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeSubscriptionFilters);
-        } catch (InvalidParameterException e) {
-            logExceptionDetails(e, logger, stackId);
-            throw new CfnInvalidRequestException(e);
-        } catch (ResourceNotFoundException e) {
-            logExceptionDetails(e, logger, stackId);
-            throw new CfnNotFoundException(e);
-        } catch (ServiceUnavailableException e) {
-            logExceptionDetails(e, logger, stackId);
-            throw new CfnServiceInternalErrorException(e);
+        } catch (Exception e) {
+            handleException(e, logger, stackId);
         }
 
-        if (describeSubscriptionFiltersResponse.subscriptionFilters().isEmpty()) {
+        if (describeSubscriptionFiltersResponse == null || describeSubscriptionFiltersResponse.subscriptionFilters().isEmpty()) {
             logger.log(String.format("Resource does not exist for request: %s", awsRequest.toString()));
             throw new CfnNotFoundException(ResourceModel.TYPE_NAME,
                     Objects.toString(model.getPrimaryIdentifier()));
         }
 
-        logger.log(String.format("Got response: %s" , describeSubscriptionFiltersResponse.toString()));
+        logger.log(String.format("Got response: %s" , describeSubscriptionFiltersResponse));
         return describeSubscriptionFiltersResponse;
     }
 

@@ -3,14 +3,6 @@ package software.amazon.logs.subscriptionfilter;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteSubscriptionFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteSubscriptionFilterResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
-import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -47,24 +39,14 @@ public class DeleteHandler extends BaseHandlerStd {
             final DeleteSubscriptionFilterRequest awsRequest,
             final ProxyClient<CloudWatchLogsClient> proxyClient,
             final String stackId) {
-        DeleteSubscriptionFilterResponse awsResponse;
+        DeleteSubscriptionFilterResponse deleteSubscriptionFilterResponse = null;
         try {
-            awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteSubscriptionFilter);
-        } catch (ResourceNotFoundException e) {
-            logExceptionDetails(e, logger, stackId);
-            throw new CfnNotFoundException(e);
-        } catch (InvalidParameterException e) {
-            logExceptionDetails(e, logger, stackId);
-            throw new CfnInvalidRequestException(e);
-        } catch (OperationAbortedException e) {
-            logExceptionDetails(e, logger, stackId);
-            throw new CfnResourceConflictException(e);
-        } catch (ServiceUnavailableException e) {
-            logExceptionDetails(e, logger, stackId);
-            throw new CfnServiceInternalErrorException(e);
+            deleteSubscriptionFilterResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteSubscriptionFilter);
+        } catch (Exception e) {
+            handleException(e, logger, stackId);
         }
 
         logger.log(String.format("%s successfully deleted.", ResourceModel.TYPE_NAME));
-        return awsResponse;
+        return deleteSubscriptionFilterResponse;
     }
 }

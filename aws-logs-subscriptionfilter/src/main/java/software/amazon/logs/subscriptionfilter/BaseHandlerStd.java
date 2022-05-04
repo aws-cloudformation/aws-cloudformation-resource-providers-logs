@@ -2,11 +2,14 @@ package software.amazon.logs.subscriptionfilter;
 
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.*;
 import software.amazon.cloudformation.exceptions.BaseHandlerException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.*;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     @Override
@@ -50,5 +53,18 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     protected void logExceptionDetails(Exception e, Logger logger, final String stackId) {
         logger.log(String.format("Stack with ID: %s got exception: %s Message: %s Cause: %s", stackId,
                 e.toString(), e.getMessage(), e.getCause()));
+    }
+
+    protected void handleException(Exception e, Logger logger, final String stackId) {
+        if (e instanceof InvalidParameterException) {
+            logExceptionDetails(e, logger, stackId);
+            throw new CfnInvalidRequestException(e);
+        } else if (e instanceof ResourceNotFoundException) {
+            logExceptionDetails(e, logger, stackId);
+            throw new CfnNotFoundException(e);
+        } else if (e instanceof ServiceUnavailableException) {
+            logExceptionDetails(e, logger, stackId);
+            throw new CfnServiceInternalErrorException(e);
+        }
     }
 }

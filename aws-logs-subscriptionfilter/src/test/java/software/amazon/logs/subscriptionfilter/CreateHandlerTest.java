@@ -173,30 +173,6 @@ public class CreateHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_FailedCreate_PutFailed() {
-        final ResourceModel model = buildDefaultModel();
-
-        final DescribeSubscriptionFiltersResponse describeResponse = DescribeSubscriptionFiltersResponse.builder()
-                .subscriptionFilters(Translator.translateToSDK(model))
-                .build();
-
-        // return no existing Subscriptions for pre-create and then success response for create
-        when(proxyClient.client().describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class)))
-                .thenThrow(ResourceNotFoundException.class)
-                .thenReturn(describeResponse);
-
-        when(proxyClient.client().putSubscriptionFilter(any(PutSubscriptionFilterRequest.class)))
-                .thenThrow(OperationAbortedException.class);
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
-
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnResourceConflictException.class);
-    }
-
-    @Test
     public void handleRequest_Success_WithGeneratedName() {
         // no filter name supplied; should be generated
         final ResourceModel model = ResourceModel.builder()
