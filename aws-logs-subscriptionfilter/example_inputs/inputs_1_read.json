@@ -1,7 +1,0 @@
-{
-  "desiredResourceState": {
-    "FilterName": "5c102e1d-c1a5-4776-b806-028-3Ucf95WrVVgJ",
-    "LogGroupName": "TestLogGroup"
-  },
-  "previousResourceState": {}
-}
