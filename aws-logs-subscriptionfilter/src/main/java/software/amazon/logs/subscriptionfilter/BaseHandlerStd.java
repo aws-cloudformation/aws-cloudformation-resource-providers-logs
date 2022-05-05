@@ -9,9 +9,25 @@ import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.*;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import static java.util.Objects.requireNonNull;
+
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
+
+    private final CloudWatchLogsClient cloudWatchLogsClient;
+
+    protected BaseHandlerStd() {
+        this(ClientBuilder.getClient());
+    }
+
+    protected BaseHandlerStd(CloudWatchLogsClient cloudWatchLogsClient) {
+        this.cloudWatchLogsClient = requireNonNull(cloudWatchLogsClient);
+    }
+
+    private CloudWatchLogsClient getCloudWatchLogsClient() {
+        return cloudWatchLogsClient;
+    }
+
     @Override
     public final ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,
@@ -67,4 +83,5 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
             throw new CfnServiceInternalErrorException(e);
         }
     }
+
 }

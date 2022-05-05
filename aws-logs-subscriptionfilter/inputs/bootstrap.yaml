@@ -1,0 +1,134 @@
+Resources:
+  StackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: StackRolePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:DeleteSubscriptionFilter
+                  - logs:DescribeSubscriptionFilters
+                  - logs:PutSubscriptionFilter
+                Resource: "*"
+
+  MyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: boostrap-subscription-filter-lambda-role
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+        Version: 2012-10-17
+      Path: /
+
+  CloudWatchLogsDeliveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: CloudWatchDeliveryRole-Role
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - logs.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: cloudwatch-delivery-policy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kinesis:PutRecord
+                  - lambda:InvokeFunction
+                Resource: '*'
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs12.x
+      Role:
+        Fn::GetAtt:
+          - LambdaRole
+          - Arn
+      Handler: index.handler
+      Code:
+        ZipFile: |
+          exports.handler = function(event, context) {
+              console.log("REQUEST RECEIVED:\n" + JSON.stringify(event))
+              response.send("Hello World")
+          }
+
+  KinesisStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: MyKinesisStream
+      ShardCount: 2
+
+  KinesisStream2:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: MyKinesisStream2
+      ShardCount: 3
+
+
+Outputs:
+  StackRoleArn:
+    Value: !GetAtt StackRole.Arn
+
+  LogGroupName:
+    Description: The name of the created LogGroup
+    Value: !Ref MyLogGroup
+
+  LambdaDestinationArn:
+    Description: The ARN for the created Lambda function
+    Value:
+      Fn::GetAtt:
+        - LambdaFunction
+        - Arn
+
+  KinesisStreamDestinationARN:
+    Description: The ARN for the created Kinesis stream
+    Value:
+      Fn::GetAtt:
+        - KinesisStream
+        - Arn
+
+  KinesisStreamDestinationARN2:
+    Description: The ARN for the second created Kinesis stream
+    Value:
+      Fn::GetAtt:
+        - KinesisStream2
+        - Arn
+
+  RoleArn:
+    Description: The ARN of an IAM role that grants CloudWatch Logs permissions to deliver ingested log events to the destination stream
+    Value:
+      Fn::GetAtt:
+        - CloudWatchLogsDeliveryRole
+        - Arn

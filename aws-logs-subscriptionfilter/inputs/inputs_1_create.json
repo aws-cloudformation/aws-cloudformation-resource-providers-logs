@@ -1,5 +1,6 @@
 {
-    "DestinationArn": "arn:aws:lambda:us-west-2:356761496836:function:TestLambdaFunc",
-    "LogGroupName": "TestLogGroup",
-    "FilterPattern": "pattern"
+  "DestinationArn": "{{KinesisStreamDestinationARN}}",
+  "LogGroupName": "{{LogGroupName}}",
+  "FilterPattern": "{$.userIdentity.type = Root}",
+  "RoleArn": "{{RoleArn}}"
 }

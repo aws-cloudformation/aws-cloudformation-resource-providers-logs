@@ -107,8 +107,16 @@ public class UpdateHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnNotFoundException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage().contains("NotFound"));
+
+        verify(proxyClient.client(), times(1)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
+        verify(sdkClient, atLeastOnce()).serviceName();
+        verifyNoMoreInteractions(sdkClient);
     }
 
     @Test
@@ -129,8 +137,12 @@ public class UpdateHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnInvalidRequestException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModels()).isNull();
+
         verify(proxyClient.client(), times(1)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
         verify(proxyClient.client(), times(1)).putSubscriptionFilter(any(PutSubscriptionFilterRequest.class));
         verify(sdkClient, atLeastOnce()).serviceName();

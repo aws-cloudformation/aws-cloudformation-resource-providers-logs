@@ -46,7 +46,6 @@ public class CreateHandler extends BaseHandlerStd {
             final Logger logger) {
 
         this.logger = logger;
-
         final ResourceModel model = request.getDesiredResourceState();
 
         if (StringUtils.isBlank(model.getFilterName())) {
@@ -77,7 +76,7 @@ public class CreateHandler extends BaseHandlerStd {
                     }
                 })
                 .then(progress ->
-                        proxy.initiate("AWS-Logs-SubscriptionFilter::Create", proxyClient, model, callbackContext)
+                        proxy.initiate(callGraphString, proxyClient, model, callbackContext)
                                 .translateToServiceRequest(Translator::translateToCreateRequest)
                                 .makeServiceCall((putLifecycleHookRequest, client) -> client
                                         .injectCredentialsAndInvokeV2(putLifecycleHookRequest,

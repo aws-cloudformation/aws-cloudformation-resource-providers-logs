@@ -1,26 +1,27 @@
 package software.amazon.logs.subscriptionfilter;
 
+import com.google.common.annotations.VisibleForTesting;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutSubscriptionFilterRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutSubscriptionFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
-import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
-import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ProxyClient;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.cloudformation.exceptions.*;
+import software.amazon.cloudformation.proxy.*;
 
 public class UpdateHandler extends BaseHandlerStd {
+    private static final String callGraphString = "AWS-AutoScaling-LifecycleHook::Update";
     private Logger logger;
+    private final ReadHandler readHandler;
+
+    public UpdateHandler() {
+        super();
+        readHandler = new ReadHandler();
+    }
+
+    @VisibleForTesting
+    protected UpdateHandler(CloudWatchLogsClient cloudWatchLogsClient, ReadHandler readHandler) {
+        super(cloudWatchLogsClient);
+        this.readHandler = readHandler;
+    }
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,
@@ -30,17 +31,40 @@ public class UpdateHandler extends BaseHandlerStd {
             final Logger logger) {
 
         this.logger = logger;
+        ResourceModel model = request.getDesiredResourceState();
 
-        final ResourceModel model = request.getDesiredResourceState();
-        final ResourceModel previousModel = request.getPreviousResourceState();
-        final String stackId = request.getStackId() == null ? "" : request.getStackId();
+        return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
+                .then(progress -> {
+                    try {
+                        ProgressEvent<ResourceModel, CallbackContext> readProgressEvent =
+                                readHandler.handleRequest(proxy, request, callbackContext, proxyClient, logger);
+                        return readProgressEvent;
+                    } catch (CfnNotFoundException e) {
+                        return ProgressEvent.defaultFailureHandler(e, HandlerErrorCode.NotFound);
+                    }
+                })
+                .onSuccess(progress ->
+                        proxy.initiate(callGraphString, proxyClient, model, callbackContext)
+                                .translateToServiceRequest(Translator::translateToUpdateRequest)
+                                .makeServiceCall((putLifecycleHookRequest, client) -> client
+                                        .injectCredentialsAndInvokeV2(putLifecycleHookRequest,
+                                                client.client()::putSubscriptionFilter))
+                                .handleError((autoScalingRequest, e, proxyClient1, model1, context) -> {
+                                    HandlerErrorCode errorCode = HandlerErrorCode.GeneralServiceException;
+                                    if (e instanceof InvalidParameterException) {
+                                        errorCode = HandlerErrorCode.InvalidRequest;
+                                    } else if (e instanceof LimitExceededException) {
+                                        errorCode = HandlerErrorCode.ServiceLimitExceeded;
+                                    } else if (e instanceof ServiceUnavailableException) {
+                                        errorCode = HandlerErrorCode.InternalFailure;
+                                    }
 
-        this.logger.log(String.format("Got request to update model to %s from model %s", model, previousModel));
-
-        return proxy.initiate("AWS-Logs-SubscriptionFilter::Update", proxyClient, model, callbackContext)
-                .translateToServiceRequest(Translator::translateToUpdateRequest)
-                .makeServiceCall((r, c) -> updateResource(model, r, c, stackId))
-                .success();
+                                    return ProgressEvent.defaultFailureHandler(e, errorCode);
+                                })
+                                .progress()
+                )
+                .then(progress -> readHandler
+                        .handleRequest(proxy, request, callbackContext, proxyClient, logger));
     }
 
     private PutSubscriptionFilterResponse updateResource(
