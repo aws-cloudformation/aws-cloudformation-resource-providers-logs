@@ -1,43 +1,23 @@
 package software.amazon.logs.subscriptionfilter;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-
-import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutSubscriptionFilterRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.PutSubscriptionFilterResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
-import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.HandlerErrorCode;
-import software.amazon.cloudformation.proxy.OperationStatus;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ProxyClient;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.proxy.*;
+
+import java.time.Duration;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CreateHandlerTest extends AbstractTestBase {
@@ -76,9 +56,8 @@ public class CreateHandlerTest extends AbstractTestBase {
         final PutSubscriptionFilterResponse createResponse = PutSubscriptionFilterResponse.builder()
                 .build();
 
-        // return no existing Subscriptions for pre-create and then success response for create
         when(proxyClient.client().describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class)))
-                .thenThrow(ResourceNotFoundException.class)
+                .thenReturn(DescribeSubscriptionFiltersResponse.builder().build())
                 .thenReturn(describeResponse);
 
         when(proxyClient.client().putSubscriptionFilter(any(PutSubscriptionFilterRequest.class)))
@@ -97,7 +76,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client()).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
+        verify(proxyClient.client(), times(2)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
         verify(proxyClient.client()).putSubscriptionFilter(any(PutSubscriptionFilterRequest.class));
     }
 
@@ -114,7 +93,10 @@ public class CreateHandlerTest extends AbstractTestBase {
 
         // return no existing Subscriptions for pre-create and then success response for create
         when(proxyClient.client().describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class)))
-                .thenReturn(preCreateResponse);
+                .thenReturn(preCreateResponse)
+                .thenReturn(DescribeSubscriptionFiltersResponse.builder()
+                        .subscriptionFilters(Translator.translateToSDK(model))
+                        .build());
 
         when(proxyClient.client().putSubscriptionFilter(any(PutSubscriptionFilterRequest.class)))
                 .thenReturn(createResponse);
@@ -132,7 +114,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client()).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
+        verify(proxyClient.client(), times(2)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
         verify(proxyClient.client()).putSubscriptionFilter(any(PutSubscriptionFilterRequest.class));
     }
 
@@ -147,7 +129,6 @@ public class CreateHandlerTest extends AbstractTestBase {
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
-
 
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
                 .isInstanceOf(CfnServiceInternalErrorException.class);
@@ -168,8 +149,13 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnAlreadyExistsException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AlreadyExists);
     }
 
     @Test

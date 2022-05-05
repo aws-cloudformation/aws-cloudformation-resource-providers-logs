@@ -1,8 +1,9 @@
 {
-    "desiredResourceState": {
-        "DestinationArn": "arn:aws:lambda:us-west-2:356761496836:function:TestLambdaFunc",
-        "LogGroupName": "TestLogGroup",
-        "FilterPattern": "pattern"
-    },
-    "previousResourceState": {}
+  "desiredResourceState": {
+    "DestinationArn": "arn:aws:lambda:us-west-2:356761496836:function:BoostrapTestingstack21-LambdaFunction-GOXyuG6XfvV5",
+    "LogGroupName": "BoostrapTestingstack21-MyLogGroup-NNoJQ9pY7qjU",
+    "RoleArn": "arn:aws:iam::356761496836:role/BoostrapTestingstack21-CloudWatchLogsWriteToLambda-881HW1P0J31F",
+    "FilterPattern": "pattern"
+  },
+  "previousResourceState": {}
 }
