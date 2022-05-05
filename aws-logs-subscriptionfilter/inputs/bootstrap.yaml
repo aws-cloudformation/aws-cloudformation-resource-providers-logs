@@ -100,10 +100,14 @@ Resources:
 Outputs:
   StackRoleArn:
     Value: !GetAtt StackRole.Arn
+    Export:
+      Name: StackRoleArn
 
   LogGroupName:
     Description: The name of the created LogGroup
     Value: !Ref MyLogGroup
+    Export:
+      Name: LogGroupName
 
   LambdaDestinationArn:
     Description: The ARN for the created Lambda function
@@ -111,6 +115,8 @@ Outputs:
       Fn::GetAtt:
         - LambdaFunction
         - Arn
+    Export:
+      Name: LambdaDestinationArn
 
   KinesisStreamDestinationARN:
     Description: The ARN for the created Kinesis stream
@@ -118,6 +124,8 @@ Outputs:
       Fn::GetAtt:
         - KinesisStream
         - Arn
+    Export:
+      Name: KinesisStreamDestinationARN
 
   KinesisStreamDestinationARN2:
     Description: The ARN for the second created Kinesis stream
@@ -125,6 +133,8 @@ Outputs:
       Fn::GetAtt:
         - KinesisStream2
         - Arn
+    Export:
+      Name: KinesisStreamDestinationARN2
 
   RoleArn:
     Description: The ARN of an IAM role that grants CloudWatch Logs permissions to deliver ingested log events to the destination stream
@@ -132,3 +142,5 @@ Outputs:
       Fn::GetAtt:
         - CloudWatchLogsDeliveryRole
         - Arn
+    Export:
+      Name: RoleArn
