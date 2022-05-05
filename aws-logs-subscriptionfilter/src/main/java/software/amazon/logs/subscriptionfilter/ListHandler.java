@@ -21,7 +21,7 @@ public class ListHandler extends BaseHandlerStd {
 
         logger.log(String.format("Invoking request for: %s with StackID: %s", callGraphString, stackId));
 
-        return proxy.initiate("AWS-Logs-SubscriptionFilter::List", proxyClient, model, callbackContext)
+        return proxy.initiate(callGraphString, proxyClient, model, callbackContext)
                 .translateToServiceRequest((cbModel) -> Translator.translateToListRequest(cbModel, nextToken))
                 .makeServiceCall((listFiltersRequest, _proxyClient) -> _proxyClient
                         .injectCredentialsAndInvokeV2(listFiltersRequest, _proxyClient.client()::describeSubscriptionFilters))
