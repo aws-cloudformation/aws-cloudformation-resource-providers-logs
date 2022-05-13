@@ -1,0 +1,4 @@
+{
+  "DestinationArn": "{{DestinationArn}}",
+  "LogGroupName": "{{LogGroupName}}"
+}
