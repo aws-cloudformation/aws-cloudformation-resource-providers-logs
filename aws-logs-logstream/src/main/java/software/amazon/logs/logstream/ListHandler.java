@@ -1,5 +1,10 @@
 package software.amazon.logs.logstream;
 
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.cloudformation.proxy.*;
+
+import java.util.List;
+
 import software.amazon.awssdk.awscore.AwsRequest;
 import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -9,7 +14,6 @@ import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class ListHandler extends BaseHandler<CallbackContext> {
 

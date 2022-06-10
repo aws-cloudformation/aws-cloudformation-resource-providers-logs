@@ -1,6 +1,5 @@
 package software.amazon.logs.logstream;
 
-import software.amazon.awssdk.core.SdkClient;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.*;
@@ -20,19 +19,19 @@ import static java.util.Objects.requireNonNull;
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
-//  private final CloudWatchLogsClient cloudWatchLogsClient;
+private final CloudWatchLogsClient cloudWatchLogsClient;
 
-//  protected BaseHandlerStd() {
-//    this(ClientBuilder.getClient());
-//  }
-//
-//  protected BaseHandlerStd(CloudWatchLogsClient cloudWatchLogsClient) {
-//    this.cloudWatchLogsClient = requireNonNull(cloudWatchLogsClient);
-//  }
-//
-//  private CloudWatchLogsClient getCloudWatchLogsClient() {
-//    return cloudWatchLogsClient;
-//  }
+  protected BaseHandlerStd() {
+    this(ClientBuilder.getClient());
+  }
+
+  protected BaseHandlerStd(CloudWatchLogsClient cloudWatchLogsClient) {
+    this.cloudWatchLogsClient = requireNonNull(cloudWatchLogsClient);
+  }
+
+  private CloudWatchLogsClient getCloudWatchLogsClient() {
+    return cloudWatchLogsClient;
+  }
 
   @Override
   public final ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -53,15 +52,16 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     final AmazonWebServicesClientProxy proxy,
     final ResourceHandlerRequest<ResourceModel> request,
     final CallbackContext callbackContext,
-    final ProxyClient<SdkClient> proxyClient,
+    final ProxyClient<CloudWatchLogsClient> proxyClient,
     final Logger logger);
 
-  protected boolean doesResourceExist(final ProxyClient<CloudWatchLogsClient> proxyClient,
-          final ResourceModel model) throws AwsServiceException {
+  protected boolean doesResourceExist(final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model)
+          throws AwsServiceException {
     final DescribeLogStreamsRequest translateToReadRequest = Translator.translateToReadRequest(model);
     final DescribeLogStreamsResponse response;
+
     try {
-      response = proxyClient.injectCredentialsAndInvokeV2(translateToReadRequest, proxyClient.client()::describeSubscriptionFilters);
+      response = proxyClient.injectCredentialsAndInvokeV2(translateToReadRequest, proxyClient.client()::describeLogStreams);
       return !response.logStreams().isEmpty();
     } catch (final AwsServiceException e) {
       BaseHandlerException newException = Translator.translateException(e);

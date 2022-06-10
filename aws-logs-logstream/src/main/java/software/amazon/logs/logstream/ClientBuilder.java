@@ -1,25 +1,42 @@
 package software.amazon.logs.logstream;
 
-import software.amazon.awssdk.core.SdkClient;
-// TODO: replace all usage of SdkClient with your service client type, e.g; YourServiceClient
-// import software.amazon.awssdk.services.yourservice.YourServiceClient;
-// import software.amazon.cloudformation.LambdaWrapper;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.internal.retry.SdkDefaultRetrySetting;
+import software.amazon.awssdk.core.retry.RetryPolicy;
+import software.amazon.awssdk.core.retry.backoff.BackoffStrategy;
+import software.amazon.awssdk.core.retry.backoff.EqualJitterBackoffStrategy;
+import software.amazon.awssdk.core.retry.conditions.RetryCondition;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.cloudformation.LambdaWrapper;
+
+import java.time.Duration;
 
 public class ClientBuilder {
-  /*
-  TODO: uncomment the following, replacing YourServiceClient with your service client name
-  It is recommended to use static HTTP client so less memory is consumed
-  e.g. https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs/blob/master/aws-logs-loggroup/src/main/java/software/amazon/logs/loggroup/ClientBuilder.java#L9
+  private static CloudWatchLogsClient cloudWatchLogsClient;
 
-  public static YourServiceClient getClient() {
-    return YourServiceClient.builder()
+  private static final BackoffStrategy BACKOFF_STRATEGY =
+          EqualJitterBackoffStrategy.builder()
+                  .baseDelay(Duration.ofSeconds(2))
+                  .maxBackoffTime(SdkDefaultRetrySetting.MAX_BACKOFF)
+                  .build();
+
+  private static final RetryPolicy RETRY_POLICY =
+          RetryPolicy.builder()
+                  .numRetries(4)
+                  .retryCondition(RetryCondition.defaultRetryCondition())
+                  .throttlingBackoffStrategy(BACKOFF_STRATEGY)
+                  .build();
+
+  public static CloudWatchLogsClient getClient() {
+    if (cloudWatchLogsClient == null) {
+      return CloudWatchLogsClient.builder()
               .httpClient(LambdaWrapper.HTTP_CLIENT)
+              .overrideConfiguration(ClientOverrideConfiguration.builder()
+                      .retryPolicy(RETRY_POLICY)
+                      .apiCallTimeout(Duration.ofSeconds(55))
+                      .build())
               .build();
-  }
-  */
-
-  // TODO: remove this implementation once you have uncommented the above
-  public static SdkClient getClient() {
-    return null;
+    }
+    return cloudWatchLogsClient;
   }
 }

@@ -1,8 +1,5 @@
 package software.amazon.logs.logstream;
 
-// TODO: replace all usage of SdkClient with your service client type, e.g; YourServiceAsyncClient
-// import software.amazon.awssdk.services.yourservice.YourServiceAsyncClient;
-
 import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.SdkClient;
@@ -13,6 +10,15 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.StringUtils;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.cloudformation.exceptions.*;
+import software.amazon.cloudformation.proxy.*;
+import software.amazon.cloudformation.resource.IdentifierUtils;
 
 public class CreateHandler extends BaseHandlerStd {
     private Logger logger;
@@ -21,7 +27,7 @@ public class CreateHandler extends BaseHandlerStd {
         final AmazonWebServicesClientProxy proxy,
         final ResourceHandlerRequest<ResourceModel> request,
         final CallbackContext callbackContext,
-        final ProxyClient<SdkClient> proxyClient,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
         final Logger logger) {
 
         this.logger = logger;
@@ -57,13 +63,13 @@ public class CreateHandler extends BaseHandlerStd {
                     })
 
                     // STEP 1.3 [TODO: handle exception]
-                    .handleError((awsRequest, exception, client, model, context) -> {
-                        // TODO: uncomment when ready to implement
-                        // if (exception instanceof CfnNotFoundException)
-                        //     return ProgressEvent.progress(model, context);
-                        // throw exception;
-                        return ProgressEvent.progress(model, context);
-                    })
+//                    .handleError((awsRequest, exception, client, model, context) -> {
+//                        // TODO: uncomment when ready to implement
+//                        // if (exception instanceof CfnNotFoundException)
+//                        //     return ProgressEvent.progress(model, context);
+//                        // throw exception;
+//                        return ProgressEvent.progress(model, context);
+//                    })
                     .progress()
             )
 
@@ -80,7 +86,7 @@ public class CreateHandler extends BaseHandlerStd {
 
                     // STEP 2.2 [TODO: make an api call]
                     .makeServiceCall((awsRequest, client) -> {
-                        AwsResponse awsResponse = null;
+                        DescribeLogStreamsResponse awsResponse = null;
                         try {
 
                             // TODO: put your create resource code here
@@ -102,14 +108,14 @@ public class CreateHandler extends BaseHandlerStd {
                     // STEP 2.3 [TODO: stabilize step is not necessarily required but typically involves describing the resource until it is in a certain status, though it can take many forms]
                     // for more information -> https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
                     // If your resource requires some form of stabilization (e.g. service does not provide strong consistency), you will need to ensure that your code
-                    // accounts for any potential issues, so that a subsequent read/update requests will not cause any conflicts (e.g. NotFoundException/InvalidRequestException)
-                    .stabilize((awsRequest, awsResponse, client, model, context) -> {
-                        // TODO: put your stabilization code here
-
-                        final boolean stabilized = true;
-                        logger.log(String.format("%s [%s] has been stabilized.", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier()));
-                        return stabilized;
-                    })
+//                    // accounts for any potential issues, so that a subsequent read/update requests will not cause any conflicts (e.g. NotFoundException/InvalidRequestException)
+//                    .stabilize((awsRequest, awsResponse, client, model, context) -> {
+//                        // TODO: put your stabilization code here
+//
+//                        final boolean stabilized = true;
+//                        logger.log(String.format("%s [%s] has been stabilized.", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier()));
+//                        return stabilized;
+//                    })
                     .progress()
                 )
 

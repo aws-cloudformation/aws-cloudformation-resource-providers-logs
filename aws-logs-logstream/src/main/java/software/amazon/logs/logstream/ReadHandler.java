@@ -1,17 +1,27 @@
 package software.amazon.logs.logstream;
 
-// TODO: replace all usage of SdkClient with your service client type, e.g; YourServiceAsyncClient
-// import software.amazon.awssdk.services.yourservice.YourServiceAsyncClient;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.Logger;
+import software.amazon.cloudformation.proxy.OperationStatus;
+import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ProxyClient;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.SdkClient;
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ProxyClient;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+
+import java.util.Objects;
 
 public class ReadHandler extends BaseHandlerStd {
     private Logger logger;
@@ -20,7 +30,7 @@ public class ReadHandler extends BaseHandlerStd {
         final AmazonWebServicesClientProxy proxy,
         final ResourceHandlerRequest<ResourceModel> request,
         final CallbackContext callbackContext,
-        final ProxyClient<SdkClient> proxyClient,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
         final Logger logger) {
 
         this.logger = logger;
@@ -38,7 +48,7 @@ public class ReadHandler extends BaseHandlerStd {
             // Implement client invocation of the read request through the proxyClient, which is already initialised with
             // caller credentials, correct region and retry settings
             .makeServiceCall((awsRequest, client) -> {
-                AwsResponse awsResponse = null;
+                DescribeLogStreamsResponse awsResponse = null;
                 try {
 
                     // TODO: add custom read resource logic

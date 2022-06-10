@@ -15,7 +15,6 @@
     "required" : [ "LogGroupName", "LogStreamName" ],
     "createOnlyProperties" : [ "/properties/LogGroupName", "/properties/LogStreamName"],
     "primaryIdentifier" : [ "/properties/LogGroupName", "/properties/LogStreamName"],
-    "additionalProperties": false,
     "handlers" : {
         "create" : {
             "permissions" : [

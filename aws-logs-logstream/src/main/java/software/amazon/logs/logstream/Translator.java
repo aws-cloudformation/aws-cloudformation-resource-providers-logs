@@ -47,18 +47,17 @@ public class Translator {
     return new CfnGeneralServiceException(e);
   }
 
-//  static ResourceModel translateLogStream (final software.amazon.awssdk.services.cloudwatchlogs.model.LogStream logStream) {
-//    return ResourceModel.builder()
-//            .logStreamName(logStream.logStreamName())
-//            .build();
-//  }
-//
-//  static software.amazon.awssdk.services.cloudwatchlogs.model.LogStream translateToSDK (final ResourceModel model) {
-//    return software.amazon.awssdk.services.cloudwatchlogs.model.LogStream.builder()
-//            .logStreamName(model.getLogStreamName())
-//            .logGroupName(model.getLogGroupName())
-//            .build();
-//  }
+  static ResourceModel translateLogStream (final software.amazon.awssdk.services.cloudwatchlogs.model.LogStream logStream) {
+    return ResourceModel.builder()
+            .logStreamName(logStream.logStreamName())
+            .build();
+  }
+
+  static software.amazon.awssdk.services.cloudwatchlogs.model.LogStream translateToSDK (final ResourceModel model) {
+    return software.amazon.awssdk.services.cloudwatchlogs.model.LogStream.builder()
+            .logStreamName(model.getLogStreamName())
+            .build();
+  }
 
   static CreateLogStreamRequest translateToCreateRequest(final ResourceModel model) {
     return CreateLogStreamRequest.builder()
@@ -78,15 +77,15 @@ public class Translator {
   static ResourceModel translateFromReadResponse(final DescribeLogStreamsResponse awsResponse) {
     return awsResponse.logStreams()
             .stream()
-            .map(Translator::translateSubscriptionFilter)
+            .map(Translator::translateLogStream)
             .findFirst()
             .get();
   }
 
-    static DeleteSubscriptionFilterRequest translateToDeleteRequest (final ResourceModel model){
-      return DeleteSubscriptionFilterRequest.builder()
+    static DeleteLogStreamRequest translateToDeleteRequest (final ResourceModel model){
+      return DeleteLogStreamRequest.builder()
               .logGroupName(model.getLogGroupName())
-              .filterName(model.getLogStreamName())
+              .logStreamName(model.getLogStreamName())
               .build();
     }
 
@@ -98,8 +97,8 @@ public class Translator {
               .collect(Collectors.toList());
     }
 
-    static DescribeSubscriptionFiltersRequest translateToListRequest (final ResourceModel model, final String nextToken) {
-      return DescribeSubscriptionFiltersRequest.builder()
+    static DescribeLogStreamsRequest translateToListRequest (final ResourceModel model, final String nextToken) {
+      return DescribeLogStreamsRequest.builder()
               .logGroupName(model.getLogGroupName())
               .nextToken(nextToken)
               .limit(50)

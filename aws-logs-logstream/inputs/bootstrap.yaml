@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+
+  MyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
+
+  UluruLogStream:
+    Type: AWS::Logs::LogStream
+    Properties:
+      LogGroupName: second-log-group
+      LogStreamName: 1304593
+
+  Outputs:
+
+    LogGroupName:
+      Description: The name of the created LogGroup
+      Value: !Ref MyLogGroup
+      Export:
+        Name: LogGroupName
