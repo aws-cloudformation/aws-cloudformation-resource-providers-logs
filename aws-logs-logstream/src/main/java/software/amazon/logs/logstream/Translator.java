@@ -1,12 +1,8 @@
 package software.amazon.logs.logstream;
 
-import com.google.common.collect.Lists;
-import software.amazon.awssdk.awscore.AwsRequest;
-import software.amazon.awssdk.awscore.AwsResponse;
-
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.*;
-import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.cloudformation.exceptions.*;
 import software.amazon.cloudformation.proxy.*;
@@ -72,6 +68,7 @@ public class Translator {
             .logStreamNamePrefix(model.getLogStreamName())
             .logGroupName(model.getLogGroupName())
             .build();
+
   }
 
   static ResourceModel translateFromReadResponse(final DescribeLogStreamsResponse awsResponse) {

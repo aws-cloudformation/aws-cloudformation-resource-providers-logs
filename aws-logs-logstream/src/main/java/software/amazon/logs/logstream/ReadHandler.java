@@ -27,51 +27,55 @@ public class ReadHandler extends BaseHandlerStd {
     private Logger logger;
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request,
-        final CallbackContext callbackContext,
-        final ProxyClient<CloudWatchLogsClient> proxyClient,
-        final Logger logger) {
+            final AmazonWebServicesClientProxy proxy,
+            final ResourceHandlerRequest<ResourceModel> request,
+            final CallbackContext callbackContext,
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final Logger logger) {
 
         this.logger = logger;
+        final ResourceModel model = request.getDesiredResourceState();
+        logger.log(String.format("LogStreamNamePrefix: %s", model.getLogStreamName()));
+        final String stackId = request.getStackId() == null ? "" : request.getStackId();
 
-        // TODO: Adjust Progress Chain according to your implementation
-        // https://github.com/aws-cloudformation/cloudformation-cli-java-plugin/blob/master/src/main/java/software/amazon/cloudformation/proxy/CallChain.java
+        logger.log(String.format("Invoking request for: %s for stack: %s", "AWS-Logs-LogStream::Read", stackId));
 
-        // STEP 1 [initialize a proxy context]
-        return proxy.initiate("AWS-Logs-LogStream::Read", proxyClient, request.getDesiredResourceState(), callbackContext)
+        return proxy.initiate("AWS-Logs-LogStream::Read", proxyClient, model, callbackContext)
+                .translateToServiceRequest(Translator::translateToReadRequest)
+                .makeServiceCall((awsRequest, sdkProxyClient) -> {
+                    logger.log(String.format("awsrequest : %s", awsRequest));
+                    return readResource(awsRequest, sdkProxyClient , model, stackId);
+                })
+                .done(awsResponse -> {
+                    logger.log(String.format("Translator %s", Translator.translateFromReadResponse(awsResponse)));
+                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
+                            .status(OperationStatus.SUCCESS)
+                            .resourceModel(Translator.translateFromReadResponse(awsResponse))
+                            .build();
+                });
+    }
 
-            // STEP 2 [TODO: construct a body of a request]
-            .translateToServiceRequest(Translator::translateToReadRequest)
+    private DescribeLogStreamsResponse readResource(
+            final DescribeLogStreamsRequest awsRequest,
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final ResourceModel model,
+            final String stackId) {
+        DescribeLogStreamsResponse describeLogStreamsResponse = null;
 
-            // STEP 3 [TODO: make an api call]
-            // Implement client invocation of the read request through the proxyClient, which is already initialised with
-            // caller credentials, correct region and retry settings
-            .makeServiceCall((awsRequest, client) -> {
-                DescribeLogStreamsResponse awsResponse = null;
-                try {
+        try {
+            describeLogStreamsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeLogStreams);
 
-                    // TODO: add custom read resource logic
-                    // If describe request does not return ResourceNotFoundException, you must throw ResourceNotFoundException based on
-                    // awsResponse values
+        } catch (Exception e) {
+            handleException(e, logger, stackId);
+        }
 
-                } catch (final AwsServiceException e) { // ResourceNotFoundException
-                    /*
-                    * While the handler contract states that the handler must always return a progress event,
-                    * you may throw any instance of BaseHandlerException, as the wrapper map it to a progress event.
-                    * Each BaseHandlerException maps to a specific error code, and you should map service exceptions as closely as possible
-                    * to more specific error codes
-                    */
-                    throw new CfnGeneralServiceException(ResourceModel.TYPE_NAME, e); // e.g. https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs/commit/2077c92299aeb9a68ae8f4418b5e932b12a8b186#diff-5761e3a9f732dc1ef84103dc4bc93399R56-R63
-                }
+        if (describeLogStreamsResponse == null || describeLogStreamsResponse.logStreams().isEmpty()) {
+            logger.log(String.format("Resource does not exist for request: %s", awsRequest.toString()));
+            throw new CfnNotFoundException(ResourceModel.TYPE_NAME,
+                    Objects.toString(model.getPrimaryIdentifier()));
+        }
 
-                logger.log(String.format("%s has successfully been read.", ResourceModel.TYPE_NAME));
-                return awsResponse;
-            })
-
-            // STEP 4 [TODO: gather all properties of the resource]
-            // Implement client invocation of the read request through the proxyClient, which is already initialised with
-            // caller credentials, correct region and retry settings
-            .done(awsResponse -> ProgressEvent.defaultSuccessHandler(Translator.translateFromReadResponse(awsResponse)));
+        logger.log(String.format("Got response: %s" , describeLogStreamsResponse));
+        return describeLogStreamsResponse;
     }
 }

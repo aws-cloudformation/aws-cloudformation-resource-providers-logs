@@ -1,5 +1,7 @@
 package software.amazon.logs.logstream;
 
+import org.apache.commons.collections.CollectionUtils;
+
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.*;
@@ -55,14 +57,21 @@ private final CloudWatchLogsClient cloudWatchLogsClient;
     final ProxyClient<CloudWatchLogsClient> proxyClient,
     final Logger logger);
 
-  protected boolean doesResourceExist(final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model)
+  protected boolean doesResourceExistwithName(final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model)
           throws AwsServiceException {
     final DescribeLogStreamsRequest translateToReadRequest = Translator.translateToReadRequest(model);
     final DescribeLogStreamsResponse response;
 
     try {
       response = proxyClient.injectCredentialsAndInvokeV2(translateToReadRequest, proxyClient.client()::describeLogStreams);
-      return !response.logStreams().isEmpty();
+      if(CollectionUtils.isEmpty(response.logStreams())){
+        return false;
+      }
+      final LogStream logStream = response.logStreams().get(0);
+      if(logStream.logStreamName().equals(model.getLogStreamName())){
+        return true;
+      }
+      return false;
     } catch (final AwsServiceException e) {
       BaseHandlerException newException = Translator.translateException(e);
       if (newException instanceof CfnNotFoundException) {

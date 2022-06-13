@@ -22,6 +22,9 @@ public class DeleteHandler extends BaseHandlerStd {
 //                    .delay(Duration.ofSeconds(10))
 //                    .build();
 
+//    private static final Constant BACKOFF_DELAY =
+//    Constant.of().delay(Duration.ofSeconds(10)).timeout(Duration.ofMinutes(0)).build();
+
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
@@ -39,10 +42,9 @@ public class DeleteHandler extends BaseHandlerStd {
 
         return proxy.initiate("AWS-Logs-LogStream::Delete", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
-//                .backoffDelay(BACKOFF_DELAY)
                 .makeServiceCall((myRequest, myCallbackContext) ->
                 {
-                    logger.log("MakeService Call");
+                    logger.log(String.format("Calling DeleteResource Function with %s", myRequest));
                     return deleteResource(myRequest, proxyClient, stackId);
                 })
                 .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
@@ -57,6 +59,7 @@ public class DeleteHandler extends BaseHandlerStd {
         try {
             logger.log("invoke Creds");
             deleteLogStreamResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteLogStream);
+            logger.log(String.format("Delete response: %s" , deleteLogStreamResponse));
         } catch (Exception e){
             logger.log("exception");
             handleException(e, logger, stackid);

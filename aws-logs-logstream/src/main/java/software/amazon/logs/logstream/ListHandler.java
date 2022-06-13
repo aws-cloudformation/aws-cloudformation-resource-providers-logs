@@ -27,8 +27,7 @@ public class ListHandler extends BaseHandlerStd {
 
         return proxy.initiate("AWS-Logs-LogStream::List", proxyClient, model, callbackContext)
                 .translateToServiceRequest((cbModel) -> Translator.translateToListRequest(cbModel, nextToken))
-                .makeServiceCall((listFiltersRequest, _proxyClient) -> _proxyClient
-                        .injectCredentialsAndInvokeV2(listFiltersRequest, _proxyClient.client()::describeLogStreams))
+                .makeServiceCall((listFiltersRequest, _proxyClient) -> _proxyClient.injectCredentialsAndInvokeV2(listFiltersRequest, _proxyClient.client()::describeLogStreams))
                 .done((describeLogStreamsRequest, describeLogStreamsResponse, client, _model, _callbackContext) -> {
                     final List<ResourceModel> modelList = Translator.translateFromListResponse(describeLogStreamsResponse);
                     return ProgressEvent.<ResourceModel, CallbackContext>builder()
