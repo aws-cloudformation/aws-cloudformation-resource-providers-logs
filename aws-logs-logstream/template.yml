@@ -5,7 +5,7 @@ Description: AWS SAM template for the AWS::Logs::LogStream resource type
 Globals:
   Function:
     Timeout: 180  # docker start-up times can be long for SAM CLI
-    MemorySize: 256
+    MemorySize: 1024
 
 Resources:
   TypeFunction:

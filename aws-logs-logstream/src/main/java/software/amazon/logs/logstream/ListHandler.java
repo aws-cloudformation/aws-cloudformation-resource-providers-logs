@@ -5,43 +5,38 @@ import software.amazon.cloudformation.proxy.*;
 
 import java.util.List;
 
-import software.amazon.awssdk.awscore.AwsRequest;
-import software.amazon.awssdk.awscore.AwsResponse;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.OperationStatus;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-
 import java.util.ArrayList;
 
-public class ListHandler extends BaseHandler<CallbackContext> {
+public class ListHandler extends BaseHandlerStd {
 
     @Override
-    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request,
-        final CallbackContext callbackContext,
-        final Logger logger) {
+    protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
+            final AmazonWebServicesClientProxy proxy,
+            final ResourceHandlerRequest<ResourceModel> request,
+            final CallbackContext callbackContext,
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final Logger logger) {
 
-        final List<ResourceModel> models = new ArrayList<>();
+//        final List<ResourceModel> models = new ArrayList<>();
 
-        // STEP 1 [TODO: construct a body of a request]
-//        final AwsRequest awsRequest = Translator.translateToListRequest(request.getNextToken());
+        final ResourceModel model = request.getDesiredResourceState();
+        final String stackId = request.getStackId() == null ? "" : request.getStackId();
+        final String nextToken = request.getNextToken();
 
-        // STEP 2 [TODO: make an api call]
-        AwsResponse awsResponse = null; // proxy.injectCredentialsAndInvokeV2(awsRequest, ClientBuilder.getClient()::describeLogGroups);
+        logger.log(String.format("Invoking request for: %s with StackID: %s", "AWS-Logs-LogStream::List", stackId));
 
-        // STEP 3 [TODO: get a token for the next page]
-        String nextToken = null;
+        return proxy.initiate("AWS-Logs-LogStream::List", proxyClient, model, callbackContext)
+                .translateToServiceRequest((cbModel) -> Translator.translateToListRequest(cbModel, nextToken))
+                .makeServiceCall((listFiltersRequest, _proxyClient) -> _proxyClient
+                        .injectCredentialsAndInvokeV2(listFiltersRequest, _proxyClient.client()::describeLogStreams))
+                .done((describeLogStreamsRequest, describeLogStreamsResponse, client, _model, _callbackContext) -> {
+                    final List<ResourceModel> modelList = Translator.translateFromListResponse(describeLogStreamsResponse);
+                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
+                            .resourceModels(modelList)
+                            .nextToken(nextToken)
+                            .status(OperationStatus.SUCCESS)
+                            .build();
+                });
 
-        // STEP 4 [TODO: construct resource models]
-        // e.g. https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs/blob/master/aws-logs-loggroup/src/main/java/software/amazon/logs/loggroup/ListHandler.java#L19-L21
-
-        return ProgressEvent.<ResourceModel, CallbackContext>builder()
-            .resourceModels(models)
-            .nextToken(nextToken)
-            .status(OperationStatus.SUCCESS)
-            .build();
     }
 }

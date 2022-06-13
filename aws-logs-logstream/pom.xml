@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
-    xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>software.amazon.logs.logstream</groupId>
@@ -16,7 +16,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <awssdk.version>2.17.130</awssdk.version>
+        <cfn.generate.args/>
     </properties>
 
     <dependencyManagement>
@@ -24,7 +24,7 @@
             <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
-                <version>${awssdk.version}</version>
+                <version>2.17.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -38,20 +38,10 @@
             <artifactId>aws-cloudformation-rpdk-java-plugin</artifactId>
             <version>[2.0.0,3.0.0)</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/utils -->
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>utils</artifactId>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/cloudwatchlogs -->
+        <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/ec2 -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>cloudwatchlogs</artifactId>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/sdk-core -->
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>sdk-core</artifactId>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
         <dependency>
@@ -108,10 +98,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>RELEASE</version>
-            <scope>compile</scope>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -134,6 +124,14 @@
                 <version>2.3</version>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>**/Log4j2Plugins.dat</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>
@@ -157,7 +155,7 @@
                         </goals>
                         <configuration>
                             <executable>cfn</executable>
-                            <commandlineArgs>generate</commandlineArgs>
+                            <commandlineArgs>generate ${cfn.generate.args}</commandlineArgs>
                             <workingDirectory>${project.basedir}</workingDirectory>
                         </configuration>
                     </execution>
@@ -198,7 +196,6 @@
                 <configuration>
                     <excludes>
                         <exclude>**/BaseConfiguration*</exclude>
-                        <exclude>**/BaseHandler*</exclude>
                         <exclude>**/HandlerWrapper*</exclude>
                         <exclude>**/ResourceModel*</exclude>
                     </excludes>
@@ -249,6 +246,12 @@
                 <directory>${project.basedir}</directory>
                 <includes>
                     <include>aws-logs-logstream.json</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/target/loaded-target-schemas</directory>
+                <includes>
+                    <include>**/*.json</include>
                 </includes>
             </resource>
         </resources>

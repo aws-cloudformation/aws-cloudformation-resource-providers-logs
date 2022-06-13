@@ -10,12 +10,18 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
-import software.amazon.awssdk.awscore.AwsResponse;
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import java.time.Duration;
+
+import software.amazon.cloudformation.proxy.delay.Constant;
 
 public class DeleteHandler extends BaseHandlerStd {
     private Logger logger;
+
+//    private static final Constant BACKOFF_DELAY =
+//            Constant.of()
+//                    .delay(Duration.ofSeconds(10))
+//                    .build();
+
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
         final AmazonWebServicesClientProxy proxy,
@@ -28,10 +34,12 @@ public class DeleteHandler extends BaseHandlerStd {
         final ResourceModel model = request.getDesiredResourceState();
         final String stackId = request.getStackId() == null ? "" : request.getStackId();
 
+        logger.log("First log statement");
         logger.log(String.format("Invoking %s request for model: %s with StackID: %s", "AWS-Logs-LogStream::Delete", model, stackId));
 
         return proxy.initiate("AWS-Logs-LogStream::Delete", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
+//                .backoffDelay(BACKOFF_DELAY)
                 .makeServiceCall((myRequest, myCallbackContext) ->
                 {
                     logger.log("MakeService Call");
