@@ -45,11 +45,15 @@ public class DeleteHandler extends BaseHandlerStd {
                 .makeServiceCall((myRequest, myCallbackContext) ->
                 {
                     logger.log(String.format("Calling DeleteResource Function with %s", myRequest));
-                    return deleteResource(myRequest, proxyClient, stackId);
+                    return myCallbackContext.injectCredentialsAndInvokeV2(myRequest,myCallbackContext.client()::deleteLogStream);
                 })
-                .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
+                .done(awsResponse -> {
+                    logger.log(String.format("% successfully deleted.", ResourceModel.TYPE_NAME));
+                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
                         .status(OperationStatus.SUCCESS)
-                        .build());
+                        .build();
+                });
+
 
     }
 

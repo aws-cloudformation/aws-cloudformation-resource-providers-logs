@@ -11,17 +11,17 @@ import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ProxyClient;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.*;
 
 import static java.util.Objects.requireNonNull;
+
+import com.amazonaws.event.request.Progress;
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
 private final CloudWatchLogsClient cloudWatchLogsClient;
+public static final int EVENTUAL_CONSISTENCY_DELAY_SECONDS = 10;
+
 
   protected BaseHandlerStd() {
     this(ClientBuilder.getClient());
@@ -57,7 +57,7 @@ private final CloudWatchLogsClient cloudWatchLogsClient;
     final ProxyClient<CloudWatchLogsClient> proxyClient,
     final Logger logger);
 
-  protected boolean doesResourceExistwithName(final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model)
+  protected ProgressEvent<ResourceModel, CallbackContext> doesResourceExistwithName(final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model, final CallbackContext callbackContext)
           throws AwsServiceException {
     final DescribeLogStreamsRequest translateToReadRequest = Translator.translateToReadRequest(model);
     final DescribeLogStreamsResponse response;
@@ -65,17 +65,21 @@ private final CloudWatchLogsClient cloudWatchLogsClient;
     try {
       response = proxyClient.injectCredentialsAndInvokeV2(translateToReadRequest, proxyClient.client()::describeLogStreams);
       if(CollectionUtils.isEmpty(response.logStreams())){
-        return false;
+        // Log Stream does not exist so return InProgress Event
+        return ProgressEvent.progress(model, callbackContext);
+//        return false;
       }
       final LogStream logStream = response.logStreams().get(0);
       if(logStream.logStreamName().equals(model.getLogStreamName())){
-        return true;
+        // Log Stream does exist so return Failed
+        return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.AlreadyExists, String.format("Log Stream Already Exists"));
+//        return true;
       }
-      return false;
+      return ProgressEvent.progress(model, callbackContext);
     } catch (final AwsServiceException e) {
       BaseHandlerException newException = Translator.translateException(e);
       if (newException instanceof CfnNotFoundException) {
-        return false;
+        return ProgressEvent.progress(model, callbackContext);
       }
       throw e;
     }
