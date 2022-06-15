@@ -46,11 +46,12 @@ public class ReadHandler extends BaseHandlerStd {
                     logger.log(String.format("awsrequest : %s", awsRequest));
                     return readResource(awsRequest, sdkProxyClient , model, stackId);
                 })
-                .done(awsResponse -> {
-                    logger.log(String.format("Translator %s", Translator.translateFromReadResponse(awsResponse)));
+                .handleError((cbRequest, exception, cbProxyClient, cbModel, cbContext) -> handleError(cbRequest, exception, cbProxyClient, cbModel, cbContext))
+                .done((awsResponse) -> {
+                    logger.log(String.format("Translator %s", Translator.translateFromReadResponse(awsResponse, model)));
                     return ProgressEvent.<ResourceModel, CallbackContext>builder()
                             .status(OperationStatus.SUCCESS)
-                            .resourceModel(Translator.translateFromReadResponse(awsResponse))
+                            .resourceModel(Translator.translateFromReadResponse(awsResponse, model))
                             .build();
                 });
     }

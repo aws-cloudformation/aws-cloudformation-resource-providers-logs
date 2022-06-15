@@ -4,23 +4,28 @@ import org.apache.commons.collections.CollectionUtils;
 
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsRequest;
+
 import software.amazon.awssdk.services.cloudwatchlogs.model.*;
 
-import software.amazon.cloudformation.exceptions.BaseHandlerException;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
-import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+
+import software.amazon.cloudformation.exceptions.*;
 
 import software.amazon.cloudformation.proxy.*;
 
 import static java.util.Objects.requireNonNull;
 
 import com.amazonaws.event.request.Progress;
+import com.amazonaws.services.kms.model.AlreadyExistsException;
+import com.amazonaws.services.kms.model.LimitExceededException;
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
 private final CloudWatchLogsClient cloudWatchLogsClient;
 public static final int EVENTUAL_CONSISTENCY_DELAY_SECONDS = 10;
+private final static String RESOURCE_ALREADY_EXISTS_EXCEPTION = "ResourceAlreadyExistsException";
+private final static String RESOURCE_NOT_FOUND_EXCEPTION = "ResourceNotFoundException";
 
 
   protected BaseHandlerStd() {
@@ -61,19 +66,16 @@ public static final int EVENTUAL_CONSISTENCY_DELAY_SECONDS = 10;
           throws AwsServiceException {
     final DescribeLogStreamsRequest translateToReadRequest = Translator.translateToReadRequest(model);
     final DescribeLogStreamsResponse response;
-
     try {
       response = proxyClient.injectCredentialsAndInvokeV2(translateToReadRequest, proxyClient.client()::describeLogStreams);
       if(CollectionUtils.isEmpty(response.logStreams())){
         // Log Stream does not exist so return InProgress Event
         return ProgressEvent.progress(model, callbackContext);
-//        return false;
       }
       final LogStream logStream = response.logStreams().get(0);
       if(logStream.logStreamName().equals(model.getLogStreamName())){
         // Log Stream does exist so return Failed
         return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.AlreadyExists, String.format("Log Stream Already Exists"));
-//        return true;
       }
       return ProgressEvent.progress(model, callbackContext);
     } catch (final AwsServiceException e) {
@@ -90,7 +92,6 @@ public static final int EVENTUAL_CONSISTENCY_DELAY_SECONDS = 10;
             e.toString(), e.getMessage(), e.getCause()));
   }
 
-  //TODO: Look into the errors more closely
   protected void handleException(Exception e, Logger logger, final String stackId) {
     if (e instanceof InvalidParameterException) {
       logExceptionDetails(e, logger, stackId);
@@ -101,7 +102,50 @@ public static final int EVENTUAL_CONSISTENCY_DELAY_SECONDS = 10;
     } else if (e instanceof ServiceUnavailableException) {
       logExceptionDetails(e, logger, stackId);
       throw new CfnServiceInternalErrorException(e);
+    } else if (e instanceof AlreadyExistsException){
+      logExceptionDetails(e, logger, stackId);
+      throw new CfnAlreadyExistsException(e);
+    } else if (e instanceof LimitExceededException){
+      logExceptionDetails(e, logger, stackId);
+      throw new CfnServiceLimitExceededException(e);
     }
   }
+
+  //  handleErrors
+  protected ProgressEvent<ResourceModel, CallbackContext> handleError(
+          final CloudWatchLogsRequest request,
+          final Exception e,
+          final ProxyClient<CloudWatchLogsClient> proxyClient,
+          final ResourceModel resourceModel,
+          final CallbackContext callbackContext) {
+
+      BaseHandlerException ex = new CfnNotFoundException(e);
+      if (e instanceof InvalidParameterException) {
+        ex = new CfnGeneralServiceException(e);
+      } else if (e instanceof ResourceNotFoundException) {
+        ex = new CfnGeneralServiceException(e);
+      } else if (e instanceof ServiceUnavailableException) {
+        ex = new CfnServiceInternalErrorException(e);
+      } else if (e instanceof AlreadyExistsException){
+        ex = new CfnAlreadyExistsException(e);
+      } else if (e instanceof LimitExceededException){
+        ex = new CfnServiceLimitExceededException(e);
+      } else if (e instanceof CloudWatchLogsException){
+        ex = new CfnGeneralServiceException(e);
+      }
+
+    return ProgressEvent.failed(resourceModel, callbackContext, ex.getErrorCode(), ex.getMessage());
+  }
+
+  //  function to getErrorCode
+  protected static String getErrorCode(Exception e) {
+    if (e instanceof AwsServiceException) {
+      return ((AwsServiceException) e).awsErrorDetails().errorCode();
+    }
+    return e.getMessage();
+  }
+
+
+
 
 }

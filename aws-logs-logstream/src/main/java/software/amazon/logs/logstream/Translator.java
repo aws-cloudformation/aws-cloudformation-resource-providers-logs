@@ -71,12 +71,34 @@ public class Translator {
 
   }
 
+  /**
+   * Translates resource object from sdk into a resource model
+   * @param awsResponse the aws service describe resource response
+   * @return model resource model
+   */
+  static ResourceModel translateFromReadResponse(final DescribeLogStreamsResponse response, final ResourceModel model) {
+    if(response.hasLogStreams()){
+      LogStream logStream = response.logStreams().get(0);
+
+      return ResourceModel.builder()
+              .logGroupName(model.getLogGroupName())
+              .logStreamName(logStream.logStreamName())
+              .build();
+    }
+    return null;
+  }
+
+
+
   static ResourceModel translateFromReadResponse(final DescribeLogStreamsResponse awsResponse) {
-    return awsResponse.logStreams()
-            .stream()
-            .map(Translator::translateLogStream)
-            .findFirst()
-            .get();
+    if(awsResponse.hasLogStreams()) {
+      return awsResponse.logStreams()
+              .stream()
+              .map(Translator::translateLogStream)
+              .findFirst()
+              .get();
+    }
+    return null;
   }
 
     static DeleteLogStreamRequest translateToDeleteRequest (final ResourceModel model){
@@ -86,10 +108,11 @@ public class Translator {
               .build();
     }
 
-    static List<ResourceModel> translateFromListResponse (final DescribeLogStreamsResponse awsResponse){
+    static List<ResourceModel> translateFromListResponse (final DescribeLogStreamsResponse awsResponse, final ResourceModel model){
       return streamOfOrEmpty(awsResponse.logStreams())
               .map(logStream -> ResourceModel.builder()
                       .logStreamName(logStream.logStreamName())
+                      .logGroupName(model.getLogGroupName())
                       .build())
               .collect(Collectors.toList());
     }

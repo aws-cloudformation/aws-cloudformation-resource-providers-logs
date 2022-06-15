@@ -38,6 +38,11 @@ public class CreateHandler extends BaseHandlerStd {
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
+        final String stackId = request.getStackId() == null ? "" : request.getStackId();
+
+        logger.log("First log statement");
+        logger.log(String.format("Invoking %s request for model: %s with StackID: %s", "AWS-Logs-LogStream::Create", model, stackId));
+
         return ProgressEvent.progress(model, callbackContext)
             .then(progress -> {
                 if(progress.getCallbackContext().isItFirstTime()) {
@@ -58,6 +63,7 @@ public class CreateHandler extends BaseHandlerStd {
                    return ProgressEvent.defaultInProgressHandler(progress.getCallbackContext(),
                             EVENTUAL_CONSISTENCY_DELAY_SECONDS, progress.getResourceModel());
                 })
+
                 .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
     }
 
@@ -78,6 +84,7 @@ public class CreateHandler extends BaseHandlerStd {
         return proxy.initiate("AWS-Logs-LogStream::Create", proxyClient, model, context)
                 .translateToServiceRequest(cbModel -> Translator.translateToCreateRequest(cbModel))
                 .makeServiceCall((cbRequest, cbProxyClient) -> cbProxyClient.injectCredentialsAndInvokeV2(cbRequest, cbProxyClient.client()::createLogStream))
+                .handleError((cbRequest, exception, cbProxyClient, cbModel, cbContext) -> handleError(cbRequest, exception, cbProxyClient, cbModel, cbContext))
                 .done((cbRequest, cbResponse, cbClient, cbModel, cbContext) -> ProgressEvent.progress(cbModel, cbContext));
     }
 }
