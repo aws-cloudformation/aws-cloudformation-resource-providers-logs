@@ -64,10 +64,6 @@ public class ListHandlerTest extends AbstractTestBase{
                 .logStreamName("logStreamName")
                 .build();
 
-        // Build Log Stream List
-//        List<LogStream> logStreamList = new ArrayList<LogStream>();
-//        logStreamList.add(LogStream.builder().logStreamName("logStream1").build());
-
         // Build Response to return when invoked
         final DescribeLogStreamsResponse listResponse = DescribeLogStreamsResponse.builder()
                         .logStreams(Translator.translateToSDK(model))

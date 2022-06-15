@@ -2,6 +2,10 @@ package software.amazon.logs.logstream;
 
 import java.time.Duration;
 import software.amazon.awssdk.core.SdkClient;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -15,6 +19,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
@@ -27,15 +33,17 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 //    private AmazonWebServicesClientProxy proxy;
 //
 //    @Mock
-//    private ProxyClient<SdkClient> proxyClient;
+//    private ProxyClient<CloudWatchLogsClient> proxyClient;
 //
 //    @Mock
-//    SdkClient sdkClient;
+//    CloudWatchLogsClient sdkClient;
+//
+//    final DeleteHandler handler = new DeleteHandler();
 //
 //    @BeforeEach
 //    public void setup() {
 //        proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
-//        sdkClient = mock(SdkClient.class);
+//        sdkClient = mock(CloudWatchLogsClient.class);
 //        proxyClient = MOCK_PROXY(proxy, sdkClient);
 //    }
 //
@@ -47,15 +55,24 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 //
 //    @Test
 //    public void handleRequest_SimpleSuccess() {
-//        final DeleteHandler handler = new DeleteHandler();
 //
-//        final ResourceModel model = ResourceModel.builder().build();
+//        final ResourceModel model = ResourceModel.builder()
+//                .logGroupName("logGroupName1")
+//                .logStreamName("logStreamName")
+//                .build();
+//
+//
+//
+//        when(proxyClient.client().deleteLogStream(any(DeleteLogStreamRequest.class)))
+//                .thenReturn(DeleteLogStreamResponse.builder().build())
+//                .thenReturn(DeleteLogStreamResponse.builder().build());
 //
 //        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
 //            .desiredResourceState(model)
 //            .build();
 //
-//        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+//        final ProgressEvent<ResourceModel, CallbackContext> response =
+//                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 //
 //        assertThat(response).isNotNull();
 //        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);

@@ -24,6 +24,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.atLeastOnce;
@@ -87,4 +89,66 @@ public class ReadHandlerTest extends AbstractTestBase {
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
+
+    @Test
+    public void handleRequest_ResponseIsEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+                .logStreams(Collections.emptyList())
+                .build();
+
+        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+                .thenReturn(describeResponse);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnNotFoundException.class);
+    }
+
+    @Test
+    public void handleRequest_ResourceNotFound() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+                .thenThrow(ResourceNotFoundException.class);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnNotFoundException.class);
+    }
+
+    @Test
+    public void handleRequest_ExceptionThrown() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+                .thenThrow(InvalidParameterException.class);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnInvalidRequestException.class);
+    }
+
+
+
+
 }
