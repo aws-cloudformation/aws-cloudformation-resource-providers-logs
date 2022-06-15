@@ -8,6 +8,7 @@ import software.amazon.awssdk.core.SdkClient;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.pagination.sync.SdkIterable;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Credentials;
 import software.amazon.cloudformation.proxy.LoggerProxy;
@@ -21,10 +22,10 @@ public class AbstractTestBase {
     MOCK_CREDENTIALS = new Credentials("accessKey", "secretKey", "token");
     logger = new LoggerProxy();
   }
-  static ProxyClient<SdkClient> MOCK_PROXY(
+  static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(
     final AmazonWebServicesClientProxy proxy,
-    final SdkClient sdkClient) {
-    return new ProxyClient<SdkClient>() {
+    final CloudWatchLogsClient sdkClient) {
+    return new ProxyClient<CloudWatchLogsClient>() {
       @Override
       public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseT
       injectCredentialsAndInvokeV2(RequestT request, Function<RequestT, ResponseT> requestFunction) {
@@ -58,7 +59,7 @@ public class AbstractTestBase {
       }
 
       @Override
-      public SdkClient client() {
+      public CloudWatchLogsClient client() {
         return sdkClient;
       }
     };
