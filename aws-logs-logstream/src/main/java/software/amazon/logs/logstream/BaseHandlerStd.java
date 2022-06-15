@@ -121,9 +121,9 @@ private final static String RESOURCE_NOT_FOUND_EXCEPTION = "ResourceNotFoundExce
 
       BaseHandlerException ex = new CfnNotFoundException(e);
       if (e instanceof InvalidParameterException) {
-        ex = new CfnGeneralServiceException(e);
+        ex = new CfnInvalidRequestException(e);
       } else if (e instanceof ResourceNotFoundException) {
-        ex = new CfnGeneralServiceException(e);
+        ex = new CfnNotFoundException(e);
       } else if (e instanceof ServiceUnavailableException) {
         ex = new CfnServiceInternalErrorException(e);
       } else if (e instanceof AlreadyExistsException){
