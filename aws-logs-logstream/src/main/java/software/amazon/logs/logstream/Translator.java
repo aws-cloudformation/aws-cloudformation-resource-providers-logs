@@ -39,7 +39,7 @@ public class Translator {
       return new CfnNotFoundException(e);
     } else if (e instanceof ServiceUnavailableException) {
       return new CfnServiceInternalErrorException(e);
-    }
+    } else
     return new CfnGeneralServiceException(e);
   }
 
@@ -77,26 +77,13 @@ public class Translator {
    * @return model resource model
    */
   static ResourceModel translateFromReadResponse(final DescribeLogStreamsResponse response, final ResourceModel model) {
-    if(response.hasLogStreams()){
+    if(response != null && response.hasLogStreams()){
       LogStream logStream = response.logStreams().get(0);
 
       return ResourceModel.builder()
               .logGroupName(model.getLogGroupName())
               .logStreamName(logStream.logStreamName())
               .build();
-    }
-    return null;
-  }
-
-
-
-  static ResourceModel translateFromReadResponse(final DescribeLogStreamsResponse awsResponse) {
-    if(awsResponse.hasLogStreams()) {
-      return awsResponse.logStreams()
-              .stream()
-              .map(Translator::translateLogStream)
-              .findFirst()
-              .get();
     }
     return null;
   }

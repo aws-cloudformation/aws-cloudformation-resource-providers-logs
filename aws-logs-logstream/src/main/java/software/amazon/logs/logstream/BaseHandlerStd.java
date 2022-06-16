@@ -18,7 +18,6 @@ import static java.util.Objects.requireNonNull;
 
 import com.amazonaws.event.request.Progress;
 import com.amazonaws.services.kms.model.AlreadyExistsException;
-import com.amazonaws.services.kms.model.LimitExceededException;
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
@@ -102,13 +101,10 @@ private final static String RESOURCE_NOT_FOUND_EXCEPTION = "ResourceNotFoundExce
     } else if (e instanceof ServiceUnavailableException) {
       logExceptionDetails(e, logger, stackId);
       throw new CfnServiceInternalErrorException(e);
-    } else if (e instanceof AlreadyExistsException){
-      logExceptionDetails(e, logger, stackId);
-      throw new CfnAlreadyExistsException(e);
     } else if (e instanceof LimitExceededException){
       logExceptionDetails(e, logger, stackId);
       throw new CfnServiceLimitExceededException(e);
-    } else if(e instanceof CloudWatchLogsException){
+    } else {
       throw new CfnGeneralServiceException(e);
     }
   }
@@ -128,11 +124,9 @@ private final static String RESOURCE_NOT_FOUND_EXCEPTION = "ResourceNotFoundExce
         ex = new CfnNotFoundException(e);
       } else if (e instanceof ServiceUnavailableException) {
         ex = new CfnServiceInternalErrorException(e);
-      } else if (e instanceof AlreadyExistsException){
-        ex = new CfnAlreadyExistsException(e);
       } else if (e instanceof LimitExceededException){
         ex = new CfnServiceLimitExceededException(e);
-      } else if (e instanceof CloudWatchLogsException){
+      } else {
         ex = new CfnGeneralServiceException(e);
       }
 
