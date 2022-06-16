@@ -34,11 +34,6 @@ public class DeleteHandler extends BaseHandlerStd {
         logger.log("First log statement");
         logger.log(String.format("Invoking %s request for model: %s with StackID: %s", "AWS-Logs-LogStream::Delete", model, stackId));
 
-
-//        if (model == null || StringUtils.isNullOrEmpty(model.getLogStreamName())) {
-//            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest,"Log Stream Name cannot be empty");
-//        }
-
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> deleteLogStream(proxy, proxyClient, model,callbackContext, request, stackId))
                 .then(progress -> {
@@ -52,25 +47,6 @@ public class DeleteHandler extends BaseHandlerStd {
                                 EVENTUAL_CONSISTENCY_DELAY_SECONDS, progress.getResourceModel());
                 })
                .then(progress -> ProgressEvent.<ResourceModel, CallbackContext>builder().status(OperationStatus.SUCCESS).build());
-//
-//
-
-//        return proxy.initiate("AWS-Logs-LogStream::Delete", proxyClient, model, callbackContext)
-//                .translateToServiceRequest(Translator::translateToDeleteRequest)
-//                .makeServiceCall((myRequest, myCallbackContext) ->
-//                {
-//                    logger.log(String.format("Calling DeleteResource Function with %s", myRequest));
-//                    return myCallbackContext.injectCredentialsAndInvokeV2(myRequest,myCallbackContext.client()::deleteLogStream);
-//                })
-//                .handleError((cbRequest, exception, cbProxyClient, cbModel, cbContext) -> handleError(cbRequest, exception, cbProxyClient, cbModel, cbContext))
-//                .done(awsResponse -> {
-//                    logger.log(String.format("% successfully deleted.", ResourceModel.TYPE_NAME));
-//                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
-//                        .status(OperationStatus.SUCCESS)
-//                        .build();
-//                });
-
-
     }
 
     /**
@@ -94,21 +70,6 @@ public class DeleteHandler extends BaseHandlerStd {
                 .handleError((cbRequest, exception, cbProxyClient, cbModel, cbContext) -> handleError(cbRequest, exception, cbProxyClient, cbModel, cbContext))
                 .done((cbRequest, cbResponse, cbClient, cbModel, cbContext) -> ProgressEvent.progress(cbModel, cbContext));
     }
-
-//    private DeleteLogStreamResponse deleteResource(final DeleteLogStreamRequest awsRequest, final ProxyClient<CloudWatchLogsClient> proxyClient, final String stackid){
-//        DeleteLogStreamResponse deleteLogStreamResponse = null;
-//        logger.log("Inside deleteResource Function");
-//        try {
-//            logger.log("invoke Creds");
-//            deleteLogStreamResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteLogStream);
-//            logger.log(String.format("Delete response: %s" , deleteLogStreamResponse));
-//        } catch (Exception e){
-//            logger.log("exception");
-////            handleException(e, logger, stackid);
-//        }
-//        logger.log(String.format("% successfully deleted.", ResourceModel.TYPE_NAME));
-//        return deleteLogStreamResponse;
-//    }
 
 }
 

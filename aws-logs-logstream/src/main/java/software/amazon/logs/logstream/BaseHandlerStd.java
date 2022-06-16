@@ -133,15 +133,4 @@ private final static String RESOURCE_NOT_FOUND_EXCEPTION = "ResourceNotFoundExce
     return ProgressEvent.failed(resourceModel, callbackContext, ex.getErrorCode(), ex.getMessage());
   }
 
-  //  function to getErrorCode
-//  protected static String getErrorCode(Exception e) {
-//    if (e instanceof AwsServiceException) {
-//      return ((AwsServiceException) e).awsErrorDetails().errorCode();
-//    }
-//    return e.getMessage();
-//  }
-
-
-
-
 }

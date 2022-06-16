@@ -121,28 +121,28 @@ public class DeleteHandlerTest extends AbstractTestBase {
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 
-//    @Test
-//    public void handleRequest_ResourceLimitExceeded() {
-//        final ResourceModel model = ResourceModel.builder()
-//                .logGroupName("logGroupName1")
-//                .logStreamName("logStreamName")
-//                .build();
-//
-//        when(proxyClient.client().deleteLogStream(any(DeleteLogStreamRequest.class)))
-//                .thenThrow(LimitExceededException.class);
-//
-//        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-//                .desiredResourceState(model)
-//                .build();
-//
-//        final ProgressEvent<ResourceModel, CallbackContext> response =
-//                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-//
-//        assertThat(response).isNotNull();
-//        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-//        assertThat(response.getResourceModels()).isNull();
-//        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceLimitExceeded);
-//    }
+    @Test
+    public void handleRequest_ResourceLimitExceeded() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        when(proxyClient.client().deleteLogStream(any(DeleteLogStreamRequest.class)))
+                .thenThrow(LimitExceededException.class);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response =
+                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceLimitExceeded);
+    }
 
     @Test
     public void handleRequest_DeleteFailed() {

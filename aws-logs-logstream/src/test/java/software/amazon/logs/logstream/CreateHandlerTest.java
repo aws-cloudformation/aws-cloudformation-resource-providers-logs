@@ -12,6 +12,7 @@ import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.exceptions.*;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -120,25 +121,6 @@ public class CreateHandlerTest extends AbstractTestBase {
         verify(proxyClient.client()).createLogStream(any(CreateLogStreamRequest.class));
     }
 
-//    @Test
-//    public void handleRequest_CreateFailed() {
-//        final ResourceModel model = ResourceModel.builder()
-//                .logGroupName("logGroupName1")
-//                .logStreamName("logStreamName")
-//                .build();
-//
-//        when(proxyClient.client().createLogStream(any(CreateLogStreamRequest.class)))
-//                .thenThrow(ResourceAlreadyExistsException.class);
-//
-//        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-//                .desiredResourceState(model)
-//                .build();
-//
-//        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-//                .isInstanceOf(CfnAlreadyExistsException.class);
-//    }
-
-
     @Tag("noSdkInteraction")
     @Test
     public void handleRequest_FailedCreate_AlreadyExists() {
@@ -167,40 +149,110 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AlreadyExists);
     }
 
-//    @Tag("noSdkInteraction")
-//    @Test
-//    public void handleRequest_ResourceLimitExceeded() {
-//        final ResourceModel model = ResourceModel.builder()
-//                .logGroupName("logGroupName1")
-//                .logStreamName("logStreamName")
-//                .build();
-//
-//        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
-//                .logStreams(Translator.translateToSDK(model))
-//                .build();
-//
-//        final CreateLogStreamResponse createResponse = CreateLogStreamResponse.builder()
-//                .build();
-//
-//        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
-//                .thenReturn(DescribeLogStreamsResponse.builder().build())
-//                .thenReturn(describeResponse);
-//
-//        when(proxyClient.client().createLogStream(any(CreateLogStreamRequest.class)))
-//                .thenThrow(LimitExceededException.class);
-//
-//        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-//                .desiredResourceState(model)
-//                .build();
-//
-//        final ProgressEvent<ResourceModel, CallbackContext> response =
-//                handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-//
-//        assertThat(response).isNotNull();
-//        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-//        assertThat(response.getResourceModels()).isNull();
-//        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceLimitExceeded);
-//    }
+    @Test
+    public void handleRequest_FailedCreate_ServiceUnavailable() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+                .logStreams(Translator.translateToSDK(model))
+                .build();
+
+        final CreateLogStreamResponse createResponse = CreateLogStreamResponse.builder()
+                .build();
+
+
+        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+                .thenReturn(DescribeLogStreamsResponse.builder().build())
+                .thenReturn(describeResponse);
+
+        when(proxyClient.client().createLogStream(any(CreateLogStreamRequest.class)))
+                .thenThrow(ServiceUnavailableException.class);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceInternalError);
+    }
+
+    @Test
+    public void handleRequest_FailedCreate_ServiceLimitExceeded() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+                .logStreams(Translator.translateToSDK(model))
+                .build();
+
+        final CreateLogStreamResponse createResponse = CreateLogStreamResponse.builder()
+                .build();
+
+
+        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+                .thenReturn(DescribeLogStreamsResponse.builder().build())
+                .thenReturn(describeResponse);
+
+        when(proxyClient.client().createLogStream(any(CreateLogStreamRequest.class)))
+                .thenThrow(LimitExceededException.class);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceLimitExceeded);
+    }
+
+    @Test
+    public void handleRequest_FailedCreate_GeneralException() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+                .logStreams(Translator.translateToSDK(model))
+                .build();
+
+        final CreateLogStreamResponse createResponse = CreateLogStreamResponse.builder()
+                .build();
+
+
+        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+                .thenReturn(DescribeLogStreamsResponse.builder().build())
+                .thenReturn(describeResponse);
+
+        when(proxyClient.client().createLogStream(any(CreateLogStreamRequest.class)))
+                .thenThrow(AwsServiceException.class);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.GeneralServiceException);
+    }
 
 
 
@@ -215,70 +267,28 @@ public class CreateHandlerTest extends AbstractTestBase {
 
         final OperationAbortedException operationAbortedException = OperationAbortedException.builder().build();
         final CfnResourceConflictException cfnResourceConflictException = new CfnResourceConflictException(e);
-        assertThat(translateException(operationAbortedException)).isEqualToComparingFieldByField(
-                cfnResourceConflictException);
+        assertThat(translateException(operationAbortedException)).isEqualToComparingFieldByField(cfnResourceConflictException);
 
         final InvalidParameterException invalidParameterException = InvalidParameterException.builder().build();
         final CfnInvalidRequestException cfnInvalidRequestException = new CfnInvalidRequestException(e);
-        assertThat(translateException(invalidParameterException)).isEqualToComparingFieldByField(
-                cfnInvalidRequestException);
+        assertThat(translateException(invalidParameterException)).isEqualToComparingFieldByField(cfnInvalidRequestException);
 
         final ResourceNotFoundException resourceNotFoundException = ResourceNotFoundException.builder().build();
         final CfnNotFoundException cfnNotFoundException = new CfnNotFoundException(e);
         assertThat(translateException(resourceNotFoundException)).isEqualToComparingFieldByField(cfnNotFoundException);
 
         final ServiceUnavailableException serviceUnavailableException = ServiceUnavailableException.builder().build();
-        final CfnServiceInternalErrorException cfnServiceInternalErrorException = new CfnServiceInternalErrorException(
-                e);
-        assertThat(translateException(serviceUnavailableException)).isEqualToComparingFieldByField(
-                cfnServiceInternalErrorException);
+        final CfnServiceInternalErrorException cfnServiceInternalErrorException = new CfnServiceInternalErrorException(e);
+        assertThat(translateException(serviceUnavailableException)).isEqualToComparingFieldByField(cfnServiceInternalErrorException);
 
         final AwsServiceException awsServiceException = AwsServiceException.builder().build();
         CfnGeneralServiceException cfnGeneralServiceException = new CfnGeneralServiceException(e);
         assertThat(translateException(awsServiceException)).isEqualToComparingFieldByField(cfnGeneralServiceException);
-
     }
 
 
 
 
-
-
-
-
-//    @Tag("noSdkInteraction")
-//    @Test
-//    public void testHandleExceptionTranslation() {
-//        final Exception e = new Exception();
-//        final LimitExceededException limitExceededException = LimitExceededException.builder().build();
-//        final CfnServiceLimitExceededException cfnServiceLimitExceededException = new CfnServiceLimitExceededException(e);
-//        assertThat(translateException(limitExceededException)).isEqualToComparingFieldByField(cfnServiceLimitExceededException);
-//
-//        final OperationAbortedException operationAbortedException = OperationAbortedException.builder().build();
-//        final CfnResourceConflictException cfnResourceConflictException = new CfnResourceConflictException(e);
-//        assertThat(translateException(operationAbortedException)).isEqualToComparingFieldByField(
-//                cfnResourceConflictException);
-//
-//        final InvalidParameterException invalidParameterException = InvalidParameterException.builder().build();
-//        final CfnInvalidRequestException cfnInvalidRequestException = new CfnInvalidRequestException(e);
-//        assertThat(translateException(invalidParameterException)).isEqualToComparingFieldByField(
-//                cfnInvalidRequestException);
-//
-//        final ResourceNotFoundException resourceNotFoundException = ResourceNotFoundException.builder().build();
-//        final CfnNotFoundException cfnNotFoundException = new CfnNotFoundException(e);
-//        assertThat(translateException(resourceNotFoundException)).isEqualToComparingFieldByField(cfnNotFoundException);
-//
-//        final ServiceUnavailableException serviceUnavailableException = ServiceUnavailableException.builder().build();
-//        final CfnServiceInternalErrorException cfnServiceInternalErrorException = new CfnServiceInternalErrorException(
-//                e);
-//        assertThat(translateException(serviceUnavailableException)).isEqualToComparingFieldByField(
-//                cfnServiceInternalErrorException);
-//
-//        final AwsServiceException awsServiceException = AwsServiceException.builder().build();
-//        CfnGeneralServiceException cfnGeneralServiceException = new CfnGeneralServiceException(e);
-//        assertThat(translateException(awsServiceException)).isEqualToComparingFieldByField(cfnGeneralServiceException);
-//
-//    }
 
 
 

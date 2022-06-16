@@ -17,8 +17,6 @@ public class ListHandler extends BaseHandlerStd {
             final ProxyClient<CloudWatchLogsClient> proxyClient,
             final Logger logger) {
 
-//        final List<ResourceModel> models = new ArrayList<>();
-
         final ResourceModel model = request.getDesiredResourceState();
         final String stackId = request.getStackId() == null ? "" : request.getStackId();
         final String nextToken = request.getNextToken();
