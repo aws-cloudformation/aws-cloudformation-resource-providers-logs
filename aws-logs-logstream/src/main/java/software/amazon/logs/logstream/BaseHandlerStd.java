@@ -87,29 +87,31 @@ private final static String RESOURCE_NOT_FOUND_EXCEPTION = "ResourceNotFoundExce
     }
   }
 
-  protected void logExceptionDetails(Exception e, Logger logger, final String stackId) {
-    logger.log(String.format("Stack with ID: %s got exception: %s Message: %s Cause: %s", stackId,
-            e.toString(), e.getMessage(), e.getCause()));
-  }
+//  protected void logExceptionDetails(Exception e, Logger logger, final String stackId) {
+//    logger.log(String.format("Stack with ID: %s got exception: %s Message: %s Cause: %s", stackId,
+//            e.toString(), e.getMessage(), e.getCause()));
+//  }
 
-  protected void handleException(Exception e, Logger logger, final String stackId) {
-    if (e instanceof InvalidParameterException) {
-      logExceptionDetails(e, logger, stackId);
-      throw new CfnInvalidRequestException(e);
-    } else if (e instanceof ResourceNotFoundException) {
-      logExceptionDetails(e, logger, stackId);
-      throw new CfnNotFoundException(e);
-    } else if (e instanceof ServiceUnavailableException) {
-      logExceptionDetails(e, logger, stackId);
-      throw new CfnServiceInternalErrorException(e);
-    } else if (e instanceof AlreadyExistsException){
-      logExceptionDetails(e, logger, stackId);
-      throw new CfnAlreadyExistsException(e);
-    } else if (e instanceof LimitExceededException){
-      logExceptionDetails(e, logger, stackId);
-      throw new CfnServiceLimitExceededException(e);
-    }
-  }
+//  protected void handleException(Exception e, Logger logger, final String stackId) {
+//    if (e instanceof InvalidParameterException) {
+//      logExceptionDetails(e, logger, stackId);
+//      throw new CfnInvalidRequestException(e);
+//    } else if (e instanceof ResourceNotFoundException) {
+//      logExceptionDetails(e, logger, stackId);
+//      throw new CfnNotFoundException(e);
+//    } else if (e instanceof ServiceUnavailableException) {
+//      logExceptionDetails(e, logger, stackId);
+//      throw new CfnServiceInternalErrorException(e);
+//    } else if (e instanceof AlreadyExistsException){
+//      logExceptionDetails(e, logger, stackId);
+//      throw new CfnAlreadyExistsException(e);
+//    } else if (e instanceof LimitExceededException){
+//      logExceptionDetails(e, logger, stackId);
+//      throw new CfnServiceLimitExceededException(e);
+//    } else if(e instanceof CloudWatchLogsException){
+//      throw new CfnGeneralServiceException(e);
+//    }
+//  }
 
   //  handleErrors
   protected ProgressEvent<ResourceModel, CallbackContext> handleError(
@@ -138,12 +140,12 @@ private final static String RESOURCE_NOT_FOUND_EXCEPTION = "ResourceNotFoundExce
   }
 
   //  function to getErrorCode
-  protected static String getErrorCode(Exception e) {
-    if (e instanceof AwsServiceException) {
-      return ((AwsServiceException) e).awsErrorDetails().errorCode();
-    }
-    return e.getMessage();
-  }
+//  protected static String getErrorCode(Exception e) {
+//    if (e instanceof AwsServiceException) {
+//      return ((AwsServiceException) e).awsErrorDetails().errorCode();
+//    }
+//    return e.getMessage();
+//  }
 
 
 

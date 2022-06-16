@@ -63,7 +63,6 @@ public class CreateHandler extends BaseHandlerStd {
                    return ProgressEvent.defaultInProgressHandler(progress.getCallbackContext(),
                             EVENTUAL_CONSISTENCY_DELAY_SECONDS, progress.getResourceModel());
                 })
-
                 .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
     }
 

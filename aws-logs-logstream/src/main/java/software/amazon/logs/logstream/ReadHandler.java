@@ -63,17 +63,16 @@ public class ReadHandler extends BaseHandlerStd {
             final String stackId) {
         DescribeLogStreamsResponse describeLogStreamsResponse = null;
 
-        try {
+//        try {
             describeLogStreamsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeLogStreams);
 
-        } catch (Exception e) {
-            handleException(e, logger, stackId);
-        }
+//        } catch (Exception e) {
+//            handleException(e, logger, stackId);
+//        }
 
         if (describeLogStreamsResponse == null || describeLogStreamsResponse.logStreams().isEmpty()) {
             logger.log(String.format("Resource does not exist for request: %s", awsRequest.toString()));
-            throw new CfnNotFoundException(ResourceModel.TYPE_NAME,
-                    Objects.toString(model.getPrimaryIdentifier()));
+            throw new CfnNotFoundException(ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier()));
         }
 
         logger.log(String.format("Got response: %s" , describeLogStreamsResponse));

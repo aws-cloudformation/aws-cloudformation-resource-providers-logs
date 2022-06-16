@@ -40,8 +40,7 @@ public class DeleteHandler extends BaseHandlerStd {
 //        }
 
         return ProgressEvent.progress(model, callbackContext)
-//                .then(progress -> new ReadHandler().handleRequest(proxy, request, progress.getCallbackContext(), proxyClient, logger))
-                .then(progress -> deleteLogStream(proxy, proxyClient, model,callbackContext, request))
+                .then(progress -> deleteLogStream(proxy, proxyClient, model,callbackContext, request, stackId))
                 .then(progress -> {
                         if (progress.getCallbackContext().isPropagationDelay()) {
                             logger.log("Propagation delay completed");
@@ -86,11 +85,12 @@ public class DeleteHandler extends BaseHandlerStd {
             final ProxyClient<CloudWatchLogsClient> proxyClient,
             final ResourceModel model,
             final CallbackContext context,
-            final ResourceHandlerRequest<ResourceModel> request) {
+            final ResourceHandlerRequest<ResourceModel> request,
+            final String stackId) {
 
         return proxy.initiate("AWS-Logs-LogStream::Delete", proxyClient, model, context)
                 .translateToServiceRequest(cbModel -> Translator.translateToDeleteRequest(cbModel))
-                .makeServiceCall((cbRequest, cbProxyClient) -> cbProxyClient.injectCredentialsAndInvokeV2(cbRequest, cbProxyClient.client()::deleteLogStream))
+                .makeServiceCall((cbRequest, cbProxyClient) -> proxyClient.injectCredentialsAndInvokeV2(cbRequest, cbProxyClient.client()::deleteLogStream))
                 .handleError((cbRequest, exception, cbProxyClient, cbModel, cbContext) -> handleError(cbRequest, exception, cbProxyClient, cbModel, cbContext))
                 .done((cbRequest, cbResponse, cbClient, cbModel, cbContext) -> ProgressEvent.progress(cbModel, cbContext));
     }
