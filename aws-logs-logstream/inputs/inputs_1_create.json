@@ -1,4 +1,4 @@
 {
-  "LogGroupName" : "first-log-group",
+  "LogGroupName" : "{{LogGroupName}}",
   "LogStreamName" : "13150601"
 }

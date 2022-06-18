@@ -34,6 +34,11 @@ public class DeleteHandler extends BaseHandlerStd {
         logger.log("First log statement");
         logger.log(String.format("Invoking %s request for model: %s with StackID: %s", "AWS-Logs-LogStream::Delete", model, stackId));
 
+        // if log group name is null then return an error message
+        if (model == null || StringUtils.isNullOrEmpty(model.getLogGroupName())){
+            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Group Name cannot be empty");
+        }
+
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> deleteLogStream(proxy, proxyClient, model,callbackContext, request, stackId))
                 .then(progress -> {

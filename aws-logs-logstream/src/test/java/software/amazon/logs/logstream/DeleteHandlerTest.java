@@ -17,6 +17,7 @@ import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import java.util.Collections;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,8 +57,12 @@ public class DeleteHandlerTest extends AbstractTestBase {
     }
 
     @AfterEach
-    public void tear_down() {
-        verify(sdkClient, atLeastOnce()).serviceName();
+    public void tear_down(org.junit.jupiter.api.TestInfo testInfo) {
+        if (testInfo.getTags().contains("noSdkInteraction")) {
+            verify(sdkClient, never()).serviceName();
+        } else {
+            verify(sdkClient, atLeastOnce()).serviceName();
+        }
         verifyNoMoreInteractions(sdkClient);
     }
 
@@ -96,6 +102,46 @@ public class DeleteHandlerTest extends AbstractTestBase {
         assertThat(response2.getResourceModels()).isNull();
         assertThat(response2.getMessage()).isNull();
         assertThat(response2.getErrorCode()).isNull();
+    }
+
+
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_LogGroupNameEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .logStreamName("logStreamName")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_ModelEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
     }
 
     @Test

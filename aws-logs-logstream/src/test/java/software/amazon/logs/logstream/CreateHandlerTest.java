@@ -1,6 +1,8 @@
 package software.amazon.logs.logstream;
 
 import java.time.Duration;
+import java.util.Collections;
+
 import software.amazon.awssdk.core.SdkClient;
 import org.junit.jupiter.api.Tag;
 import software.amazon.awssdk.services.cloudwatchlogs.model.CreateLogStreamRequest;
@@ -121,6 +123,46 @@ public class CreateHandlerTest extends AbstractTestBase {
         verify(proxyClient.client()).createLogStream(any(CreateLogStreamRequest.class));
     }
 
+
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_LogGroupNameEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .logStreamName("logStreamName")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_ModelEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
     @Tag("noSdkInteraction")
     @Test
     public void handleRequest_FailedCreate_AlreadyExists() {
@@ -147,6 +189,128 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AlreadyExists);
+    }
+
+    @Test
+    public void handleRequest_DoesResourceExistwithName() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        final ResourceModel model2 = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName2")
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+                .logStreams(Translator.translateToSDK(model2))
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse2 = DescribeLogStreamsResponse.builder()
+                .logStreams(Translator.translateToSDK(model))
+                .build();
+
+        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+                .thenReturn(describeResponse)
+                .thenReturn(describeResponse2);
+
+        final CreateLogStreamResponse createResponse = CreateLogStreamResponse.builder()
+                .build();
+
+//        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+//                .thenReturn(DescribeLogStreamsResponse.builder().build())
+//                .thenReturn(describeResponse);
+
+        when(proxyClient.client().createLogStream(any(CreateLogStreamRequest.class)))
+                .thenReturn(createResponse);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.IN_PROGRESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(10);
+        assertThat(response.getErrorCode()).isNull();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response2 =
+                handler.handleRequest(proxy, request, response.getCallbackContext(), proxyClient, logger);
+
+        assertThat(response2).isNotNull();
+        assertThat(response2.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response2.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response2.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response2.getResourceModels()).isNull();
+        assertThat(response2.getMessage()).isNull();
+        assertThat(response2.getErrorCode()).isNull();
+        verify(proxyClient.client(), times(2)).describeLogStreams(any(DescribeLogStreamsRequest.class));
+        verify(proxyClient.client()).createLogStream(any(CreateLogStreamRequest.class));
+
+    }
+
+    @Test
+    public void handleRequest_DoesResourceExistwithNameException() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName")
+                .build();
+
+        final ResourceModel model2 = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName2")
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+                .logStreams(Translator.translateToSDK(model2))
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse2 = DescribeLogStreamsResponse.builder()
+                .logStreams(Translator.translateToSDK(model))
+                .build();
+
+        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+                .thenThrow(ResourceNotFoundException.class)
+                .thenReturn(describeResponse2);
+
+        final CreateLogStreamResponse createResponse = CreateLogStreamResponse.builder()
+                .build();
+
+//        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+//                .thenReturn(DescribeLogStreamsResponse.builder().build())
+//                .thenReturn(describeResponse);
+
+        when(proxyClient.client().createLogStream(any(CreateLogStreamRequest.class)))
+                .thenReturn(createResponse);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.IN_PROGRESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(10);
+        assertThat(response.getErrorCode()).isNull();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response2 =
+                handler.handleRequest(proxy, request, response.getCallbackContext(), proxyClient, logger);
+
+        assertThat(response2).isNotNull();
+        assertThat(response2.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response2.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response2.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response2.getResourceModels()).isNull();
+        assertThat(response2.getMessage()).isNull();
+        assertThat(response2.getErrorCode()).isNull();
+        verify(proxyClient.client(), times(2)).describeLogStreams(any(DescribeLogStreamsRequest.class));
+        verify(proxyClient.client()).createLogStream(any(CreateLogStreamRequest.class));
+
     }
 
     @Test

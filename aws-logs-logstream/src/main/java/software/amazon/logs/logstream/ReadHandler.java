@@ -9,12 +9,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableEx
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.OperationStatus;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ProxyClient;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.*;
 
 import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
@@ -22,6 +17,8 @@ import software.amazon.awssdk.core.SdkClient;
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 
 import java.util.Objects;
+
+import com.amazonaws.util.StringUtils;
 
 public class ReadHandler extends BaseHandlerStd {
     private Logger logger;
@@ -40,12 +37,18 @@ public class ReadHandler extends BaseHandlerStd {
 
         logger.log(String.format("Invoking request for: %s for stack: %s", "AWS-Logs-LogStream::Read", stackId));
 
+        // if log group name is null then return an error message
+        if (model == null || StringUtils.isNullOrEmpty(model.getLogGroupName())){
+            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Group Name cannot be empty");
+        }
+
         return proxy.initiate("AWS-Logs-LogStream::Read", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToReadRequest)
                 .makeServiceCall((awsRequest, sdkProxyClient) -> {
                     logger.log(String.format("awsrequest : %s", awsRequest));
                     return readResource(awsRequest, sdkProxyClient , model, stackId);
                 })
+                .handleError((cbRequest, exception, cbProxyClient, cbModel, cbContext) -> handleError(cbRequest, exception, cbProxyClient, cbModel, cbContext))
                 .done((awsResponse) -> {
                     logger.log(String.format("Translator %s", Translator.translateFromReadResponse(awsResponse, model)));
                     return ProgressEvent.<ResourceModel, CallbackContext>builder()
@@ -61,20 +64,18 @@ public class ReadHandler extends BaseHandlerStd {
             final ResourceModel model,
             final String stackId) {
         DescribeLogStreamsResponse describeLogStreamsResponse = null;
-
-        try {
+//        try {
             describeLogStreamsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeLogStreams);
-
-        } catch (Exception e) {
-            handleException(e, logger, stackId);
-        }
-
-        if (describeLogStreamsResponse == null || describeLogStreamsResponse.logStreams().isEmpty()) {
+//        } catch (Exception e) {
+//            handleException(e, logger, stackId);
+//        }
+        if (describeLogStreamsResponse == null || describeLogStreamsResponse.logStreams().isEmpty()
+                || !describeLogStreamsResponse.logStreams().get(0).logStreamName().equals(model.getLogStreamName())) {
             logger.log(String.format("Resource does not exist for request: %s", awsRequest.toString()));
             throw new CfnNotFoundException(ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier()));
         }
 
-        logger.log(String.format("Got response: %s" , describeLogStreamsResponse));
+        logger.log(String.format("Got response: %s", describeLogStreamsResponse));
         return describeLogStreamsResponse;
     }
 }

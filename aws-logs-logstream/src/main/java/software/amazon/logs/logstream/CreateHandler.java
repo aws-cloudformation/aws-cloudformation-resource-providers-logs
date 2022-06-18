@@ -10,8 +10,9 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
+import com.amazonaws.util.StringUtils;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.lang3.StringUtils;
+
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
@@ -42,6 +43,11 @@ public class CreateHandler extends BaseHandlerStd {
 
         logger.log("First log statement");
         logger.log(String.format("Invoking %s request for model: %s with StackID: %s", "AWS-Logs-LogStream::Create", model, stackId));
+
+        // if log group name is null then return an error message
+        if (model == null || StringUtils.isNullOrEmpty(model.getLogGroupName())){
+            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Group Name cannot be empty");
+        }
 
         return ProgressEvent.progress(model, callbackContext)
             .then(progress -> {

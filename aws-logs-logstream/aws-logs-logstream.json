@@ -12,7 +12,7 @@
             "description" : "The name of the log stream. The name must be unique wihtin the log group."
         }
     },
-    "required" : [ "LogGroupName", "LogStreamName" ],
+    "required" : [ "LogGroupName"],
     "createOnlyProperties" : [ "/properties/LogGroupName", "/properties/LogStreamName"],
     "primaryIdentifier" : [ "/properties/LogGroupName", "/properties/LogStreamName"],
     "handlers" : {
@@ -29,8 +29,7 @@
         },
         "delete" : {
             "permissions" : [
-                "logs:DeleteLogStream",
-                "logs:DescribeLogStreams"
+                "logs:DeleteLogStream"
             ]
         },
         "list" : {

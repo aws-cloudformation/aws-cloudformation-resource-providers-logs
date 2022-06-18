@@ -117,6 +117,58 @@ public class ReadHandlerTest extends AbstractTestBase {
 
     }
 
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_LogGroupNameEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .logStreamName("logStreamName")
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+                .logStreams(Collections.emptyList())
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_ModelEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .build();
+
+        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+                .logStreams(Collections.emptyList())
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
+
+
+
+
+
     @Test
     public void handleRequest_ResourceNotFound() {
         final ResourceModel model = ResourceModel.builder()
@@ -131,8 +183,16 @@ public class ReadHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnNotFoundException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
+//
+//        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+//                .isInstanceOf(CfnNotFoundException.class);
 
     }
 
@@ -155,14 +215,19 @@ public class ReadHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_ResourceNotFoundDescribeEmptyLogsEmpty() {
+    public void handleRequest_ResourceNotFoundDescribeNotEqualtoModel() {
         final ResourceModel model = ResourceModel.builder()
                 .logGroupName("logGroupName1")
                 .logStreamName("logStreamName")
                 .build();
 
+        final ResourceModel model2 = ResourceModel.builder()
+                .logGroupName("logGroupName1")
+                .logStreamName("logStreamName2")
+                .build();
+
         final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
-                .logStreams(Collections.emptyList())
+                .logStreams(Translator.translateToSDK(model2))
                 .build();
 
         when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
@@ -175,6 +240,36 @@ public class ReadHandlerTest extends AbstractTestBase {
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
                 .isInstanceOf(CfnNotFoundException.class);
     }
+
+//    @Test
+//    public void handleRequest_ResourceNotFoundDescribe() {
+//        final ResourceModel model = ResourceModel.builder()
+//                .logGroupName("logGroupName1")
+//                .logStreamName("logStreamName")
+//                .build();
+//
+//        final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder()
+//                .logStreams(Collections.emptyList())
+//                .build();
+//
+//        when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class)))
+//                .thenReturn(describeResponse);
+//
+//        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+//                .desiredResourceState(model)
+//                .build();
+//
+//        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+//                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+//
+////        assertThat(response).isNotNull();
+////        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+////        assertThat(response.getResourceModels()).isNull();
+////        assertThat(response.getErrorCode()).isInstanceOf(CfnNotFoundException.class);
+//
+////        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+////                .isInstanceOf(CfnNotFoundException.class);
+//    }
 
     @Test
     public void handleRequest_ExceptionThrown() {
@@ -190,8 +285,16 @@ public class ReadHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnInvalidRequestException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+//        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+//                .isInstanceOf(CfnInvalidRequestException.class);
 
     }
 
@@ -209,8 +312,16 @@ public class ReadHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnServiceInternalErrorException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceInternalError);
+
+//        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+//                .isInstanceOf(CfnServiceInternalErrorException.class);
     }
 
     @Test
@@ -227,8 +338,16 @@ public class ReadHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnServiceLimitExceededException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceLimitExceeded);
+
+//        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+//                .isInstanceOf(CfnServiceLimitExceededException.class);
     }
 
     @Test
@@ -245,8 +364,16 @@ public class ReadHandlerTest extends AbstractTestBase {
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnGeneralServiceException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.GeneralServiceException);
+
+//        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+//                .isInstanceOf(CfnGeneralServiceException.class);
     }
 
     @Tag("noSdkInteraction")

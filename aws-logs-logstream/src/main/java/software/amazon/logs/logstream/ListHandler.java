@@ -7,6 +7,8 @@ import java.util.List;
 
 import java.util.ArrayList;
 
+import com.amazonaws.util.StringUtils;
+
 public class ListHandler extends BaseHandlerStd {
 
     @Override
@@ -22,6 +24,11 @@ public class ListHandler extends BaseHandlerStd {
         final String nextToken = request.getNextToken();
 
         logger.log(String.format("Invoking request for: %s with StackID: %s", "AWS-Logs-LogStream::List", stackId));
+
+        // if log group name is null then return an error message
+        if (model == null || StringUtils.isNullOrEmpty(model.getLogGroupName())){
+            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Group Name cannot be empty");
+        }
 
         return proxy.initiate("AWS-Logs-LogStream::List", proxyClient, model, callbackContext)
                 .translateToServiceRequest((cbModel) -> Translator.translateToListRequest(cbModel, nextToken))

@@ -62,7 +62,6 @@ public class Translator {
             .build();
   }
 
-  //TODO:: Need to add in the additional parameters that this can take in
   static DescribeLogStreamsRequest translateToReadRequest(final ResourceModel model) {
     return DescribeLogStreamsRequest.builder()
             .logStreamNamePrefix(model.getLogStreamName())

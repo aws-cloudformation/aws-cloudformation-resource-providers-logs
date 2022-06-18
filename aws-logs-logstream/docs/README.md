@@ -43,7 +43,7 @@ _Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/l
 
 The name of the log stream. The name must be unique wihtin the log group.
 
-_Required_: Yes
+_Required_: No
 
 _Type_: String
 

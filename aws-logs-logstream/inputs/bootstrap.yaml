@@ -1,21 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Resources:
-
-  MyLogGroup:
+  LogGroupContractTest:
     Type: AWS::Logs::LogGroup
     Properties:
-      RetentionInDays: 7
+      LogGroupName: LogGroupContractTest
 
-  UluruLogStream:
-    Type: AWS::Logs::LogStream
-    Properties:
-      LogGroupName: second-log-group
-      LogStreamName: 1304593
+Outputs:
+  LogGroupName:
+    Description: The name of the created LogGroup
+    Value: !Ref LogGroupContractTest
+    Export:
+      Name: LogGroupName
 
-  Outputs:
-
-    LogGroupName:
-      Description: The name of the created LogGroup
-      Value: !Ref MyLogGroup
-      Export:
-        Name: LogGroupName
