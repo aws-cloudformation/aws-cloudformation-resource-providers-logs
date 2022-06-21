@@ -144,6 +144,69 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     }
 
+
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_LogStreamNameEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_LogStreamNameContainsColon() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName")
+                .logStreamName("logstream:name")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_LogStreamNameContainsAsterisk() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName")
+                .logStreamName("logstream*name")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
     @Tag("noSdkInteraction")
     @Test
     public void handleRequest_ModelEmpty() {

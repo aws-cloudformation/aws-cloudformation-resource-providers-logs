@@ -4,6 +4,7 @@ import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.SdkClient;
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -45,8 +46,20 @@ public class CreateHandler extends BaseHandlerStd {
         logger.log(String.format("Invoking %s request for model: %s with StackID: %s", "AWS-Logs-LogStream::Create", model, stackId));
 
         // if log group name is null then return an error message
-        if (model == null || StringUtils.isNullOrEmpty(model.getLogGroupName())){
+        if(model == null){
+            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Model cannot be empty");
+        }
+        if (StringUtils.isNullOrEmpty(model.getLogGroupName())){
             return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Group Name cannot be empty");
+        }
+        if (StringUtils.isNullOrEmpty(model.getLogStreamName())) {
+            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Stream Name cannot be empty");
+        }
+
+        if (model.getLogStreamName().length() > 512) {
+            return ProgressEvent.failed(null, null, HandlerErrorCode.InvalidRequest, "LogStreamName must have length less than or equal to 512");
+        } else if(model.getLogStreamName().contains(":") || model.getLogStreamName().contains("*")){
+            return ProgressEvent.failed(null, null, HandlerErrorCode.InvalidRequest, "LogStreamName cannot contain the characters ':'(colon) or '*'(asterisk)");
         }
 
         return ProgressEvent.progress(model, callbackContext)
