@@ -44,18 +44,12 @@ public class ReadHandler extends BaseHandlerStd {
 
         return proxy.initiate("AWS-Logs-LogStream::Read", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToReadRequest)
-                .makeServiceCall((awsRequest, sdkProxyClient) -> {
-                    logger.log(String.format("awsrequest : %s", awsRequest));
-                    return readResource(awsRequest, sdkProxyClient , model, stackId);
-                })
+                .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient , model, stackId))
                 .handleError((cbRequest, exception, cbProxyClient, cbModel, cbContext) -> handleError(cbRequest, exception, cbProxyClient, cbModel, cbContext))
-                .done((awsResponse) -> {
-                    logger.log(String.format("Translator %s", Translator.translateFromReadResponse(awsResponse, model)));
-                    return ProgressEvent.<ResourceModel, CallbackContext>builder()
+                .done((awsResponse) -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                             .status(OperationStatus.SUCCESS)
                             .resourceModel(Translator.translateFromReadResponse(awsResponse, model))
-                            .build();
-                });
+                            .build());
     }
 
     private DescribeLogStreamsResponse readResource(
@@ -64,11 +58,8 @@ public class ReadHandler extends BaseHandlerStd {
             final ResourceModel model,
             final String stackId) {
         DescribeLogStreamsResponse describeLogStreamsResponse = null;
-//        try {
             describeLogStreamsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeLogStreams);
-//        } catch (Exception e) {
-//            handleException(e, logger, stackId);
-//        }
+
         if (describeLogStreamsResponse == null || describeLogStreamsResponse.logStreams().isEmpty()
                 || !describeLogStreamsResponse.logStreams().get(0).logStreamName().equals(model.getLogStreamName())) {
             logger.log(String.format("Resource does not exist for request: %s", awsRequest.toString()));

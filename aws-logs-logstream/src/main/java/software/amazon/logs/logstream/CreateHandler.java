@@ -42,7 +42,6 @@ public class CreateHandler extends BaseHandlerStd {
 
         final String stackId = request.getStackId() == null ? "" : request.getStackId();
 
-        logger.log("First log statement");
         logger.log(String.format("Invoking %s request for model: %s with StackID: %s", "AWS-Logs-LogStream::Create", model, stackId));
 
         // if log group name is null then return an error message
