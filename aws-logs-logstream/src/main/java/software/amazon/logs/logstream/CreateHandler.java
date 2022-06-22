@@ -25,6 +25,9 @@ import software.amazon.cloudformation.resource.IdentifierUtils;
 public class CreateHandler extends BaseHandlerStd {
     private Logger logger;
 
+    private static final String DEFAULT_LOGSTREAMNAME_PREFIX = "LogStreamName";
+    private static final int LOGSTREAM_NAME_MAX_LENGTH = 512;
+
         // * doesResourceWithNameExist
         // * waitForCreate
         // * doPostCreate
@@ -48,11 +51,16 @@ public class CreateHandler extends BaseHandlerStd {
         if(model == null){
             return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Model cannot be empty");
         }
-        if (StringUtils.isNullOrEmpty(model.getLogGroupName())){
+        if (com.amazonaws.util.StringUtils.isNullOrEmpty(model.getLogGroupName())){
             return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Group Name cannot be empty");
         }
-        if (StringUtils.isNullOrEmpty(model.getLogStreamName())) {
-            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Stream Name cannot be empty");
+
+        if (StringUtils.isNullOrEmpty(model.getLogStreamName())){
+            if (StringUtils.isNullOrEmpty(callbackContext.getGeneratedLogStreamName())) {
+                String generatedLogStreamName = generateName(request);
+                callbackContext.setGeneratedLogStreamName(generatedLogStreamName);
+            }
+            model.setLogStreamName(callbackContext.getGeneratedLogStreamName());
         }
 
         if (model.getLogStreamName().length() > 512) {
@@ -103,5 +111,16 @@ public class CreateHandler extends BaseHandlerStd {
                 .makeServiceCall((cbRequest, cbProxyClient) -> cbProxyClient.injectCredentialsAndInvokeV2(cbRequest, cbProxyClient.client()::createLogStream))
                 .handleError((cbRequest, exception, cbProxyClient, cbModel, cbContext) -> handleError(cbRequest, exception, cbProxyClient, cbModel, cbContext))
                 .done((cbRequest, cbResponse, cbClient, cbModel, cbContext) -> ProgressEvent.progress(cbModel, cbContext));
+    }
+
+    @VisibleForTesting
+    protected String generateName(ResourceHandlerRequest<ResourceModel> request) {
+        String logicalIdentifier = org.apache.commons.lang3.StringUtils.defaultString(request.getLogicalResourceIdentifier(), DEFAULT_LOGSTREAMNAME_PREFIX);
+        if (request.getStackId() != null) {
+            return IdentifierUtils.generateResourceIdentifier(request.getStackId(), logicalIdentifier,
+                    request.getClientRequestToken(), LOGSTREAM_NAME_MAX_LENGTH);
+        }
+        return IdentifierUtils.generateResourceIdentifier(logicalIdentifier, request.getClientRequestToken(),
+                LOGSTREAM_NAME_MAX_LENGTH);
     }
 }

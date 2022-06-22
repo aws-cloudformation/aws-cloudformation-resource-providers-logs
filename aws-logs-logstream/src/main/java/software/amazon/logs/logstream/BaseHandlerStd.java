@@ -86,29 +86,6 @@ private final static String RESOURCE_NOT_FOUND_EXCEPTION = "ResourceNotFoundExce
     }
   }
 
-//  protected void logExceptionDetails(Exception e, Logger logger, final String stackId) {
-//    logger.log(String.format("Stack with ID: %s got exception: %s Message: %s Cause: %s", stackId,
-//            e.toString(), e.getMessage(), e.getCause()));
-//  }
-//
-//  protected void handleException(Exception e, Logger logger, final String stackId) {
-//    if (e instanceof InvalidParameterException) {
-//      logExceptionDetails(e, logger, stackId);
-//      throw new CfnInvalidRequestException(e);
-//    } else if (e instanceof ResourceNotFoundException) {
-//      logExceptionDetails(e, logger, stackId);
-//      throw new CfnNotFoundException(e);
-//    } else if (e instanceof ServiceUnavailableException) {
-//      logExceptionDetails(e, logger, stackId);
-//      throw new CfnServiceInternalErrorException(e);
-//    } else if (e instanceof LimitExceededException){
-//      logExceptionDetails(e, logger, stackId);
-//      throw new CfnServiceLimitExceededException(e);
-//    } else {
-//      throw new CfnGeneralServiceException(e);
-//    }
-//  }
-
   //  handleErrors
   protected ProgressEvent<ResourceModel, CallbackContext> handleError(
           final CloudWatchLogsRequest request,

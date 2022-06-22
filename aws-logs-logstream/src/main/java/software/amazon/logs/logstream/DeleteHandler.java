@@ -38,6 +38,9 @@ public class DeleteHandler extends BaseHandlerStd {
         if (model == null || StringUtils.isNullOrEmpty(model.getLogGroupName())){
             return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Group Name cannot be empty");
         }
+        if(StringUtils.isNullOrEmpty(model.getLogStreamName())){
+            return ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest, "Log Stream Name cannot be empty");
+        }
 
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> deleteLogStream(proxy, proxyClient, model,callbackContext, request, stackId))

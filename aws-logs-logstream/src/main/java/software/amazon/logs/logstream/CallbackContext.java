@@ -9,4 +9,5 @@ import software.amazon.cloudformation.proxy.StdCallbackContext;
 public class CallbackContext extends StdCallbackContext {
     private boolean isItFirstTime = true;
     private boolean propagationDelay = false;
+    private String generatedLogStreamName;
 }

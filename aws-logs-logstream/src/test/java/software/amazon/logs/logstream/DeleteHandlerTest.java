@@ -127,6 +127,26 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     @Tag("noSdkInteraction")
     @Test
+    public void handleRequest_LogStreamNameEmpty() {
+        final ResourceModel model = ResourceModel.builder()
+                .logGroupName("logGroupName")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
+    @Tag("noSdkInteraction")
+    @Test
     public void handleRequest_ModelEmpty() {
         final ResourceModel model = ResourceModel.builder()
                 .build();
