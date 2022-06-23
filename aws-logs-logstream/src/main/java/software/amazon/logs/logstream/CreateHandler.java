@@ -63,12 +63,6 @@ public class CreateHandler extends BaseHandlerStd {
             model.setLogStreamName(callbackContext.getGeneratedLogStreamName());
         }
 
-        if (model.getLogStreamName().length() > 512) {
-            return ProgressEvent.failed(null, null, HandlerErrorCode.InvalidRequest, "LogStreamName must have length less than or equal to 512");
-        } else if(model.getLogStreamName().contains(":") || model.getLogStreamName().contains("*")){
-            return ProgressEvent.failed(null, null, HandlerErrorCode.InvalidRequest, "LogStreamName cannot contain the characters ':'(colon) or '*'(asterisk)");
-        }
-
         return ProgressEvent.progress(model, callbackContext)
             .then(progress -> {
                 if(progress.getCallbackContext().isItFirstTime()) {

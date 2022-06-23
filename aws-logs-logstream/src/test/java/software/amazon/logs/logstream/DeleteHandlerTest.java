@@ -164,6 +164,23 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     }
 
+    @Tag("noSdkInteraction")
+    @Test
+    public void handleRequest_ModelNull() {
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(null)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
+
+    }
+
     @Test
     public void handleRequest_ResourceNotFound() {
         final ResourceModel model = ResourceModel.builder()
@@ -232,60 +249,5 @@ public class DeleteHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
     }
-
-
-//    @Test
-//    @org.junit.jupiter.api.Tag("SkipTearDown")
-//    public void handleRequest_ExceptionList() {
-//
-//        CloudWatchLogsException e1 = (CloudWatchLogsException) CloudWatchLogsException.builder().awsErrorDetails(AwsErrorDetails.builder().errorCode("AlreadyExistsException").build()).build();
-//        CloudWatchLogsException e2 = (CloudWatchLogsException) CloudWatchLogsException.builder().awsErrorDetails(AwsErrorDetails.builder().errorCode("InvalidParameterException").build()).build();
-//        CloudWatchLogsException e3 = (CloudWatchLogsException) CloudWatchLogsException.builder().awsErrorDetails(AwsErrorDetails.builder().errorCode("ServiceUnavailable").build()).build();
-//        CloudWatchLogsException e4 = (CloudWatchLogsException) CloudWatchLogsException.builder().awsErrorDetails(AwsErrorDetails.builder().errorCode("UnauthorizedOperation").build()).build();
-//
-//        List<Exception> exceptionList = ImmutableList.of(e1, e2, e3, e4);
-//
-//        for(int i = 0; i < exceptionList.size(); i++) {
-//
-//            LogStream gateway1 = LogStream.builder().logStreamName("logStreamName").build();
-//
-//            final DescribeLogStreamsResponse describeResponse = DescribeLogStreamsResponse.builder().logStreams(gateway1).build();
-//            when(proxyClient.client().describeLogStreams(any(DescribeLogStreamsRequest.class))).thenReturn(describeResponse);
-//
-//            when(proxyClient.client().deleteLogStream(any(DeleteLogStreamRequest.class))).thenThrow(exceptionList.get(i));
-//
-//            final ResourceModel model = ResourceModel.builder()
-//                    .logGroupName("logGroupName1")
-//                    .logStreamName("logStreamName")
-//                    .build();
-//
-//            final ResourceHandlerRequest<ResourceModel> request =
-//                    ResourceHandlerRequest.<ResourceModel>builder().desiredResourceState(model).build();
-//
-//            final ProgressEvent<ResourceModel, CallbackContext> response =
-//                    handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
-//
-//            assertThat(response).isNotNull();
-//            assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-//            assertThat(response.getResourceModels()).isNull();
-//            if (i == 0) {
-//                assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-//                assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AlreadyExists);
-//            } else if (i == 1) {
-//                assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-//                assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.InvalidRequest);
-//            } else if (i ==2) {
-//                assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-//                assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceInternalError);
-//            } else if (i == 3) {
-//                assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-//                assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.AccessDenied);
-//            }
-//        }
-//    }
-
-
-
-
 
 }
