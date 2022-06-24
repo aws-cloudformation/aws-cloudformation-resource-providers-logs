@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  LogGroupContractTest:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: LogGroupContractTest
+
+Outputs:
+  LogGroupName:
+    Description: The name of the created LogGroup
+    Value: !Ref LogGroupContractTest
+    Export:
+      Name: LogGroupName
+
