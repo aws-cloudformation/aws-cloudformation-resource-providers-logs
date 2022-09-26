@@ -42,6 +42,7 @@ public class UpdateHandler extends BaseHandlerStd {
         return proxy.initiate("AWS-Logs-MetricFilter::Update", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToUpdateRequest)
                 .makeServiceCall((r, c) -> updateResource(model, r, c))
+                .handleError(handleRateExceededError)
                 .success();
     }
 

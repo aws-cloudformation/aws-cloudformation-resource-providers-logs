@@ -1,7 +1,9 @@
 package software.amazon.logs.metricfilter;
 
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.exception.RetryableException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
@@ -18,6 +20,17 @@ import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
+    CallChain.ExceptionPropagate<CloudWatchLogsRequest, Exception, CloudWatchLogsClient, ResourceModel, CallbackContext, ProgressEvent<ResourceModel, CallbackContext>> handleRateExceededError = (
+            CloudWatchLogsRequest request,
+            Exception exception,
+            ProxyClient<CloudWatchLogsClient> client,
+            ResourceModel resourceModel,
+            CallbackContext context) -> {
+        if (exception.getMessage().toLowerCase().contains("rate exceeded")) {
+            throw RetryableException.builder().cause(exception).build();
+        }
+        return ProgressEvent.failed(resourceModel, context, HandlerErrorCode.GeneralServiceException, exception.getMessage());
+    };
   @Override
   public final ProgressEvent<ResourceModel, CallbackContext> handleRequest(
     final AmazonWebServicesClientProxy proxy,

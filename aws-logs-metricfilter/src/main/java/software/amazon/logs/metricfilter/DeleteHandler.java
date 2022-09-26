@@ -37,6 +37,7 @@ public class DeleteHandler extends BaseHandlerStd {
         return proxy.initiate("AWS-Logs-MetricFilter::Delete", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
                 .makeServiceCall(this::deleteResource)
+                .handleError(handleRateExceededError)
                 .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                     .status(OperationStatus.SUCCESS)
                     .resourceModel(model)

@@ -36,6 +36,7 @@ public class CreateHandler extends BaseHandlerStd {
         return proxy.initiate("AWS-Logs-MetricFilter::Create", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToCreateRequest)
                 .makeServiceCall((r, c) -> createResource(model, r, c))
+                .handleError(handleRateExceededError)
                 .success();
     }
 

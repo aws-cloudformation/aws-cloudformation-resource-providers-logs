@@ -37,6 +37,7 @@ public class ReadHandler extends BaseHandlerStd {
         return proxy.initiate("AWS-Logs-MetricFilter::Read", proxyClient, model, callbackContext)
             .translateToServiceRequest(Translator::translateToReadRequest)
             .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient , model))
+            .handleError(handleRateExceededError)
             .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                 .status(OperationStatus.SUCCESS)
                 .resourceModel(Translator.translateFromReadResponse(awsResponse))
