@@ -16,12 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static software.amazon.logs.subscriptionfilter.Translator.translateException;
 
 @ExtendWith(MockitoExtension.class)
-public class TranslatorTest {
+class TranslatorTest {
     private static final SubscriptionFilter SUBSCRIPTION_FILTER = SubscriptionFilter.builder()
             .logGroupName("LogGroup")
             .destinationArn("DestinationArn")
             .filterPattern("Pattern")
             .roleArn("RoleArn")
+            .distribution(Distribution.RANDOM)
             .build();
 
     private static final ResourceModel RESOURCE_MODEL = ResourceModel.builder()
@@ -30,43 +31,46 @@ public class TranslatorTest {
             .destinationArn("DestinationArn")
             .filterPattern("Pattern")
             .roleArn("RoleArn")
+            .distribution(Distribution.RANDOM.toString())
             .build();
 
     @Test
-    public void extractSubscriptionFilters_success() {
+    void extractSubscriptionFilters_success() {
         final DescribeSubscriptionFiltersResponse response = DescribeSubscriptionFiltersResponse.builder()
                 .subscriptionFilters(Collections.singletonList(SUBSCRIPTION_FILTER))
                 .build();
 
-        final List<ResourceModel> expectedModels = Arrays.asList(ResourceModel.builder()
+        final List<ResourceModel> expectedModels = Collections.singletonList(ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .destinationArn("DestinationArn")
                 .filterPattern("Pattern")
                 .roleArn("RoleArn")
+                .distribution(Distribution.RANDOM.toString())
                 .build());
 
         assertThat(Translator.translateFromListResponse(response)).isEqualTo(expectedModels);
     }
 
     @Test
-    public void extractSubscriptionFilters_API_removesEmptyFilterPattern() {
+    void extractSubscriptionFilters_API_removesEmptyFilterPattern() {
         final DescribeSubscriptionFiltersResponse response = DescribeSubscriptionFiltersResponse.builder()
                 .subscriptionFilters(Collections.singletonList(SUBSCRIPTION_FILTER.toBuilder()
                         .filterPattern(null)
                         .build()))
                 .build();
 
-        final List<ResourceModel> expectedModels = Arrays.asList(ResourceModel.builder()
+        final List<ResourceModel> expectedModels = Collections.singletonList(ResourceModel.builder()
                 .logGroupName("LogGroup")
                 .destinationArn("DestinationArn")
                 .roleArn("RoleArn")
+                .distribution(Distribution.RANDOM.toString())
                 .build());
 
         assertThat(Translator.translateFromListResponse(response)).isEqualTo(expectedModels);
     }
 
     @Test
-    public void extractSubscriptionFilters_noFilters() {
+    void extractSubscriptionFilters_noFilters() {
         final DescribeSubscriptionFiltersResponse response = DescribeSubscriptionFiltersResponse.builder()
                 .subscriptionFilters(Collections.emptyList())
                 .build();
@@ -76,7 +80,7 @@ public class TranslatorTest {
     }
 
     @Test
-    public void translateToDeleteRequest() {
+    void translateToDeleteRequest() {
         final DeleteSubscriptionFilterRequest expectedRequest = DeleteSubscriptionFilterRequest.builder()
                 .filterName("FilterName")
                 .logGroupName("LogGroup")
@@ -88,13 +92,14 @@ public class TranslatorTest {
     }
 
     @Test
-    public void translateToPutRequest() {
+    void translateToPutRequest() {
         final PutSubscriptionFilterRequest expectedRequest = PutSubscriptionFilterRequest.builder()
                 .logGroupName("LogGroup")
                 .filterName("FilterName")
                 .destinationArn("DestinationArn")
                 .filterPattern("Pattern")
                 .roleArn("RoleArn")
+                .distribution(Distribution.RANDOM)
                 .build();
 
         final DeleteSubscriptionFilterRequest actualRequest = Translator.translateToDeleteRequest(RESOURCE_MODEL);
@@ -103,7 +108,7 @@ public class TranslatorTest {
     }
 
     @Test
-    public void translateToReadRequest() {
+    void translateToReadRequest() {
         final DescribeSubscriptionFiltersRequest expectedRequest = DescribeSubscriptionFiltersRequest.builder()
                 .logGroupName("LogGroup")
                 .filterNamePrefix("FilterName")
@@ -115,7 +120,7 @@ public class TranslatorTest {
     }
 
     @Test
-    public void translateToListRequest() {
+    void translateToListRequest() {
         final DescribeSubscriptionFiltersRequest expectedRequest = DescribeSubscriptionFiltersRequest.builder()
                 .logGroupName("LogGroup")
                 .limit(50)
@@ -128,7 +133,7 @@ public class TranslatorTest {
     }
 
     @Test
-    public void testExceptionTranslation() {
+    void testExceptionTranslation() {
         final Exception e = new Exception();
         final LimitExceededException limitExceededException = LimitExceededException.builder().build();
         final CfnServiceLimitExceededException cfnServiceLimitExceededException = new CfnServiceLimitExceededException(e);
@@ -154,5 +159,4 @@ public class TranslatorTest {
         CfnGeneralServiceException cfnGeneralServiceException = new CfnGeneralServiceException(e);
         assertThat(translateException(awsServiceException)).isEqualToComparingFieldByField(cfnGeneralServiceException);
     }
-
 }

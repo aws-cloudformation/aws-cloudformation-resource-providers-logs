@@ -1,20 +1,25 @@
 package software.amazon.logs.subscriptionfilter;
 
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutSubscriptionFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteSubscriptionFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.cloudformation.exceptions.*;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Translator {
+  private static final int RESPONSE_LIMIT = 50;
 
   public static BaseHandlerException translateException(final AwsServiceException e) {
     if (e instanceof LimitExceededException) {
@@ -43,6 +48,7 @@ public class Translator {
             .filterPattern(subscriptionFilter.filterPattern())
             .logGroupName(subscriptionFilter.logGroupName())
             .roleArn(subscriptionFilter.roleArn())
+            .distribution(subscriptionFilter.distributionAsString())
             .build();
   }
 
@@ -54,6 +60,7 @@ public class Translator {
             .filterPattern(model.getFilterPattern())
             .logGroupName(model.getLogGroupName())
             .roleArn(model.getRoleArn())
+            .distribution(model.getDistribution())
             .build();
   }
 
@@ -64,6 +71,7 @@ public class Translator {
             .filterPattern(model.getFilterPattern())
             .logGroupName(model.getLogGroupName())
             .roleArn(model.getRoleArn())
+            .distribution(model.getDistribution())
             .build();
   }
 
@@ -90,6 +98,7 @@ public class Translator {
                     .destinationArn(subscriptionFilter.destinationArn())
                     .filterPattern(subscriptionFilter.filterPattern())
                     .roleArn(subscriptionFilter.roleArn())
+                    .distribution(subscriptionFilter.distributionAsString())
                     .build())
             .collect(Collectors.toList());
   }
@@ -109,7 +118,7 @@ public class Translator {
     return DescribeSubscriptionFiltersRequest.builder()
             .logGroupName(model.getLogGroupName())
             .nextToken(nextToken)
-            .limit(50)
+            .limit(RESPONSE_LIMIT)
             .build();
   }
 

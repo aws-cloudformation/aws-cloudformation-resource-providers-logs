@@ -12,6 +12,7 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 public class DeleteHandler extends BaseHandlerStd {
     private Logger logger;
+    private static final String CALL_GRAPH_STRING = "AWS-Logs-SubscriptionFilter::Delete";
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,
@@ -22,12 +23,11 @@ public class DeleteHandler extends BaseHandlerStd {
 
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
-        final String callGraphString = "AWS-Logs-SubscriptionFilter::Delete";
         final String stackId = request.getStackId() == null ? "" : request.getStackId();
 
-        logger.log(String.format("Invoking %s request for model: %s with StackID: %s", callGraphString, model, stackId));
+        logger.log(String.format("Invoking %s request for model: %s with StackID: %s", CALL_GRAPH_STRING, model, stackId));
 
-        return proxy.initiate(callGraphString, proxyClient, model, callbackContext)
+        return proxy.initiate(CALL_GRAPH_STRING, proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
                 .makeServiceCall((_request, _callbackContext) -> deleteResource(_request, proxyClient, stackId))
                 .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()

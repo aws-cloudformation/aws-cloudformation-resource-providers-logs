@@ -17,5 +17,6 @@ public class Matchers {
         assertThat(model.getFilterPattern()).isEqualTo(sdkModel.filterPattern());
         assertThat(model.getLogGroupName()).isEqualTo(sdkModel.logGroupName());
         assertThat(model.getDestinationArn()).isEqualTo(sdkModel.destinationArn());
+        assertThat(model.getDistribution()).isEqualTo(sdkModel.distributionAsString());
     }
 }

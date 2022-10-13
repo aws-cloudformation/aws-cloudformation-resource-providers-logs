@@ -29,15 +29,15 @@ public class ClientBuilder {
 
   public static CloudWatchLogsClient getClient() {
     if (cloudWatchLogsClient == null) {
-        return CloudWatchLogsClient.builder()
-                .httpClient(LambdaWrapper.HTTP_CLIENT)
-                .overrideConfiguration(ClientOverrideConfiguration.builder()
-                        .retryPolicy(RETRY_POLICY)
-                        .apiCallTimeout(Duration.ofSeconds(55))
-                        .build())
-                .build();
-      }
+      cloudWatchLogsClient =  CloudWatchLogsClient.builder()
+              .httpClient(LambdaWrapper.HTTP_CLIENT)
+              .overrideConfiguration(ClientOverrideConfiguration.builder()
+                      .retryPolicy(RETRY_POLICY)
+                      .apiCallTimeout(Duration.ofSeconds(55))
+                      .build())
+              .build();
       return cloudWatchLogsClient;
     }
-
+    return cloudWatchLogsClient;
+  }
 }

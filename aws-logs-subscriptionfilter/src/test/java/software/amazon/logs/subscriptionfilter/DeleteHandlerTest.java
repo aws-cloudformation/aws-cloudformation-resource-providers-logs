@@ -33,8 +33,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class DeleteHandlerTest extends AbstractTestBase {
-
+class DeleteHandlerTest extends AbstractTestBase {
     @Mock
     private AmazonWebServicesClientProxy proxy;
 
@@ -60,7 +59,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_Success() {
+    void handleRequest_Success() {
         final ResourceModel model = buildDefaultModel();
 
         when(proxyClient.client().deleteSubscriptionFilter(ArgumentMatchers.any(DeleteSubscriptionFilterRequest.class)))
@@ -74,8 +73,8 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel()).isEqualTo(null); // delete handler should not return model on success
+        assertThat(response.getCallbackDelaySeconds()).isZero();
+        assertThat(response.getResourceModel()).isNull(); // delete handler should not return model on success
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
@@ -83,7 +82,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_ResourceNotFound() {
+    void handleRequest_ResourceNotFound() {
         final ResourceModel model = buildDefaultModel();
 
         when(proxyClient.client().deleteSubscriptionFilter(ArgumentMatchers.any(DeleteSubscriptionFilterRequest.class)))
@@ -98,7 +97,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_DeleteFailed() {
+    void handleRequest_DeleteFailed() {
         final ResourceModel model = buildDefaultModel();
 
         when(proxyClient.client().deleteSubscriptionFilter(ArgumentMatchers.any(DeleteSubscriptionFilterRequest.class)))

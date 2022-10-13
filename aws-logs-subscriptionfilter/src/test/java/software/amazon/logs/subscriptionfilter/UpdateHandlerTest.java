@@ -3,6 +3,7 @@ package software.amazon.logs.subscriptionfilter;
 import java.time.Duration;
 import java.util.Collections;
 
+import software.amazon.awssdk.services.cloudwatchevents.model.InternalException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersResponse;
@@ -37,8 +38,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UpdateHandlerTest extends AbstractTestBase {
-
+class UpdateHandlerTest extends AbstractTestBase {
     @Mock
     private AmazonWebServicesClientProxy proxy;
 
@@ -58,7 +58,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_Success() {
+    void handleRequest_Success() {
         final PutSubscriptionFilterResponse updateResponse = PutSubscriptionFilterResponse.builder()
                 .build();
 
@@ -81,7 +81,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getCallbackDelaySeconds()).isZero();
         assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
@@ -93,7 +93,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_ResourceNotFound() {
+    void handleRequest_ResourceNotFound() {
         final ResourceModel model = buildDefaultModel();
 
         final DescribeSubscriptionFiltersResponse describeResponse = DescribeSubscriptionFiltersResponse.builder()
@@ -110,9 +110,9 @@ public class UpdateHandlerTest extends AbstractTestBase {
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getCallbackDelaySeconds()).isZero();
         assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage().contains("NotFound"));
+        assertThat(response.getMessage()).contains("No value present");
 
         verify(proxyClient.client(), times(1)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
         verify(sdkClient, atLeastOnce()).serviceName();
@@ -120,7 +120,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_InternalException() {
+    void handleRequest_InternalException() {
         final ResourceModel model = buildDefaultModel();
 
         final DescribeSubscriptionFiltersResponse describeResponse = DescribeSubscriptionFiltersResponse.builder()
@@ -131,7 +131,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
                 .thenReturn(describeResponse);
 
         when(proxyClient.client().putSubscriptionFilter(ArgumentMatchers.any(PutSubscriptionFilterRequest.class)))
-                .thenThrow(InvalidParameterException.class);
+                .thenThrow(InternalException.class);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
@@ -140,7 +140,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getCallbackDelaySeconds()).isZero();
         assertThat(response.getResourceModels()).isNull();
 
         verify(proxyClient.client(), times(1)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));

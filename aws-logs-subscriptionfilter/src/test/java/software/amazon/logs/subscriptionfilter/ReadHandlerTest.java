@@ -3,18 +3,14 @@ package software.amazon.logs.subscriptionfilter;
 import java.time.Duration;
 import java.util.Collections;
 
+import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.OperationStatus;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ProxyClient;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,8 +30,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ReadHandlerTest extends AbstractTestBase {
-
+class ReadHandlerTest extends AbstractTestBase {
     @Mock
     private AmazonWebServicesClientProxy proxy;
 
@@ -61,7 +56,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_Success() {
+    void handleRequest_Success() {
         final ResourceModel model = buildDefaultModel();
         final DescribeSubscriptionFiltersResponse describeResponse = DescribeSubscriptionFiltersResponse.builder()
                 .subscriptionFilters(Translator.translateToSDK(model))
@@ -78,7 +73,7 @@ public class ReadHandlerTest extends AbstractTestBase {
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getCallbackDelaySeconds()).isZero();
         assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
@@ -87,8 +82,12 @@ public class ReadHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_ResponseIsEmpty() {
+    void handleRequest_ResponseIsEmpty() {
         final ResourceModel model = buildDefaultModel();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
 
         final DescribeSubscriptionFiltersResponse describeResponse = DescribeSubscriptionFiltersResponse.builder()
                 .subscriptionFilters(Collections.emptyList())
@@ -97,41 +96,62 @@ public class ReadHandlerTest extends AbstractTestBase {
         when(proxyClient.client().describeSubscriptionFilters(ArgumentMatchers.any(DescribeSubscriptionFiltersRequest.class)))
                 .thenReturn(describeResponse);
 
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnNotFoundException.class);
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.NotFound);
     }
 
     @Test
-    public void handleRequest_ResourceNotFound() {
+    void handleRequest_ServiceLimitExceptionThrown() {
         final ResourceModel model = buildDefaultModel();
 
         when(proxyClient.client().describeSubscriptionFilters(ArgumentMatchers.any(DescribeSubscriptionFiltersRequest.class)))
-                .thenThrow(ResourceNotFoundException.class);
+                .thenThrow(LimitExceededException.class);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnNotFoundException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getErrorCode()).isEqualTo(HandlerErrorCode.ServiceLimitExceeded);
     }
 
     @Test
-    public void handleRequest_ExceptionThrown() {
+    void handleRequest_SuccessSoftFailureAccessDenied() {
         final ResourceModel model = buildDefaultModel();
 
+        final AwsErrorDetails accessDeniedDetails =  AwsErrorDetails.builder().
+                errorMessage("User: USER is not authorized to perform: logs:DescribeSubscriptionFilters on resource: " +
+                        "LogGroupName: because no identity-based policy allows the logs:DescribeSubscriptionFilters action " +
+                        "(Service: CloudWatchLogs, Status Code: 400, Request ID: 123)")
+                .build();
+
+        final AwsServiceException accessDeniedException = CloudWatchLogsException.builder().awsErrorDetails(accessDeniedDetails).build();
+
         when(proxyClient.client().describeSubscriptionFilters(ArgumentMatchers.any(DescribeSubscriptionFiltersRequest.class)))
-                .thenThrow(InvalidParameterException.class);
+                .thenThrow(accessDeniedException);
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnInvalidRequestException.class);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler
+                .handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
     }
 }

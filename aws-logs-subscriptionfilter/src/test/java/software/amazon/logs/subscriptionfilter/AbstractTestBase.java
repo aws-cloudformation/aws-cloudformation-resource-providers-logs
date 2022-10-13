@@ -1,9 +1,5 @@
 package software.amazon.logs.subscriptionfilter;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -24,6 +20,7 @@ public class AbstractTestBase {
     MOCK_CREDENTIALS = new Credentials("accessKey", "secretKey", "token");
     logger = new LoggerProxy();
   }
+
   static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(
           final AmazonWebServicesClientProxy proxy,
           final CloudWatchLogsClient sdkClient) {
@@ -62,6 +59,7 @@ public class AbstractTestBase {
             .filterPattern("[pattern]")
             .logGroupName("log-group-name")
             .roleArn("role-arn")
+            .distribution("Random")
             .build();
   }
 }
