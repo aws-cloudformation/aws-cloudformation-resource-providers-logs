@@ -15,7 +15,8 @@ To declare this entity in your AWS CloudFormation template, use the following sy
         "<a href="#destinationarn" title="DestinationArn">DestinationArn</a>" : <i>String</i>,
         "<a href="#filterpattern" title="FilterPattern">FilterPattern</a>" : <i>String</i>,
         "<a href="#loggroupname" title="LogGroupName">LogGroupName</a>" : <i>String</i>,
-        "<a href="#rolearn" title="RoleArn">RoleArn</a>" : <i>String</i>
+        "<a href="#rolearn" title="RoleArn">RoleArn</a>" : <i>String</i>,
+        "<a href="#distribution" title="Distribution">Distribution</a>" : <i>String</i>
     }
 }
 </pre>
@@ -29,6 +30,7 @@ Properties:
     <a href="#filterpattern" title="FilterPattern">FilterPattern</a>: <i>String</i>
     <a href="#loggroupname" title="LogGroupName">LogGroupName</a>: <i>String</i>
     <a href="#rolearn" title="RoleArn">RoleArn</a>: <i>String</i>
+    <a href="#distribution" title="Distribution">Distribution</a>: <i>String</i>
 </pre>
 
 ## Properties
@@ -70,6 +72,18 @@ The ARN of an IAM role that grants CloudWatch Logs permissions to deliver ingest
 _Required_: No
 
 _Type_: String
+
+_Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-replacement)
+
+#### Distribution
+
+The method used to distribute log data to the destination. By default, log data is grouped by log stream, but the grouping can be set to random for a more even distribution. This property is only applicable when the destination is an Amazon Kinesis stream.
+
+_Required_: No
+
+_Type_: String
+
+_Allowed Values_: <code>Random</code> | <code>ByLogStream</code>
 
 _Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-replacement)
 

@@ -12,20 +12,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashSet;
-
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
-import static software.amazon.logs.subscriptionfilter.AbstractTestBase.MOCK_PROXY;
-import static software.amazon.logs.subscriptionfilter.AbstractTestBase.buildDefaultModel;
 
 @ExtendWith(MockitoExtension.class)
-public class ListHandlerTest extends AbstractTestBase {
-
+class ListHandlerTest extends AbstractTestBase {
     @Mock
     private AmazonWebServicesClientProxy proxy;
 
@@ -45,7 +37,7 @@ public class ListHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_SimpleSuccess() {
+    void handleRequest_SimpleSuccess() {
         final ResourceModel model = buildDefaultModel();
         final DescribeSubscriptionFiltersResponse describeResponse = DescribeSubscriptionFiltersResponse.builder()
                 .subscriptionFilters(Translator.translateToSDK(model))
@@ -64,7 +56,7 @@ public class ListHandlerTest extends AbstractTestBase {
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
         assertThat(response.getCallbackContext()).isNull();
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getCallbackDelaySeconds()).isZero();
         assertThat(response.getResourceModel()).isNull();
         assertThat(response.getResourceModels()).isNotNull();
         assertThat(response.getMessage()).isNull();
