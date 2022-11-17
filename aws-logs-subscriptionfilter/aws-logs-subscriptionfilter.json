@@ -69,14 +69,12 @@
     "LogGroupName"
   ],
   "createOnlyProperties": [
+    "/properties/FilterName",
     "/properties/DestinationArn",
     "/properties/FilterPattern",
     "/properties/LogGroupName",
     "/properties/RoleArn",
     "/properties/Distribution"
-  ],
-  "readOnlyProperties": [
-    "/properties/FilterName"
   ],
   "primaryIdentifier": [
     "/properties/FilterName",

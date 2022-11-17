@@ -12,7 +12,6 @@ import java.util.NoSuchElementException;
 
 import static java.util.Objects.requireNonNull;
 
-
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
     private final CloudWatchLogsClient cloudWatchLogsClient;
@@ -133,4 +132,5 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
         return e instanceof InvalidParameterException || e instanceof AbortedException
                 || e.getMessage().equals(ERROR_CODE_OPERATION_ABORTED_EXCEPTION);
     }
+
 }

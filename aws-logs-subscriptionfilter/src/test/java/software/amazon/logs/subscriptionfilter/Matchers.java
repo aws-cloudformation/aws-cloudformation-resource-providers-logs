@@ -13,6 +13,7 @@ public class Matchers {
                                                 final SubscriptionFilter sdkModel) {
         assertThat(rawModel).isInstanceOf(ResourceModel.class);
         ResourceModel model = (ResourceModel)rawModel;
+        assertThat(model.getFilterName()).isEqualTo(sdkModel.filterName());
         assertThat(model.getRoleArn()).isEqualTo(sdkModel.roleArn());
         assertThat(model.getFilterPattern()).isEqualTo(sdkModel.filterPattern());
         assertThat(model.getLogGroupName()).isEqualTo(sdkModel.logGroupName());

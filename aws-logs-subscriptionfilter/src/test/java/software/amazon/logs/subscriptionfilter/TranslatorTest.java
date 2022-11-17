@@ -18,6 +18,7 @@ import static software.amazon.logs.subscriptionfilter.Translator.translateExcept
 @ExtendWith(MockitoExtension.class)
 class TranslatorTest {
     private static final SubscriptionFilter SUBSCRIPTION_FILTER = SubscriptionFilter.builder()
+            .filterName("FilterName")
             .logGroupName("LogGroup")
             .destinationArn("DestinationArn")
             .filterPattern("Pattern")
@@ -26,8 +27,8 @@ class TranslatorTest {
             .build();
 
     private static final ResourceModel RESOURCE_MODEL = ResourceModel.builder()
-            .logGroupName("LogGroup")
             .filterName("FilterName")
+            .logGroupName("LogGroup")
             .destinationArn("DestinationArn")
             .filterPattern("Pattern")
             .roleArn("RoleArn")
@@ -41,6 +42,7 @@ class TranslatorTest {
                 .build();
 
         final List<ResourceModel> expectedModels = Collections.singletonList(ResourceModel.builder()
+                .filterName("FilterName")
                 .logGroupName("LogGroup")
                 .destinationArn("DestinationArn")
                 .filterPattern("Pattern")
@@ -60,6 +62,7 @@ class TranslatorTest {
                 .build();
 
         final List<ResourceModel> expectedModels = Collections.singletonList(ResourceModel.builder()
+                .filterName("FilterName")
                 .logGroupName("LogGroup")
                 .destinationArn("DestinationArn")
                 .roleArn("RoleArn")
@@ -94,8 +97,8 @@ class TranslatorTest {
     @Test
     void translateToPutRequest() {
         final PutSubscriptionFilterRequest expectedRequest = PutSubscriptionFilterRequest.builder()
-                .logGroupName("LogGroup")
                 .filterName("FilterName")
+                .logGroupName("LogGroup")
                 .destinationArn("DestinationArn")
                 .filterPattern("Pattern")
                 .roleArn("RoleArn")

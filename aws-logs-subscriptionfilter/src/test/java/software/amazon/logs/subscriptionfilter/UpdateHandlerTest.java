@@ -39,6 +39,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateHandlerTest extends AbstractTestBase {
+
     @Mock
     private AmazonWebServicesClientProxy proxy;
 
