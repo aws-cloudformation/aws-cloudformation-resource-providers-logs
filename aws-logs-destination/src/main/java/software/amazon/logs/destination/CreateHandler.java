@@ -28,7 +28,7 @@ public class CreateHandler extends BaseHandlerStd {
         // Create destination policy command checks to see if optional destination/access policy is passed in before attempting create
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> preCreateCheck(proxy, callbackContext, proxyClient, model).done((response) -> {
-                    if (isDestinationListNullOrEmpty(response)) {
+                    if (!isDestinationExists(response, model)) {
                         return ProgressEvent.progress(model, callbackContext);
                     }
                     return ProgressEvent.defaultFailureHandler(new CfnAlreadyExistsException(ResourceModel.TYPE_NAME,
