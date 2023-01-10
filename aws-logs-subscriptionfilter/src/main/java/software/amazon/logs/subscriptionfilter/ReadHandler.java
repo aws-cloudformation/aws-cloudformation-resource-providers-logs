@@ -1,7 +1,13 @@
 package software.amazon.logs.subscriptionfilter;
 
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.cloudformation.proxy.*;
+import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.Logger;
+import software.amazon.cloudformation.proxy.OperationStatus;
+import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ProxyClient;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.HandlerErrorCode;
 
 public class ReadHandler extends BaseHandlerStd {
     private Logger logger;

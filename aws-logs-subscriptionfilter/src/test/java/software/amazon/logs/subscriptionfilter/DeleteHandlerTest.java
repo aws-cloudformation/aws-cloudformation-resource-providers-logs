@@ -34,6 +34,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DeleteHandlerTest extends AbstractTestBase {
+
     @Mock
     private AmazonWebServicesClientProxy proxy;
 

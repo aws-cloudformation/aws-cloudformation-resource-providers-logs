@@ -1,4 +1,5 @@
 {
+  "FilterName": "FilterName",
   "DestinationArn": "{{KinesisStreamDestinationARN}}",
   "LogGroupName": "{{LogGroupName}}",
   "FilterPattern": "{$.userIdentity.type = Root}",

@@ -11,8 +11,9 @@ import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 public class DeleteHandler extends BaseHandlerStd {
+    private final String CALL_GRAPH_STRING = "AWS-Logs-SubscriptionFilter::Delete";
+
     private Logger logger;
-    private static final String CALL_GRAPH_STRING = "AWS-Logs-SubscriptionFilter::Delete";
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,

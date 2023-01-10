@@ -13,53 +13,52 @@ import software.amazon.cloudformation.proxy.LoggerProxy;
 import software.amazon.cloudformation.proxy.ProxyClient;
 
 public class AbstractTestBase {
-  protected static final Credentials MOCK_CREDENTIALS;
-  protected static final LoggerProxy logger;
+    protected static final Credentials MOCK_CREDENTIALS;
+    protected static final LoggerProxy logger;
 
-  static {
-    MOCK_CREDENTIALS = new Credentials("accessKey", "secretKey", "token");
-    logger = new LoggerProxy();
-  }
+    static {
+        MOCK_CREDENTIALS = new Credentials("accessKey", "secretKey", "token");
+        logger = new LoggerProxy();
+    }
 
-  static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(
-          final AmazonWebServicesClientProxy proxy,
-          final CloudWatchLogsClient sdkClient) {
-    return new ProxyClient<CloudWatchLogsClient>() {
-      @Override
-      public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseT
-      injectCredentialsAndInvokeV2(RequestT request, Function<RequestT, ResponseT> requestFunction) {
-        return proxy.injectCredentialsAndInvokeV2(request, requestFunction);
-      }
+    static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(
+            final AmazonWebServicesClientProxy proxy,
+            final CloudWatchLogsClient sdkClient) {
+        return new ProxyClient<CloudWatchLogsClient>() {
+            @Override
+            public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseT
+            injectCredentialsAndInvokeV2(RequestT request, Function<RequestT, ResponseT> requestFunction) {
+                return proxy.injectCredentialsAndInvokeV2(request, requestFunction);
+            }
 
-      @Override
-      public <RequestT extends AwsRequest, ResponseT extends AwsResponse>
-      CompletableFuture<ResponseT>
-      injectCredentialsAndInvokeV2Async(RequestT request, Function<RequestT, CompletableFuture<ResponseT>> requestFunction) {
-        throw new UnsupportedOperationException();
-      }
+            @Override
+            public <RequestT extends AwsRequest, ResponseT extends AwsResponse>
+            CompletableFuture<ResponseT>
+            injectCredentialsAndInvokeV2Async(RequestT request, Function<RequestT, CompletableFuture<ResponseT>> requestFunction) {
+                throw new UnsupportedOperationException();
+            }
 
-      @Override
-      public <RequestT extends AwsRequest, ResponseT extends AwsResponse, IterableT extends SdkIterable<ResponseT>>
-      IterableT
-      injectCredentialsAndInvokeIterableV2(RequestT request, Function<RequestT, IterableT> requestFunction) {
-        return proxy.injectCredentialsAndInvokeIterableV2(request, requestFunction);
-      }
+            @Override
+            public <RequestT extends AwsRequest, ResponseT extends AwsResponse, IterableT extends SdkIterable<ResponseT>>
+            IterableT
+            injectCredentialsAndInvokeIterableV2(RequestT request, Function<RequestT, IterableT> requestFunction) {
+                return proxy.injectCredentialsAndInvokeIterableV2(request, requestFunction);
+            }
 
-      @Override
-      public CloudWatchLogsClient client() {
-        return sdkClient;
-      }
-    };
-  }
+            @Override
+            public CloudWatchLogsClient client() {
+                return sdkClient;
+            }
+        };
+    }
 
-  static ResourceModel buildDefaultModel() {
-    return ResourceModel.builder()
-            .filterName("filter-name")
-            .destinationArn("destination-arn")
-            .filterPattern("[pattern]")
-            .logGroupName("log-group-name")
-            .roleArn("role-arn")
-            .distribution("Random")
-            .build();
-  }
+    static ResourceModel buildDefaultModel() {
+        return ResourceModel.builder()
+                .filterName("filter-name")
+                .destinationArn("destination-arn")
+                .filterPattern("[pattern]")
+                .logGroupName("log-group-name")
+                .roleArn("role-arn")
+                .build();
+    }
 }
