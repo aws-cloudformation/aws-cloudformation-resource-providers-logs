@@ -15,7 +15,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
         "<a href="#filtername" title="FilterName">FilterName</a>" : <i>String</i>,
         "<a href="#filterpattern" title="FilterPattern">FilterPattern</a>" : <i>String</i>,
         "<a href="#loggroupname" title="LogGroupName">LogGroupName</a>" : <i>String</i>,
-        "<a href="#metrictransformations" title="MetricTransformations">MetricTransformations</a>" : <i>[ <a href="metrictransformations.md">MetricTransformations</a>, ... ]</i>
+        "<a href="#metrictransformations" title="MetricTransformations">MetricTransformations</a>" : <i>[ <a href="metrictransformation.md">MetricTransformation</a>, ... ]</i>
     }
 }
 </pre>
@@ -29,7 +29,7 @@ Properties:
     <a href="#filterpattern" title="FilterPattern">FilterPattern</a>: <i>String</i>
     <a href="#loggroupname" title="LogGroupName">LogGroupName</a>: <i>String</i>
     <a href="#metrictransformations" title="MetricTransformations">MetricTransformations</a>: <i>
-      - <a href="metrictransformations.md">MetricTransformations</a></i>
+      - <a href="metrictransformation.md">MetricTransformation</a></i>
 </pre>
 
 ## Properties
@@ -84,6 +84,7 @@ A collection of information that defines how metric data gets emitted.
 
 _Required_: Yes
 
-_Type_: List of <a href="metrictransformations.md">MetricTransformations</a>
+_Type_: List of <a href="metrictransformation.md">MetricTransformation</a>
 
 _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+
