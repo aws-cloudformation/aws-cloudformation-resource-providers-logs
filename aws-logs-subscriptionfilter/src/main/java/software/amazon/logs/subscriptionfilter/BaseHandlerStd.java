@@ -3,10 +3,28 @@ package software.amazon.logs.subscriptionfilter;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.AbortedException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.cloudformation.exceptions.*;
-import software.amazon.cloudformation.proxy.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
+import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
+import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.CallChain;
+import software.amazon.cloudformation.proxy.HandlerErrorCode;
+import software.amazon.cloudformation.proxy.Logger;
+import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ProxyClient;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import java.util.NoSuchElementException;
 
@@ -67,7 +85,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                 e.getMessage(), e.getCause()));
 
         if (e instanceof CloudWatchLogsException) {
-            if  (e.getMessage() != null && e.getMessage().contains("is not authorized to perform: logs:DescribeSubscriptionFilters")) {
+            if  (e.getMessage() != null && e.getMessage().contains("is not authorized to perform: logs:")) {
                 logger.log("AccessDenied exception in AccessDeniedCheck, passing");
                 return true;
             }
@@ -90,12 +108,19 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
         logExceptionDetails(e, logger, stackId);
 
         if (e instanceof InvalidParameterException) {
-            throw new CfnInvalidRequestException(e);
+            throw new CfnInvalidRequestException(String.format("%s. %s", ResourceModel.TYPE_NAME, e.getMessage()), e);
+        } else if (e instanceof ResourceAlreadyExistsException) {
+            throw new CfnAlreadyExistsException(e);
         } else if (e instanceof ResourceNotFoundException) {
             throw new CfnNotFoundException(e);
         } else if (e instanceof ServiceUnavailableException) {
             throw new CfnServiceInternalErrorException(e);
+        } else if (e instanceof LimitExceededException) {
+            throw new CfnServiceLimitExceededException(e);
+        } else if (isAccessDeniedError(e, logger)) {
+            throw new CfnAccessDeniedException(e);
         }
+        throw new CfnGeneralServiceException(e);
     }
 
     protected HandlerErrorCode getExceptionDetails(final Exception e, final Logger logger, final String stackId) {
@@ -133,4 +158,44 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                 || e.getMessage().equals(ERROR_CODE_OPERATION_ABORTED_EXCEPTION);
     }
 
+    protected CallChain.Completed<DescribeSubscriptionFiltersRequest, DescribeSubscriptionFiltersResponse, CloudWatchLogsClient, ResourceModel, CallbackContext> preCreateCheck(
+            final AmazonWebServicesClientProxy proxy, final CallbackContext callbackContext,
+            final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model) {
+        return proxy.initiate("AWS-Logs-SubscriptionFilter::Create::PreExistenceCheck", proxyClient, model, callbackContext)
+                .translateToServiceRequest(Translator::translateToReadRequest)
+                .makeServiceCall((awsRequest, sdkProxyClient) -> sdkProxyClient.injectCredentialsAndInvokeV2(awsRequest,
+                        sdkProxyClient.client()::describeSubscriptionFilters))
+                .handleError((request, exception, client, model1, context1) -> {
+                    ProgressEvent<ResourceModel, CallbackContext> progress;
+                    if (exception instanceof InvalidParameterException) {
+                        progress = ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest,
+                                exception.getMessage());
+                    } else if (exception instanceof ServiceUnavailableException) {
+                        progress = ProgressEvent.failed(model, callbackContext, HandlerErrorCode.ServiceInternalError,
+                                exception.getMessage());
+                    } else if (exception instanceof ResourceNotFoundException) {
+                        progress = ProgressEvent.progress(model, callbackContext);
+                    } else if (exception instanceof CloudWatchLogsException) {
+                        progress =
+                                ProgressEvent.failed(model, callbackContext, HandlerErrorCode.GeneralServiceException,
+                                        exception.getMessage());
+                    } else {
+                        throw exception;
+                    }
+                    return progress;
+                });
+    }
+
+    protected boolean filterNameExists(final DescribeSubscriptionFiltersResponse response, ResourceModel model) {
+        if (response == null || response.subscriptionFilters() == null) {
+            return false;
+        }
+        if (!response.hasSubscriptionFilters()) {
+            return false;
+        }
+        if (response.subscriptionFilters().isEmpty()) {
+            return false;
+        }
+        return model.getFilterName().equals(response.subscriptionFilters().get(0).filterName());
+    }
 }

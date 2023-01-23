@@ -54,6 +54,7 @@ class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         when(proxyClient.client().describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class)))
+                .thenReturn(DescribeSubscriptionFiltersResponse.builder().build())
                 .thenReturn(describeResponse);
 
         when(proxyClient.client().putSubscriptionFilter(any(PutSubscriptionFilterRequest.class)))
@@ -72,7 +73,7 @@ class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(1)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
+        verify(proxyClient.client(), times(2)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
         verify(proxyClient.client()).putSubscriptionFilter(any(PutSubscriptionFilterRequest.class));
     }
 
@@ -84,6 +85,7 @@ class CreateHandlerTest extends AbstractTestBase {
 
         // return no existing Subscriptions for pre-create and then success response for create
         when(proxyClient.client().describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class)))
+                .thenReturn(DescribeSubscriptionFiltersResponse.builder().build())
                 .thenReturn(DescribeSubscriptionFiltersResponse.builder()
                         .subscriptionFilters(Translator.translateToSDK(model))
                         .build());
@@ -104,7 +106,7 @@ class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(1)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
+        verify(proxyClient.client(), times(2)).describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class));
         verify(proxyClient.client()).putSubscriptionFilter(any(PutSubscriptionFilterRequest.class));
     }
 
@@ -117,6 +119,7 @@ class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         when(proxyClient.client().describeSubscriptionFilters(any(DescribeSubscriptionFiltersRequest.class)))
+                .thenReturn(DescribeSubscriptionFiltersResponse.builder().build())
                 .thenReturn(DescribeSubscriptionFiltersResponse.builder()
                         .subscriptionFilters(Translator.translateToSDK(model))
                         .build());

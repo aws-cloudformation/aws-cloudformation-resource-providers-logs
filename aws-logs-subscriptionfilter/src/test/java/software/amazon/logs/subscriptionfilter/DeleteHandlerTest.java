@@ -2,11 +2,15 @@ package software.amazon.logs.subscriptionfilter;
 
 import java.time.Duration;
 
+import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteSubscriptionFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteSubscriptionFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
+import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -110,5 +114,28 @@ class DeleteHandlerTest extends AbstractTestBase {
 
         assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
                 .isInstanceOf(CfnInvalidRequestException.class);
+    }
+
+    @Test
+    void handleRequest_AccessDenied() {
+        final ResourceModel model = buildDefaultModel();
+
+        final AwsErrorDetails accessDeniedDetails =  AwsErrorDetails.builder().
+                errorMessage("User: USER is not authorized to perform: logs:DeleteSubscriptionFilter on resource: " +
+                        "LogGroupName: because no identity-based policy allows the logs:DeleteSubscriptionFilter action " +
+                        "(Service: CloudWatchLogs, Status Code: 400, Request ID: 123)")
+                .build();
+
+        final AwsServiceException accessDeniedException = CloudWatchLogsException.builder().awsErrorDetails(accessDeniedDetails).build();
+
+        when(proxyClient.client().deleteSubscriptionFilter(ArgumentMatchers.any(DeleteSubscriptionFilterRequest.class)))
+                .thenThrow(accessDeniedException);
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnAccessDeniedException.class);
     }
 }

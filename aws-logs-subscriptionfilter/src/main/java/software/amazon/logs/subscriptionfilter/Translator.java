@@ -27,19 +27,15 @@ import java.util.stream.Stream;
 public class Translator {
     private static final int RESPONSE_LIMIT = 50;
     public static BaseHandlerException translateException(final AwsServiceException e) {
-        if (e instanceof LimitExceededException) {
-            return new CfnServiceLimitExceededException(e);
-        }
-        if (e instanceof OperationAbortedException) {
-            return new CfnResourceConflictException(e);
-        }
         if (e instanceof InvalidParameterException) {
-            return new CfnInvalidRequestException(e);
-        }
-        else if (e instanceof ResourceNotFoundException) {
+            return new CfnInvalidRequestException(String.format("%s. %s", ResourceModel.TYPE_NAME, e.getMessage()), e);
+        } else if (e instanceof LimitExceededException) {
+            return new CfnServiceLimitExceededException(e);
+        } else if (e instanceof OperationAbortedException) {
+            return new CfnResourceConflictException(e);
+        } else if (e instanceof ResourceNotFoundException) {
             return new CfnNotFoundException(e);
-        }
-        else if (e instanceof ServiceUnavailableException) {
+        } else if (e instanceof ServiceUnavailableException) {
             return new CfnServiceInternalErrorException(e);
         }
         return new CfnGeneralServiceException(e);

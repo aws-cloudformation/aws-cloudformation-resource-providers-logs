@@ -1,6 +1,7 @@
 package software.amazon.logs.subscriptionfilter;
 
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.cloudformation.exceptions.ResourceNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -28,21 +29,26 @@ public class ReadHandler extends BaseHandlerStd {
 
         return proxy.initiate(CALL_GRAPH_STRING, proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToReadRequest)
-                .makeServiceCall((cloudWatchLogsRequest, sdkProxyClient) -> {
-                    return sdkProxyClient.injectCredentialsAndInvokeV2(cloudWatchLogsRequest,
-                            sdkProxyClient.client()::describeSubscriptionFilters);
-                }).handleError((cloudWatchLogsRequest, e, _proxyClient, _model, ctx) -> {
-                    if (isAccessDeniedError(e, logger)) {
-                        return ProgressEvent.success(model, ctx);
-                    } else {
-                        final HandlerErrorCode handlerErrorCode = getExceptionDetails(e, logger, stackId);
-                        return ProgressEvent.failed(model, callbackContext, handlerErrorCode, e.getMessage());
-                    }
-                })
+                .makeServiceCall((cloudWatchLogsRequest, sdkProxyClient) -> sdkProxyClient.injectCredentialsAndInvokeV2(cloudWatchLogsRequest,
+                        sdkProxyClient.client()::describeSubscriptionFilters))
+                .handleError((cloudWatchLogsRequest, e, pc, md, ctx) -> handleError(e, model, ctx, stackId))
                 .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                         .status(OperationStatus.SUCCESS)
                         .resourceModel(Translator.translateFromReadResponse(awsResponse))
                         .build());
     }
 
+    private ProgressEvent<ResourceModel, CallbackContext> handleError(
+            final Exception e,
+            final ResourceModel model,
+            final CallbackContext callbackContext,
+            final String stackId) {
+
+        if (isAccessDeniedError(e, logger) || e instanceof ResourceNotFoundException) {
+            return ProgressEvent.success(model, callbackContext);
+        }
+
+        final HandlerErrorCode handlerErrorCode = getExceptionDetails(e, logger, stackId);
+        return ProgressEvent.failed(model, callbackContext, handlerErrorCode, e.getMessage());
+    }
 }
