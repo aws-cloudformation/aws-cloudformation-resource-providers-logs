@@ -27,13 +27,14 @@ public class CreateHandler extends BaseHandlerStd {
         // Verify if a destination is already present with same identifier
         // Create destination policy command checks to see if optional destination/access policy is passed in before attempting create
         return ProgressEvent.progress(model, callbackContext)
-                .then(progress -> preCreateCheck(proxy, callbackContext, proxyClient, model).done((response) -> {
-                    if (isDestinationListNullOrEmpty(response)) {
-                        return ProgressEvent.progress(model, callbackContext);
+                .then(progress -> preCreateCheck(proxy, callbackContext, proxyClient, model).done(response -> {
+                    if (destinationNameExists(response, model)) {
+                        return ProgressEvent.defaultFailureHandler(
+                                new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString()),
+                                HandlerErrorCode.AlreadyExists
+                        );
                     }
-                    return ProgressEvent.defaultFailureHandler(new CfnAlreadyExistsException(ResourceModel.TYPE_NAME,
-                            model.getPrimaryIdentifier()
-                                    .toString()), HandlerErrorCode.AlreadyExists);
+                    return ProgressEvent.progress(model, callbackContext);
                 }))
                 .then(progress -> putDestination(proxy, callbackContext, proxyClient, model, DESTINATION_CREATE_GRAPH,
                         logger, Action.CREATE))

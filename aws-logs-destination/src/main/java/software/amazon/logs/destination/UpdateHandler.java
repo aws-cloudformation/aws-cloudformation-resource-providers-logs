@@ -24,11 +24,12 @@ public class UpdateHandler extends BaseHandlerStd {
         final ResourceModel model = request.getDesiredResourceState();
 
         return ProgressEvent.progress(model, callbackContext)
-                .then(progress -> preCreateCheck(proxy, callbackContext, proxyClient, model).done((response) -> {
-                    if (isDestinationListNullOrEmpty(response)) {
-                        return ProgressEvent.defaultFailureHandler(new CfnNotFoundException(ResourceModel.TYPE_NAME,
-                                model.getPrimaryIdentifier()
-                                        .toString()), HandlerErrorCode.NotFound);
+                .then(progress -> preCreateCheck(proxy, callbackContext, proxyClient, model).done(response -> {
+                    if (!destinationNameExists(response, model)) {
+                        return ProgressEvent.defaultFailureHandler(
+                                new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString()),
+                                HandlerErrorCode.NotFound
+                        );
                     }
                     return ProgressEvent.progress(model, callbackContext);
                 }))

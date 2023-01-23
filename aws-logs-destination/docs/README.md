@@ -53,7 +53,7 @@ _Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/l
 
 An IAM policy document that governs which AWS accounts can create subscription filters against this destination.
 
-_Required_: Yes
+_Required_: No
 
 _Type_: String
 
@@ -100,3 +100,4 @@ For more information about using the `Fn::GetAtt` intrinsic function, see [Fn::G
 #### Arn
 
 Returns the <code>Arn</code> value.
+
