@@ -1,14 +1,10 @@
 package software.amazon.logs.metricfilter;
 
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -36,7 +32,9 @@ public class ReadHandler extends BaseHandlerStd {
 
         return proxy.initiate("AWS-Logs-MetricFilter::Read", proxyClient, model, callbackContext)
             .translateToServiceRequest(Translator::translateToReadRequest)
+            .backoffDelay(backoffStrategy)
             .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient , model))
+            .handleError(handleError)
             .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                 .status(OperationStatus.SUCCESS)
                 .resourceModel(Translator.translateFromReadResponse(awsResponse))
@@ -44,32 +42,22 @@ public class ReadHandler extends BaseHandlerStd {
     }
 
     private DescribeMetricFiltersResponse readResource(
-        final DescribeMetricFiltersRequest awsRequest,
-        final ProxyClient<CloudWatchLogsClient> proxyClient,
-        final ResourceModel model) {
-        DescribeMetricFiltersResponse awsResponse;
+            final DescribeMetricFiltersRequest awsRequest,
+            final ProxyClient<CloudWatchLogsClient> proxyClient,
+            final ResourceModel model) {
+        DescribeMetricFiltersResponse awsResponse = null;
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::describeMetricFilters);
-        } catch (InvalidParameterException e) {
-            throw new CfnInvalidRequestException(e);
-        } catch (ResourceNotFoundException e) {
-            throw new CfnNotFoundException(e);
-        } catch (ServiceUnavailableException e) {
-            throw new CfnServiceInternalErrorException(e);
+        } catch (CloudWatchLogsException e) {
+            Translator.translateException(e);
         }
 
-        if (awsResponse.metricFilters().isEmpty()) {
+        if (awsResponse != null && awsResponse.metricFilters().isEmpty()) {
             logger.log("Resource does not exist.");
-            throw new CfnNotFoundException(ResourceModel.TYPE_NAME,
-                    Objects.toString(model.getPrimaryIdentifier()));
+            throw new CfnNotFoundException(ResourceModel.TYPE_NAME, Objects.toString(model.getPrimaryIdentifier()));
         }
 
-        logger.log(String.format("%s has successfully been read." , ResourceModel.TYPE_NAME));
+        logger.log(String.format("%s has successfully been read.", ResourceModel.TYPE_NAME));
         return awsResponse;
     }
-
-    private ProgressEvent<ResourceModel, CallbackContext> constructResourceModelFromResponse(final DescribeMetricFiltersResponse awsResponse) {
-        return ProgressEvent.defaultSuccessHandler(Translator.translateFromReadResponse(awsResponse));
-    }
-
 }

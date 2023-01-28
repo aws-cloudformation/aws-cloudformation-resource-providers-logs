@@ -1,9 +1,23 @@
 package software.amazon.logs.metricfilter;
 
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
+import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutMetricFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.cloudformation.exceptions.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
+import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,23 +30,21 @@ import java.util.stream.Stream;
 
 public class Translator {
 
-  public static BaseHandlerException translateException(final AwsServiceException e) {
-    if (e instanceof LimitExceededException) {
-      return new CfnServiceLimitExceededException(e);
-    }
-    if (e instanceof OperationAbortedException) {
-      return new CfnResourceConflictException(e);
-    }
+  static void translateException(final AwsServiceException e) {
     if (e instanceof InvalidParameterException) {
-      return new CfnInvalidRequestException(e);
+      throw new CfnInvalidRequestException(String.format("%s. %s", ResourceModel.TYPE_NAME, e.getMessage()), e);
+    } else if (e instanceof LimitExceededException) {
+      throw new CfnServiceLimitExceededException(e);
+    } else if (e instanceof OperationAbortedException) {
+      throw new CfnResourceConflictException(e);
+    } else if (e instanceof ResourceNotFoundException) {
+      throw new CfnNotFoundException(e);
+    } else if (e instanceof ServiceUnavailableException) {
+      throw new CfnServiceInternalErrorException(e);
+    } else if (e instanceof ResourceAlreadyExistsException) {
+      throw new CfnAlreadyExistsException(e);
     }
-    else if (e instanceof ResourceNotFoundException) {
-      return new CfnNotFoundException(e);
-    }
-    else if (e instanceof ServiceUnavailableException) {
-      return new CfnServiceInternalErrorException(e);
-    }
-    return new CfnGeneralServiceException(e);
+    throw new CfnGeneralServiceException(e);
   }
 
   static software.amazon.awssdk.services.cloudwatchlogs.model.MetricTransformation translateMetricTransformationToSdk

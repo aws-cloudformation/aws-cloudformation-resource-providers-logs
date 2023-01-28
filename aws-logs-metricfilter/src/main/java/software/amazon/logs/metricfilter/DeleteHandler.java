@@ -1,16 +1,9 @@
 package software.amazon.logs.metricfilter;
 
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
-import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -36,28 +29,22 @@ public class DeleteHandler extends BaseHandlerStd {
 
         return proxy.initiate("AWS-Logs-MetricFilter::Delete", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
+                .backoffDelay(backoffStrategy)
                 .makeServiceCall(this::deleteResource)
+                .handleError(handleError)
                 .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
                     .status(OperationStatus.SUCCESS)
-                    .resourceModel(model)
                     .build());
     }
 
     private DeleteMetricFilterResponse deleteResource(
-        final DeleteMetricFilterRequest awsRequest,
-        final ProxyClient<CloudWatchLogsClient> proxyClient) {
-        DeleteMetricFilterResponse awsResponse;
+            final DeleteMetricFilterRequest awsRequest,
+            final ProxyClient<CloudWatchLogsClient> proxyClient) {
+        DeleteMetricFilterResponse awsResponse = null;
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteMetricFilter);
-        } catch (ResourceNotFoundException e) {
-            logger.log("Resource does not exist and could not be deleted.");
-            throw new CfnNotFoundException(e);
-        } catch (InvalidParameterException e) {
-            throw new CfnInvalidRequestException(e);
-        } catch (OperationAbortedException e) {
-            throw new CfnResourceConflictException(e);
-        } catch (ServiceUnavailableException e) {
-            throw new CfnServiceInternalErrorException(e);
+        } catch (final CloudWatchLogsException e) {
+            Translator.translateException(e);
         }
 
         logger.log(String.format("%s successfully deleted.", ResourceModel.TYPE_NAME));

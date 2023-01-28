@@ -1,11 +1,11 @@
 {
   "CREATE": {
-    "/LogGroupName": "this-is-a-random-loggroup",
+    "/LogGroupName": "this-is-a-random-loggroup-for-contract-tests",
     "/FilterName": "my-metric-filter",
     "/FilterPattern": "[size]",
     "/MetricTransformations": [
       {
-        "MetricValue": 10,
+        "MetricValue": "10",
         "MetricNamespace": "my-namespace",
         "MetricName": "metric-name"
       }
