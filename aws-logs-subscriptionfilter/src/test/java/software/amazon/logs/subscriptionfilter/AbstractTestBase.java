@@ -53,12 +53,17 @@ public class AbstractTestBase {
     }
 
     static ResourceModel buildDefaultModel() {
+        return buildDefaultModel("filter-name");
+    }
+
+    static ResourceModel buildDefaultModel(String filterName) {
         return ResourceModel.builder()
-                .filterName("filter-name")
+                .filterName(filterName)
                 .destinationArn("destination-arn")
                 .filterPattern("[pattern]")
                 .logGroupName("log-group-name")
                 .roleArn("role-arn")
                 .build();
+
     }
 }

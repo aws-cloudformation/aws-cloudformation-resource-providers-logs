@@ -63,14 +63,24 @@ public class CreateHandler extends BaseHandlerStd {
             logger.log(String.format("Filter name not present. Generated: %s as FilterName for stackID: %s", resourceIdentifier, request.getStackId()));
         }
 
-        return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
+        return ProgressEvent.progress(model, callbackContext)
                 .then(progress ->
+                        preCreateCheck(proxy, callbackContext, proxyClient, model).done(response -> {
+                            if (filterNameExists(response, model)) {
+                                return ProgressEvent.defaultFailureHandler(
+                                        new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString()),
+                                        HandlerErrorCode.AlreadyExists
+                                );
+                            }
+                            return ProgressEvent.progress(model, callbackContext);
+                        }))
+                        .then(progress ->
                         proxy.initiate(CALL_GRAPH_STRING, proxyClient, model, callbackContext)
                                 .translateToServiceRequest(Translator::translateToCreateRequest)
-                                .makeServiceCall((putLifecycleHookRequest, client) -> client
-                                        .injectCredentialsAndInvokeV2(putLifecycleHookRequest,
+                                .makeServiceCall((filterRequest, client) -> client
+                                        .injectCredentialsAndInvokeV2(filterRequest,
                                                 client.client()::putSubscriptionFilter))
-                                .handleError((autoScalingRequest, e, proxyClient1, model1, context) ->  {
+                                .handleError((req, e, proxyClient1, model1, context) ->  {
                                     // invalid parameter exception needs to be retried
                                     if (e instanceof AwsServiceException && ((AwsServiceException)e).awsErrorDetails() != null) {
                                         final AwsServiceException awsServiceException = (AwsServiceException) e;
