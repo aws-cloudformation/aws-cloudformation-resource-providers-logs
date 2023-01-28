@@ -61,9 +61,17 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
                 });
     }
 
-    protected boolean isDestinationListNullOrEmpty(final DescribeDestinationsResponse response) {
-        return ! response.hasDestinations() || response.destinations()
-                .isEmpty();
+    protected boolean destinationNameExists(final DescribeDestinationsResponse response, ResourceModel model) {
+        if (response == null || response.destinations() == null) {
+            return false;
+        }
+        if (!response.hasDestinations()) {
+            return false;
+        }
+        if (response.destinations().isEmpty()) {
+            return false;
+        }
+        return model.getDestinationName().equals(response.destinations().get(0).destinationName());
     }
 
     protected ProgressEvent<ResourceModel, CallbackContext> putDestination(final AmazonWebServicesClientProxy proxy,

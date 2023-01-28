@@ -6,16 +6,20 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteDestinationReq
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
 
 import java.util.Collection;
 import java.util.List;
@@ -58,10 +62,8 @@ public class Translator {
                 .build();
     }
 
-    static DescribeDestinationsRequest translateToListRequest(final String nextToken) {
+    static DescribeDestinationsRequest translateToListRequest(final ResourceModel model) {
         return DescribeDestinationsRequest.builder()
-                .limit(50)
-                .nextToken(nextToken)
                 .build();
     }
 
@@ -94,16 +96,19 @@ public class Translator {
 
     static void translateException(AwsServiceException exception) {
         if (exception instanceof InvalidParameterException) {
-            throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, exception);
+            throw new CfnInvalidRequestException(String.format("%s. %s", ResourceModel.TYPE_NAME, exception.getMessage()), exception);
         } else if (exception instanceof ServiceUnavailableException) {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, exception);
+        } else if (exception instanceof LimitExceededException) {
+            throw new CfnServiceLimitExceededException(exception);
         } else if (exception instanceof OperationAbortedException) {
             throw new CfnResourceConflictException(exception);
         } else if (exception instanceof ResourceNotFoundException) {
             throw new CfnNotFoundException(exception);
-        } else if (exception instanceof CloudWatchLogsException) {
-            throw new CfnGeneralServiceException(exception);
+        } else if (exception instanceof ResourceAlreadyExistsException) {
+            throw new CfnAlreadyExistsException(exception);
         }
+        throw new CfnGeneralServiceException(exception);
     }
 
 }

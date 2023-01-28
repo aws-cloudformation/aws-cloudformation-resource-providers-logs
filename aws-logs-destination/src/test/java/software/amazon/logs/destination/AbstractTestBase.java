@@ -85,9 +85,17 @@ public class AbstractTestBase {
         return getTestDestination(true);
     }
 
+    protected Destination getTestDestination(String destinationName) {
+        return getTestDestination(true, destinationName);
+    }
+
     protected Destination getTestDestination(boolean withPolicy) {
+        return getTestDestination(withPolicy, TEST_DESTINATION_INPUT);
+    }
+
+    protected Destination getTestDestination(boolean withPolicy, String destinationName) {
         return Destination.builder()
-                .destinationName(TEST_DESTINATION_INPUT)
+                .destinationName(destinationName)
                 .accessPolicy(withPolicy ? TEST_ACCESS_POLICY : null)
                 .roleArn(TEST_ROLE_ARN)
                 .targetArn(TEST_TARGET_ARN)
@@ -95,12 +103,15 @@ public class AbstractTestBase {
     }
 
     protected ResourceModel getTestResourceModel() {
+        return getTestResourceModel(TEST_DESTINATION_INPUT);
+    }
+
+    protected ResourceModel getTestResourceModel(String destinationName) {
         return ResourceModel.builder()
-                .destinationName(TEST_DESTINATION_INPUT)
+                .destinationName(destinationName)
                 .destinationPolicy(TEST_ACCESS_POLICY)
                 .roleArn(TEST_ROLE_ARN)
                 .targetArn(TEST_TARGET_ARN)
                 .build();
     }
-
 }

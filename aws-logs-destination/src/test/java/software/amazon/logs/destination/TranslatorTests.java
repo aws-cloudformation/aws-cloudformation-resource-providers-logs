@@ -134,10 +134,8 @@ public class TranslatorTests extends AbstractTestBase {
     @Test
     public void translateToListRequest_Should_ReturnSuccess() {
         final DescribeDestinationsRequest request = DescribeDestinationsRequest.builder()
-                .nextToken("token")
-                .limit(50)
                 .build();
-        Assertions.assertThat(Translator.translateToListRequest("token"))
+        Assertions.assertThat(Translator.translateToListRequest(ResourceModel.builder().build()))
                 .isEqualToComparingFieldByField(request);
     }
 
