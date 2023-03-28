@@ -114,7 +114,7 @@ class BaseHandlerStdTest extends AbstractTestBase {
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(response.getCallbackDelaySeconds()).isZero();
-        assertThat(response.getMessage()).contains("Invalid request (Service: CloudWatchLogs, Status Code: 400, Request ID: e689f8f9-bc25-48de-86be-4cee73125707");
+        assertEquals("Invalid request (Service: CloudWatchLogs, Status Code: 400, Request ID: e689f8f9-bc25-48de-86be-4cee73125707)", response.getMessage());
         assertThat(response.getErrorCode()).isNotNull();
         verify(proxyClient.client(), never()).putMetricFilter(any(PutMetricFilterRequest.class));
     }

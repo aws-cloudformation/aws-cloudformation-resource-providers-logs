@@ -16,10 +16,10 @@ public class ReadHandler extends BaseHandlerStd {
     private Logger logger;
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request,
-            final CallbackContext callbackContext,
-            final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final Logger logger) {
+                                                                          final ResourceHandlerRequest<ResourceModel> request,
+                                                                          final CallbackContext callbackContext,
+                                                                          final ProxyClient<CloudWatchLogsClient> proxyClient,
+                                                                          final Logger logger) {
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
@@ -31,8 +31,8 @@ public class ReadHandler extends BaseHandlerStd {
     }
 
     private DescribeDestinationsResponse readResource(final DescribeDestinationsRequest awsRequest,
-            final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final ResourceModel model) {
+                                                      final ProxyClient<CloudWatchLogsClient> proxyClient,
+                                                      final ResourceModel model) {
         DescribeDestinationsResponse awsResponse = null;
 
         try {
@@ -49,10 +49,10 @@ public class ReadHandler extends BaseHandlerStd {
     }
 
     private ProgressEvent<ResourceModel, CallbackContext> constructResourceModelFromResponse(DescribeDestinationsRequest describeDestinationsRequest,
-            DescribeDestinationsResponse describeDestinationsResponse,
-            ProxyClient<CloudWatchLogsClient> cloudWatchLogsClientProxyClient,
-            ResourceModel resourceModel,
-            CallbackContext callbackContext) {
+                                                                                             DescribeDestinationsResponse describeDestinationsResponse,
+                                                                                             ProxyClient<CloudWatchLogsClient> cloudWatchLogsClientProxyClient,
+                                                                                             ResourceModel resourceModel,
+                                                                                             CallbackContext callbackContext) {
         ResourceModel translatedResourceModel = Translator.translateFromReadResponse(describeDestinationsResponse);
 
         if (translatedResourceModel == null) {

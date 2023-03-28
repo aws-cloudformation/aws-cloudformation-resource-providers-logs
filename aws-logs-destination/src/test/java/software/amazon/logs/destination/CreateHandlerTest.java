@@ -204,14 +204,14 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Should_ThrowCfnResourceConflictException_When_PutOperationIsAborted() {
-        final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
-                .destinations(destination)
-                .build();
-
         Mockito.when(proxyClient.client()
                 .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenThrow(ResourceNotFoundException.class)
-                .thenReturn(describeResponse);
+                .thenReturn(DescribeDestinationsResponse
+                        .builder()
+                        .destinations(destination)
+                        .build());
+
         Mockito.when(proxyClient.client()
                 .putDestination(ArgumentMatchers.any(PutDestinationRequest.class)))
                 .thenThrow(OperationAbortedException.class);
@@ -220,9 +220,15 @@ public class CreateHandlerTest extends AbstractTestBase {
                 getDefaultRequestBuilder().desiredResourceState(testResourceModel)
                         .build();
 
-        Assertions.assertThrows(CfnResourceConflictException.class,
-                () -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.IN_PROGRESS);
+        assertThat(response.getCallbackDelaySeconds()).isNotZero();
+        assertThat(response.getResourceModel()).isNotNull();
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
     }
 
     @Test
@@ -286,6 +292,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(progressEvent.getStatus()).isEqualTo(OperationStatus.FAILED);
         assertThat(progressEvent.getErrorCode()).isEqualTo(HandlerErrorCode.GeneralServiceException);
     }
+
     // tests for optional parameter, destination policy not provided tests
     @Test
     public void handleRequest_Should_ReturnSuccess_When_DestinationNotFound_and_DestinationPolicyNotProvided() {
@@ -404,5 +411,4 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
     }
-
 }

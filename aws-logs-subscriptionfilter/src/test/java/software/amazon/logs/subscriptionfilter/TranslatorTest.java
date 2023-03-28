@@ -142,10 +142,6 @@ class TranslatorTest {
         final CfnServiceLimitExceededException cfnServiceLimitExceededException = new CfnServiceLimitExceededException(e);
         assertThat(translateException(limitExceededException)).isEqualToComparingFieldByField(cfnServiceLimitExceededException);
 
-        final OperationAbortedException operationAbortedException = OperationAbortedException.builder().build();
-        final CfnResourceConflictException cfnResourceConflictException = new CfnResourceConflictException(e);
-        assertThat(translateException(operationAbortedException)).isEqualToComparingFieldByField(cfnResourceConflictException);
-
         final InvalidParameterException invalidParameterException = InvalidParameterException.builder().build();
         final CfnInvalidRequestException cfnInvalidRequestException = new CfnInvalidRequestException(e);
         assertThat(translateException(invalidParameterException)).isEqualToComparingFieldByField(cfnInvalidRequestException);

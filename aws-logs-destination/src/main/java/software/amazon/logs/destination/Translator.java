@@ -110,5 +110,4 @@ public class Translator {
         }
         throw new CfnGeneralServiceException(exception);
     }
-
 }

@@ -13,6 +13,7 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 public class ListHandler extends BaseHandlerStd {
 
     private Logger logger;
+    public static final String DESTINATION_POLICY_LIST_GRAPH = "AWS-Logs-Destination::List";
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -23,7 +24,7 @@ public class ListHandler extends BaseHandlerStd {
             final Logger logger) {
         this.logger = logger;
 
-        return proxy.initiate("AWS-Logs-Destination::List", proxyClient, request.getDesiredResourceState(), callbackContext)
+        return proxy.initiate(DESTINATION_POLICY_LIST_GRAPH, proxyClient, request.getDesiredResourceState(), callbackContext)
                 .translateToServiceRequest(Translator::translateToListRequest)
                 .makeServiceCall((describeDestinationsRequest, client) -> {
                     DescribeDestinationsResponse awsResponse = null;
@@ -40,5 +41,4 @@ public class ListHandler extends BaseHandlerStd {
                         .nextToken(describeDestinationsResponse.nextToken())
                         .build());
     }
-
 }
