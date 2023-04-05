@@ -4,8 +4,15 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.cloudformation.exceptions.*;
-import software.amazon.cloudformation.proxy.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
+import software.amazon.cloudformation.exceptions.CfnThrottlingException;
+import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.Logger;
+import software.amazon.cloudformation.proxy.ProxyClient;
+import software.amazon.cloudformation.proxy.HandlerErrorCode;
+import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.resource.IdentifierUtils;
 
 public class CreateHandler extends BaseHandlerStd {
@@ -74,19 +81,24 @@ public class CreateHandler extends BaseHandlerStd {
                             }
                             return ProgressEvent.progress(model, callbackContext);
                         }))
-                        .then(progress ->
+                .then(progress ->
                         proxy.initiate(CALL_GRAPH_STRING, proxyClient, model, callbackContext)
                                 .translateToServiceRequest(Translator::translateToCreateRequest)
                                 .makeServiceCall((filterRequest, client) -> client
                                         .injectCredentialsAndInvokeV2(filterRequest,
                                                 client.client()::putSubscriptionFilter))
-                                .handleError((req, e, proxyClient1, model1, context) ->  {
+                                .handleError((req, e, proxyClient1, model1, context) -> {
                                     // invalid parameter exception needs to be retried
-                                    if (e instanceof AwsServiceException && ((AwsServiceException)e).awsErrorDetails() != null) {
+                                    if (e instanceof AwsServiceException && ((AwsServiceException) e).awsErrorDetails() != null) {
                                         final AwsServiceException awsServiceException = (AwsServiceException) e;
                                         if (awsServiceException.awsErrorDetails().errorCode().equals(ERROR_CODE_INVALID_PARAMETER_EXCEPTION)) {
                                             throw new CfnThrottlingException(e);
                                         }
+                                    }
+
+                                    // Check if multiple concurrent requests to update the same resource are in conflict
+                                    if (e instanceof OperationAbortedException) {
+                                        return ProgressEvent.defaultInProgressHandler(context, 5, model1);
                                     }
 
                                     final HandlerErrorCode handlerErrorCode = getExceptionDetails(e, logger, stackId);

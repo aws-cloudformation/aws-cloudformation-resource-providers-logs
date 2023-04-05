@@ -31,8 +31,6 @@ public class Translator {
             return new CfnInvalidRequestException(String.format("%s. %s", ResourceModel.TYPE_NAME, e.getMessage()), e);
         } else if (e instanceof LimitExceededException) {
             return new CfnServiceLimitExceededException(e);
-        } else if (e instanceof OperationAbortedException) {
-            return new CfnResourceConflictException(e);
         } else if (e instanceof ResourceNotFoundException) {
             return new CfnNotFoundException(e);
         } else if (e instanceof ServiceUnavailableException) {

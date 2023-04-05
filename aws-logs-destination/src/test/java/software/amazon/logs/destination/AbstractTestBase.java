@@ -35,7 +35,7 @@ public class AbstractTestBase {
     }
 
     static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(final AmazonWebServicesClientProxy proxy,
-            final CloudWatchLogsClient sdkClient) {
+                                                        final CloudWatchLogsClient sdkClient) {
         return new ProxyClient<CloudWatchLogsClient>() {
 
             @Override

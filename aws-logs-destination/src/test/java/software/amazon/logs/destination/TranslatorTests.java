@@ -8,7 +8,6 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteDestinationReq
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.OperationAbortedException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationPolicyRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
@@ -16,7 +15,6 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableEx
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 
 import java.util.Arrays;
@@ -28,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class TranslatorTests extends AbstractTestBase {
 
     private ResourceModel resourceModel;
+
+    private static final String TOKEN = "token";
 
     @BeforeEach
     public void setup() {
@@ -103,9 +103,9 @@ public class TranslatorTests extends AbstractTestBase {
     public void translateFromListResponse_Should_ReturnSuccess() {
         final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
                 .destinations(Collections.singletonList(getTestDestination()))
-                .nextToken("token")
+                .nextToken(TOKEN)
                 .build();
-        final List<ResourceModel> expectedModels = Arrays.asList(getTestResourceModel());
+        final List<ResourceModel> expectedModels = Collections.singletonList(getTestResourceModel());
         Assertions.assertThat(Translator.translateFromListResponse(response))
                 .isEqualTo(expectedModels);
     }
@@ -114,7 +114,7 @@ public class TranslatorTests extends AbstractTestBase {
     public void translateFromListResponse_Should_ReturnEmptyList_WhenDestinationsIsEmpty() {
         final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
                 .destinations(Collections.emptyList())
-                .nextToken("token")
+                .nextToken(TOKEN)
                 .build();
         final List<ResourceModel> expectedModels = Collections.emptyList();
         Assertions.assertThat(Translator.translateFromListResponse(response))
@@ -124,7 +124,7 @@ public class TranslatorTests extends AbstractTestBase {
     @Test
     public void translateFromListResponse_Should_ReturnEmptyList_WhenDestinationsIsNull() {
         final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
-                .nextToken("token")
+                .nextToken(TOKEN)
                 .build();
         final List<ResourceModel> expectedModels = Collections.emptyList();
         Assertions.assertThat(Translator.translateFromListResponse(response))
@@ -141,36 +141,25 @@ public class TranslatorTests extends AbstractTestBase {
 
     @Test
     public void translateException_Should_ThrowCfnInvalidRequestException() {
-        assertThrows(CfnInvalidRequestException.class, () -> Translator.translateException(
-                InvalidParameterException.builder()
-                        .build()));
+        InvalidParameterException exception = InvalidParameterException.builder().build();
+        assertThrows(CfnInvalidRequestException.class, () -> Translator.translateException(exception));
     }
 
     @Test
     public void translateException_Should_ThrowCfnServiceInternalErrorException() {
-        assertThrows(CfnServiceInternalErrorException.class, () -> Translator.translateException(
-                ServiceUnavailableException.builder()
-                        .build()));
-    }
-
-    @Test
-    public void translateException_Should_ThrowCfnResourceConflictException() {
-        assertThrows(CfnResourceConflictException.class, () -> Translator.translateException(
-                OperationAbortedException.builder()
-                        .build()));
+        ServiceUnavailableException exception = ServiceUnavailableException.builder().build();
+        assertThrows(CfnServiceInternalErrorException.class, () -> Translator.translateException(exception));
     }
 
     @Test
     public void translateException_Should_ThrowCfnNotFoundException() {
-        assertThrows(CfnNotFoundException.class, () -> Translator.translateException(ResourceNotFoundException.builder()
-                .build()));
+        ResourceNotFoundException exception = ResourceNotFoundException.builder().build();
+        assertThrows(CfnNotFoundException.class, () -> Translator.translateException(exception));
     }
 
     @Test
     public void translateException_Should_ThrowCfnGeneralServiceException() {
-        assertThrows(CfnGeneralServiceException.class, () -> Translator.translateException(
-                CloudWatchLogsException.builder()
-                        .build()));
+        CloudWatchLogsException exception = (CloudWatchLogsException) CloudWatchLogsException.builder().build();
+        assertThrows(CfnGeneralServiceException.class, () -> Translator.translateException(exception));
     }
-
 }

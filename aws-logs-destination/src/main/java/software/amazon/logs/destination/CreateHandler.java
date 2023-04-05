@@ -16,13 +16,15 @@ public class CreateHandler extends BaseHandlerStd {
 
     public static final String DESTINATION_POLICY_CREATE_GRAPH = "AWS-Logs-DestinationPolicy::Create";
 
-    protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
+    protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
+            final AmazonWebServicesClientProxy proxy,
             final ResourceHandlerRequest<ResourceModel> request,
             final CallbackContext callbackContext,
             final ProxyClient<CloudWatchLogsClient> proxyClient,
             final Logger logger) {
 
         final ResourceModel model = request.getDesiredResourceState();
+        final String stackId = request.getStackId();
 
         // Verify if a destination is already present with same identifier
         // Create destination policy command checks to see if optional destination/access policy is passed in before attempting create
@@ -36,12 +38,11 @@ public class CreateHandler extends BaseHandlerStd {
                     }
                     return ProgressEvent.progress(model, callbackContext);
                 }))
-                .then(progress -> putDestination(proxy, callbackContext, proxyClient, model, DESTINATION_CREATE_GRAPH,
-                        logger, Action.CREATE))
+                .then(progress -> putDestination(proxy, callbackContext, proxyClient, model, stackId, DESTINATION_CREATE_GRAPH,
+                        logger))
                 .then(progress -> model.getDestinationPolicy() != null ? putDestinationPolicy(proxy, callbackContext, proxyClient, model,
                         DESTINATION_POLICY_CREATE_GRAPH, logger, Action.CREATE) : progress)
                 .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient,
                         logger));
     }
-
 }

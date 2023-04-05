@@ -14,22 +14,24 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 public class DeleteHandler extends BaseHandlerStd {
 
     private Logger logger;
+    public static final String DESTINATION_POLICY_DELETE_GRAPH = "AWS-Logs-Destination::Delete";
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request,
-            final CallbackContext callbackContext,
-            final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final Logger logger) {
+                                                                          final ResourceHandlerRequest<ResourceModel> request,
+                                                                          final CallbackContext callbackContext,
+                                                                          final ProxyClient<CloudWatchLogsClient> proxyClient,
+                                                                          final Logger logger) {
         this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
-        return proxy.initiate("AWS-Logs-Destination::Delete", proxyClient, model, callbackContext)
+        return proxy.initiate(DESTINATION_POLICY_DELETE_GRAPH, proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
                 .makeServiceCall(this::deleteResource)
-                .done((x)-> ProgressEvent.<ResourceModel, CallbackContext>builder().status(OperationStatus.SUCCESS).build());
+                .done(x -> ProgressEvent.<ResourceModel, CallbackContext>builder().status(OperationStatus.SUCCESS).build());
     }
 
-    private DeleteDestinationResponse deleteResource(final DeleteDestinationRequest awsRequest,
+    private DeleteDestinationResponse deleteResource(
+            final DeleteDestinationRequest awsRequest,
             final ProxyClient<CloudWatchLogsClient> proxyClient) {
         DeleteDestinationResponse awsResponse = null;
 

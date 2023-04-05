@@ -29,9 +29,9 @@ public class ListHandlerTest extends AbstractTestBase {
 
     @Mock
     private CloudWatchLogsClient sdkClient;
-    
+
     private AmazonWebServicesClientProxy proxy;
-    
+
     private ProxyClient<CloudWatchLogsClient> proxyClient;
 
     private ResourceModel testResourceModel;
@@ -55,7 +55,7 @@ public class ListHandlerTest extends AbstractTestBase {
         final DescribeDestinationsResponse describeResponse = DescribeDestinationsResponse.builder()
                 .destinations(getTestDestination())
                 .build();
-        
+
         Mockito.when(proxyClient.client()
                 .describeDestinations(any(DescribeDestinationsRequest.class)))
                 .thenReturn(describeResponse);
@@ -93,5 +93,4 @@ public class ListHandlerTest extends AbstractTestBase {
 
         assertThrows(CfnServiceInternalErrorException.class, () -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
     }
-
 }
