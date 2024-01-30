@@ -1,201 +1,214 @@
 package software.amazon.logs.subscriptionfilter;
 
+import static software.amazon.awssdk.core.internal.retry.SdkDefaultRetrySetting.RETRYABLE_STATUS_CODES;
+import static software.amazon.logs.common.MetricsConstants.CFN;
+import static software.amazon.logs.common.MetricsConstants.SERVICE;
+import static software.amazon.logs.subscriptionfilter.MetricsHelper.putSubscriptionFilterRequestMetrics;
+
+import java.time.Duration;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.core.exception.AbortedException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeSubscriptionFiltersResponse;
-import software.amazon.awssdk.services.cloudwatchlogs.model.InvalidParameterException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.LimitExceededException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutSubscriptionFilterRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.PutSubscriptionFilterResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
-import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
+import software.amazon.cloudformation.Action;
+import software.amazon.cloudformation.exceptions.BaseHandlerException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
-import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.CallChain;
-import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-
-import java.util.NoSuchElementException;
-
-import static java.util.Objects.requireNonNull;
+import software.amazon.cloudformation.proxy.delay.Exponential;
+import software.amazon.cloudwatchlogs.emf.logger.MetricsLogger;
+import software.amazon.logs.common.MetricsHelper;
+import software.amazon.logs.common.MetricsProvider;
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
-    private final CloudWatchLogsClient cloudWatchLogsClient;
-
-    protected BaseHandlerStd() {
-        this(ClientBuilder.getClient());
+    // Uluru level exponential back off strategy. Starting with min delay of 5s, until 30s is reached.
+    Exponential getBackOffStrategy() {
+        return Exponential.of().minDelay(Duration.ofSeconds(5)).timeout(Duration.ofSeconds(30)).build();
     }
 
-    protected BaseHandlerStd(CloudWatchLogsClient cloudWatchLogsClient) {
-        this.cloudWatchLogsClient = requireNonNull(cloudWatchLogsClient);
-    }
-
-    private CloudWatchLogsClient getCloudWatchLogsClient() {
-        return cloudWatchLogsClient;
-    }
+    private static final String ERROR_CODE_INVALID_PARAMETER_EXCEPTION = "InvalidParameterException";
 
     @Override
     public final ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-            final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request,
-            final CallbackContext callbackContext,
-            final Logger logger) {
-        return handleRequest(
-                proxy,
-                request,
-                callbackContext != null ? callbackContext : new CallbackContext(),
-                proxy.newProxy(ClientBuilder::getClient),
-                logger
-        );
+        final AmazonWebServicesClientProxy proxy,
+        final ResourceHandlerRequest<ResourceModel> request,
+        final CallbackContext callbackContext,
+        final Logger logger
+    ) {
+        final long startTime = System.currentTimeMillis();
+        MetricsLogger metricsLogger = MetricsProvider.getMetrics();
+        MetricsHelper.putCFNRequestProperties(metricsLogger, request);
+
+        ProgressEvent<ResourceModel, CallbackContext> result;
+        try {
+            result =
+                handleRequest(
+                    proxy,
+                    request,
+                    callbackContext != null ? callbackContext : new CallbackContext(),
+                    proxy.newProxy(ClientBuilder::getClient),
+                    logger,
+                    MetricsProvider.getMetrics()
+                );
+            MetricsHelper.putCFNProperties(metricsLogger, result);
+        } finally {
+            MetricsHelper.putTime(metricsLogger, startTime, System.currentTimeMillis());
+            MetricsHelper.flush(metricsLogger);
+        }
+
+        return result;
     }
 
     protected abstract ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-            final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request,
-            final CallbackContext callbackContext,
-            final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final Logger logger);
+        final AmazonWebServicesClientProxy proxy,
+        final ResourceHandlerRequest<ResourceModel> request,
+        final CallbackContext callbackContext,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
+        final Logger logger,
+        final MetricsLogger metrics
+    );
 
     /**
-     * Log the details of the exception thrown
+     * Checks if the given exception is a retryable exception.
      *
-     * @param e - the exception
-     * @param logger - a reference to the logger
-     * @param stackId - the id of the stack where the exception was thrown
+     * @param exception The exception to be checked.
+     * @return true if the exception is retryable, false otherwise.
      */
-    protected void logExceptionDetails(Exception e, Logger logger, final String stackId) {
-        logger.log(String.format("Stack with ID: %s got exception: %s Message: %s Cause: %s", stackId,
-                e.toString(), e.getMessage(), e.getCause()));
+    boolean isRetryableException(final Exception exception) {
+        boolean retryableException =
+            exception instanceof AwsServiceException && RETRYABLE_STATUS_CODES.contains(((AwsServiceException) exception).statusCode());
+        boolean isInvalidParameterException =
+            exception instanceof AwsServiceException &&
+            ((AwsServiceException) exception).awsErrorDetails() != null &&
+            ((AwsServiceException) exception).awsErrorDetails().errorCode().equals(ERROR_CODE_INVALID_PARAMETER_EXCEPTION);
+
+        return retryableException || isInvalidParameterException;
     }
 
-    protected boolean isAccessDeniedError(Exception e, final Logger logger) {
-        logger.log(String.format("Got exception in AccessDenied Check: Exception: %s Message: %s, Cause: %s", e,
-                e.getMessage(), e.getCause()));
+    /**
+     * Creates a Subscription Filter
+     *
+     * @param model         The resource model representing the subscription filter.
+     * @param awsRequest    The request object used to create the subscription filter.
+     * @param proxyClient   The proxy client used to execute API calls.
+     * @param handlerAction The action being performed by the handler.
+     * @param logger        The logger.
+     * @param metrics       The metrics logger.
+     * @return The response object containing the created subscription filter.
+     * @throws BaseHandlerException If an exception occurs while creating the resource.
+     */
+    protected PutSubscriptionFilterResponse putResource(
+        final ResourceModel model,
+        final PutSubscriptionFilterRequest awsRequest,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
+        final Action handlerAction,
+        final Logger logger,
+        final MetricsLogger metrics
+    ) throws BaseHandlerException {
+        PutSubscriptionFilterResponse awsResponse;
+        putSubscriptionFilterRequestMetrics(metrics, awsRequest);
 
-        if (e instanceof CloudWatchLogsException) {
-            if  (e.getMessage() != null && e.getMessage().contains("is not authorized to perform: logs:")) {
-                logger.log("AccessDenied exception in AccessDeniedCheck, passing");
-                return true;
+        final String filterName = awsRequest.filterName();
+        final String logGroupName = awsRequest.logGroupName();
+
+        try {
+            boolean exists = exists(proxyClient, model, handlerAction, logger, metrics);
+
+            if (exists && handlerAction.equals(Action.CREATE)) {
+                logger.log(
+                    String.format("[CREATE][FAILED] SubscriptionFilter %s already exists in log group %s", filterName, logGroupName)
+                );
+                throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString());
             }
+
+            if (!exists && handlerAction.equals(Action.UPDATE)) {
+                logger.log(
+                    String.format("[UPDATE][FAILED] SubscriptionFilter %s does not exist in log group %s", filterName, logGroupName)
+                );
+                throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString());
+            }
+
+            // Create/Update Subscription Filter
+            awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::putSubscriptionFilter);
+        } catch (final CloudWatchLogsException serviceException) {
+            final BaseHandlerException handlerException = Translator.translateException(serviceException);
+
+            logger.log(
+                String.format(
+                    "[%s][EXCEPTION] Encountered exception with SubscriptionFilter %s in log group %s: %s: %s",
+                    handlerAction.name(),
+                    filterName,
+                    logGroupName,
+                    serviceException.getClass().getSimpleName(),
+                    serviceException.getMessage()
+                )
+            );
+
+            MetricsHelper.putExceptionProperty(metrics, serviceException, SERVICE);
+            MetricsHelper.putExceptionProperty(metrics, handlerException, CFN);
+
+            throw handlerException;
         }
 
-        final String ACCESS_DENIED_ERROR = "AccessDenied";
-        if (e instanceof AwsServiceException && ((AwsServiceException)e).awsErrorDetails() != null ) {
-            final AwsServiceException awsServiceException = (AwsServiceException) e;
-            return awsServiceException.awsErrorDetails().errorCode().equals(ACCESS_DENIED_ERROR);
-        } else {
-            if (e.getMessage() != null) {
-                return e.getMessage().equals(ACCESS_DENIED_ERROR);
-            } else {
+        MetricsHelper.putServiceMetrics(metrics, awsResponse);
+        logger.log(String.format("[CREATE][SUCCESS] Created new subscription filter %s in log group %s", filterName, logGroupName));
+
+        return awsResponse;
+    }
+
+    /**
+     * Checks if the Subscription Filter exists.
+     *
+     * @param proxyClient The proxy client used to execute API calls.
+     * @param model       The resource model representing the subscription filter.
+     * @return True if the resource exists, false otherwise.
+     * @throws BaseHandlerException If an exception occurs while checking if the resource exists.
+     */
+    protected boolean exists(
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
+        final ResourceModel model,
+        final Action handlerAction,
+        final Logger logger,
+        final MetricsLogger metrics
+    ) {
+        final DescribeSubscriptionFiltersRequest translateToReadRequest = Translator.translateToReadRequest(model);
+        final DescribeSubscriptionFiltersResponse response;
+
+        try {
+            response = proxyClient.injectCredentialsAndInvokeV2(translateToReadRequest, proxyClient.client()::describeSubscriptionFilters);
+            if (response == null || !response.hasSubscriptionFilters() || response.subscriptionFilters().isEmpty()) {
                 return false;
             }
-        }
-    }
 
-    protected void handleException(Exception e, Logger logger, final String stackId) {
-        logExceptionDetails(e, logger, stackId);
-
-        if (e instanceof InvalidParameterException) {
-            throw new CfnInvalidRequestException(String.format("%s. %s", ResourceModel.TYPE_NAME, e.getMessage()), e);
-        } else if (e instanceof ResourceAlreadyExistsException) {
-            throw new CfnAlreadyExistsException(e);
-        } else if (e instanceof ResourceNotFoundException) {
-            throw new CfnNotFoundException(e);
-        } else if (e instanceof ServiceUnavailableException) {
-            throw new CfnServiceInternalErrorException(e);
-        } else if (e instanceof LimitExceededException) {
-            throw new CfnServiceLimitExceededException(e);
-        } else if (isAccessDeniedError(e, logger)) {
-            throw new CfnAccessDeniedException(e);
-        }
-        throw new CfnGeneralServiceException(e);
-    }
-
-    protected HandlerErrorCode getExceptionDetails(final Exception e, final Logger logger, final String stackId) {
-        HandlerErrorCode errorCode = HandlerErrorCode.GeneralServiceException;
-        if (e instanceof InvalidParameterException) {
-            errorCode = HandlerErrorCode.InvalidRequest;
-        } else if (e instanceof LimitExceededException) {
-            errorCode = HandlerErrorCode.ServiceLimitExceeded;
-        } else if (e instanceof ServiceUnavailableException) {
-            errorCode = HandlerErrorCode.InternalFailure;
-        } else if (e instanceof NoSuchElementException) {
-            errorCode = HandlerErrorCode.NotFound;
-        }
-
-        logExceptionDetails(e, logger, stackId);
-        return errorCode;
-    }
-
-
-    /**
-     * Check if a RetryException should be thrown; returns true if InvalidParameterException, AbortedException,
-     * or "OperationAbortedException"
-     *
-     * @param e - the exception
-     * @return - true if should be retried (exception thrown), false otherwise
-     */
-    protected boolean shouldThrowRetryException(final Exception e) {
-        final String ERROR_CODE_OPERATION_ABORTED_EXCEPTION = "OperationAbortedException";
-        if (e instanceof AwsServiceException && ((AwsServiceException)e).awsErrorDetails() != null ) {
-            final AwsServiceException awsServiceException = (AwsServiceException) e;
-            return awsServiceException.awsErrorDetails().errorCode().equals(ERROR_CODE_OPERATION_ABORTED_EXCEPTION);
-        }
-
-        return e instanceof InvalidParameterException || e instanceof AbortedException
-                || e.getMessage().equals(ERROR_CODE_OPERATION_ABORTED_EXCEPTION);
-    }
-
-    protected CallChain.Completed<DescribeSubscriptionFiltersRequest, DescribeSubscriptionFiltersResponse, CloudWatchLogsClient, ResourceModel, CallbackContext> preCreateCheck(
-            final AmazonWebServicesClientProxy proxy, final CallbackContext callbackContext,
-            final ProxyClient<CloudWatchLogsClient> proxyClient, final ResourceModel model) {
-        return proxy.initiate("AWS-Logs-SubscriptionFilter::Create::PreExistenceCheck", proxyClient, model, callbackContext)
-                .translateToServiceRequest(Translator::translateToReadRequest)
-                .makeServiceCall((awsRequest, sdkProxyClient) -> sdkProxyClient.injectCredentialsAndInvokeV2(awsRequest,
-                        sdkProxyClient.client()::describeSubscriptionFilters))
-                .handleError((request, exception, client, model1, context1) -> {
-                    ProgressEvent<ResourceModel, CallbackContext> progress;
-                    if (exception instanceof InvalidParameterException) {
-                        progress = ProgressEvent.failed(model, callbackContext, HandlerErrorCode.InvalidRequest,
-                                exception.getMessage());
-                    } else if (exception instanceof ServiceUnavailableException) {
-                        progress = ProgressEvent.failed(model, callbackContext, HandlerErrorCode.ServiceInternalError,
-                                exception.getMessage());
-                    } else if (exception instanceof ResourceNotFoundException) {
-                        progress = ProgressEvent.progress(model, callbackContext);
-                    } else if (exception instanceof CloudWatchLogsException) {
-                        progress =
-                                ProgressEvent.failed(model, callbackContext, HandlerErrorCode.GeneralServiceException,
-                                        exception.getMessage());
-                    } else {
-                        throw exception;
-                    }
-                    return progress;
-                });
-    }
-
-    protected boolean filterNameExists(final DescribeSubscriptionFiltersResponse response, ResourceModel model) {
-        if (response == null || response.subscriptionFilters() == null) {
+            return model.getFilterName().equals(response.subscriptionFilters().get(0).filterName());
+        } catch (final ResourceNotFoundException ignored) {
             return false;
+        } catch (final CloudWatchLogsException serviceException) {
+            BaseHandlerException handlerException = Translator.translateException(serviceException);
+
+            logger.log(
+                String.format(
+                    "[%s][EXCEPTION] Encountered exception while checking if subscription filter %s exists: %s: %s",
+                    handlerAction,
+                    model.getFilterName(),
+                    serviceException.getClass().getSimpleName(),
+                    serviceException.getMessage()
+                )
+            );
+
+            MetricsHelper.putExceptionProperty(metrics, serviceException, SERVICE);
+            MetricsHelper.putExceptionProperty(metrics, handlerException, CFN);
+
+            throw handlerException;
         }
-        if (!response.hasSubscriptionFilters()) {
-            return false;
-        }
-        if (response.subscriptionFilters().isEmpty()) {
-            return false;
-        }
-        return model.getFilterName().equals(response.subscriptionFilters().get(0).filterName());
     }
 }

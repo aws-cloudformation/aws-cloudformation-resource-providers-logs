@@ -55,6 +55,7 @@
     },
     "update": {
       "permissions": [
+        "iam:PassRole",
         "logs:PutSubscriptionFilter",
         "logs:DescribeSubscriptionFilters"
       ]

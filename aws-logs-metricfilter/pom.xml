@@ -16,9 +16,22 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <awssdk.version>2.23.12</awssdk.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>software.amazon.logs.common</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/software.amazon.cloudwatchlogs/aws-embedded-metrics -->
+        <dependency>
+            <groupId>software.amazon.cloudwatchlogs</groupId>
+            <artifactId>aws-embedded-metrics</artifactId>
+            <version>4.1.3</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/software.amazon.cloudformation/aws-cloudformation-rpdk-java-plugin -->
         <dependency>
             <groupId>software.amazon.cloudformation</groupId>
@@ -29,7 +42,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.4</version>
+            <version>1.18.30</version>
             <scope>provided</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
@@ -76,7 +89,7 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>utils</artifactId>
-            <version>2.17.69</version>
+            <version>${awssdk.version}</version>
         </dependency>
     </dependencies>
 

@@ -1,6 +1,18 @@
 package software.amazon.logs.metricfilter;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeMetricFiltersResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -8,20 +20,6 @@ import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Arrays;
-import java.util.HashSet;
-
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ListHandlerTest {
@@ -44,32 +42,39 @@ public class ListHandlerTest {
     public void handleRequest_SimpleSuccess() {
         Dimension dimension1 = Dimension.builder().key("key1").value("value1").build();
         Dimension dimension2 = Dimension.builder().key("key2").value("value2").build();
-        final ResourceModel model = ResourceModel.builder()
-                .filterName("filter-name")
-                .logGroupName("log-group-name")
-                .filterPattern("[pattern]")
-                .metricTransformations(Arrays.asList(MetricTransformation.builder()
+        final ResourceModel model = ResourceModel
+            .builder()
+            .filterName("filter-name")
+            .logGroupName("log-group-name")
+            .filterPattern("[pattern]")
+            .metricTransformations(
+                Arrays.asList(
+                    MetricTransformation
+                        .builder()
                         .metricName("metric-name")
                         .metricValue("0")
                         .metricNamespace("namespace")
                         .unit("Count")
                         .dimensions(new HashSet<>(Arrays.asList(dimension1, dimension2)))
-                        .build()))
-                .build();
+                        .build()
+                )
+            )
+            .build();
 
-        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse.builder()
-                .metricFilters(Translator.translateToSDK(model))
-                .build();
+        final DescribeMetricFiltersResponse describeResponse = DescribeMetricFiltersResponse
+            .builder()
+            .metricFilters(Translator.translateToSDK(model))
+            .build();
 
         when(proxy.injectCredentialsAndInvokeV2(ArgumentMatchers.any(DescribeMetricFiltersRequest.class), any()))
-                .thenReturn(describeResponse);
+            .thenReturn(describeResponse);
 
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest
+            .<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response =
-                handler.handleRequest(proxy, request, null, logger);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, null, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);

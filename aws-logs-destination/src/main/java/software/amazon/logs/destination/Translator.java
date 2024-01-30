@@ -1,7 +1,11 @@
 package software.amazon.logs.destination;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteDestinationRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeDestinationsResponse;
@@ -13,6 +17,7 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutDestinationReques
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceAlreadyExistsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.ServiceUnavailableException;
+import software.amazon.cloudformation.exceptions.BaseHandlerException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
@@ -21,93 +26,92 @@ import software.amazon.cloudformation.exceptions.CfnResourceConflictException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.exceptions.CfnServiceLimitExceededException;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public class Translator {
 
     static PutDestinationRequest translateToPutDestinationRequest(final ResourceModel model) {
-        return PutDestinationRequest.builder()
-                .destinationName(model.getDestinationName())
-                .roleArn(model.getRoleArn())
-                .targetArn(model.getTargetArn())
-                .build();
+        return PutDestinationRequest
+            .builder()
+            .destinationName(model.getDestinationName())
+            .roleArn(model.getRoleArn())
+            .targetArn(model.getTargetArn())
+            .build();
     }
 
     static DescribeDestinationsRequest translateToReadRequest(final ResourceModel model) {
-        return DescribeDestinationsRequest.builder()
-                .destinationNamePrefix(model.getDestinationName())
-                .build();
+        return DescribeDestinationsRequest.builder().destinationNamePrefix(model.getDestinationName()).build();
     }
 
     static ResourceModel translateFromReadResponse(final DescribeDestinationsResponse awsResponse) {
-        return streamOfOrEmpty(awsResponse.destinations()).findAny()
-                .map(Translator::translateLogDestination)
-                .orElse(null);
+        return streamOfOrEmpty(awsResponse.destinations()).findAny().map(Translator::translateLogDestination).orElse(null);
     }
 
     static DeleteDestinationRequest translateToDeleteRequest(final ResourceModel model) {
-        return DeleteDestinationRequest.builder()
-                .destinationName(model.getDestinationName())
-                .build();
+        return DeleteDestinationRequest.builder().destinationName(model.getDestinationName()).build();
     }
 
     static PutDestinationPolicyRequest translateToPutDestinationPolicyRequest(final ResourceModel model) {
-        return PutDestinationPolicyRequest.builder()
-                .destinationName(model.getDestinationName())
-                .accessPolicy(model.getDestinationPolicy())
-                .build();
+        return PutDestinationPolicyRequest
+            .builder()
+            .destinationName(model.getDestinationName())
+            .accessPolicy(model.getDestinationPolicy())
+            .build();
     }
 
     static DescribeDestinationsRequest translateToListRequest(final ResourceModel model) {
-        return DescribeDestinationsRequest.builder()
-                .build();
+        return DescribeDestinationsRequest.builder().build();
     }
 
     static List<ResourceModel> translateFromListResponse(final DescribeDestinationsResponse awsResponse) {
-        return streamOfOrEmpty(awsResponse.destinations()).map(destination -> ResourceModel.builder()
-                .destinationName(destination.destinationName())
-                .destinationPolicy(destination.accessPolicy())
-                .roleArn(destination.roleArn())
-                .targetArn(destination.targetArn())
-                .build())
-                .collect(Collectors.toList());
+        return streamOfOrEmpty(awsResponse.destinations())
+            .map(destination ->
+                ResourceModel
+                    .builder()
+                    .destinationName(destination.destinationName())
+                    .destinationPolicy(destination.accessPolicy())
+                    .roleArn(destination.roleArn())
+                    .targetArn(destination.targetArn())
+                    .build()
+            )
+            .collect(Collectors.toList());
     }
 
     private static ResourceModel translateLogDestination(
-            final software.amazon.awssdk.services.cloudwatchlogs.model.Destination destination) {
-        return ResourceModel.builder()
-                .arn(destination.arn())
-                .roleArn(destination.roleArn())
-                .destinationName(destination.destinationName())
-                .destinationPolicy(destination.accessPolicy())
-                .targetArn(destination.targetArn())
-                .build();
+        final software.amazon.awssdk.services.cloudwatchlogs.model.Destination destination
+    ) {
+        return ResourceModel
+            .builder()
+            .arn(destination.arn())
+            .roleArn(destination.roleArn())
+            .destinationName(destination.destinationName())
+            .destinationPolicy(destination.accessPolicy())
+            .targetArn(destination.targetArn())
+            .build();
     }
 
     private static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {
-        return Optional.ofNullable(collection)
-                .map(Collection::stream)
-                .orElseGet(Stream::empty);
+        return Optional.ofNullable(collection).map(Collection::stream).orElseGet(Stream::empty);
     }
 
-    static void translateException(AwsServiceException exception) {
+    /**
+     * Translates an AwsServiceException to a corresponding BaseHandlerException.
+     *
+     * @param exception the AwsServiceException to be translated
+     * @return the corresponding BaseHandlerException
+     */
+    static BaseHandlerException translateException(AwsServiceException exception) {
         if (exception instanceof InvalidParameterException) {
-            throw new CfnInvalidRequestException(String.format("%s. %s", ResourceModel.TYPE_NAME, exception.getMessage()), exception);
+            return new CfnInvalidRequestException(String.format("%s. %s", ResourceModel.TYPE_NAME, exception.getMessage()), exception);
         } else if (exception instanceof ServiceUnavailableException) {
-            throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, exception);
+            return new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, exception);
         } else if (exception instanceof LimitExceededException) {
-            throw new CfnServiceLimitExceededException(exception);
+            return new CfnServiceLimitExceededException(exception);
         } else if (exception instanceof OperationAbortedException) {
-            throw new CfnResourceConflictException(exception);
+            return new CfnResourceConflictException(exception);
         } else if (exception instanceof ResourceNotFoundException) {
-            throw new CfnNotFoundException(exception);
+            return new CfnNotFoundException(exception);
         } else if (exception instanceof ResourceAlreadyExistsException) {
-            throw new CfnAlreadyExistsException(exception);
+            return new CfnAlreadyExistsException(exception);
         }
-        throw new CfnGeneralServiceException(exception);
+        return new CfnGeneralServiceException(exception);
     }
 }

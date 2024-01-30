@@ -2,7 +2,6 @@ package software.amazon.logs.subscriptionfilter;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-
 import software.amazon.awssdk.awscore.AwsRequest;
 import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.core.pagination.sync.SdkIterable;
@@ -13,6 +12,7 @@ import software.amazon.cloudformation.proxy.LoggerProxy;
 import software.amazon.cloudformation.proxy.ProxyClient;
 
 public class AbstractTestBase {
+
     protected static final Credentials MOCK_CREDENTIALS;
     protected static final LoggerProxy logger;
 
@@ -21,27 +21,30 @@ public class AbstractTestBase {
         logger = new LoggerProxy();
     }
 
-    static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(
-            final AmazonWebServicesClientProxy proxy,
-            final CloudWatchLogsClient sdkClient) {
+    static ProxyClient<CloudWatchLogsClient> MOCK_PROXY(final AmazonWebServicesClientProxy proxy, final CloudWatchLogsClient sdkClient) {
         return new ProxyClient<CloudWatchLogsClient>() {
             @Override
-            public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseT
-            injectCredentialsAndInvokeV2(RequestT request, Function<RequestT, ResponseT> requestFunction) {
+            public <RequestT extends AwsRequest, ResponseT extends AwsResponse> ResponseT injectCredentialsAndInvokeV2(
+                RequestT request,
+                Function<RequestT, ResponseT> requestFunction
+            ) {
                 return proxy.injectCredentialsAndInvokeV2(request, requestFunction);
             }
 
             @Override
-            public <RequestT extends AwsRequest, ResponseT extends AwsResponse>
-            CompletableFuture<ResponseT>
-            injectCredentialsAndInvokeV2Async(RequestT request, Function<RequestT, CompletableFuture<ResponseT>> requestFunction) {
+            public <
+                RequestT extends AwsRequest, ResponseT extends AwsResponse
+            > CompletableFuture<ResponseT> injectCredentialsAndInvokeV2Async(
+                RequestT request,
+                Function<RequestT, CompletableFuture<ResponseT>> requestFunction
+            ) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <RequestT extends AwsRequest, ResponseT extends AwsResponse, IterableT extends SdkIterable<ResponseT>>
-            IterableT
-            injectCredentialsAndInvokeIterableV2(RequestT request, Function<RequestT, IterableT> requestFunction) {
+            public <
+                RequestT extends AwsRequest, ResponseT extends AwsResponse, IterableT extends SdkIterable<ResponseT>
+            > IterableT injectCredentialsAndInvokeIterableV2(RequestT request, Function<RequestT, IterableT> requestFunction) {
                 return proxy.injectCredentialsAndInvokeIterableV2(request, requestFunction);
             }
 
@@ -57,13 +60,13 @@ public class AbstractTestBase {
     }
 
     static ResourceModel buildDefaultModel(String filterName) {
-        return ResourceModel.builder()
-                .filterName(filterName)
-                .destinationArn("destination-arn")
-                .filterPattern("[pattern]")
-                .logGroupName("log-group-name")
-                .roleArn("role-arn")
-                .build();
-
+        return ResourceModel
+            .builder()
+            .filterName(filterName)
+            .destinationArn("destination-arn")
+            .filterPattern("[pattern]")
+            .logGroupName("log-group-name")
+            .roleArn("role-arn")
+            .build();
     }
 }

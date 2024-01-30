@@ -1,6 +1,9 @@
 package software.amazon.logs.destination;
 
-import org.assertj.core.api.Assertions;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
@@ -17,13 +20,7 @@ import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-public class TranslatorTests extends AbstractTestBase {
+class TranslatorTests extends AbstractTestBase {
 
     private ResourceModel resourceModel;
 
@@ -35,131 +32,125 @@ public class TranslatorTests extends AbstractTestBase {
     }
 
     @Test
-    public void translateToCreateRequest_Should_ReturnSuccess() {
-        PutDestinationRequest putDestinationRequest = PutDestinationRequest.builder()
-                .destinationName(TEST_DESTINATION_INPUT)
-                .roleArn(TEST_ROLE_ARN)
-                .targetArn(TEST_TARGET_ARN)
-                .build();
-        Assertions.assertThat(Translator.translateToPutDestinationRequest(resourceModel))
-                .isEqualToComparingFieldByField(putDestinationRequest);
+    void translateToCreateRequest_Should_ReturnSuccess() {
+        PutDestinationRequest putDestinationRequest = PutDestinationRequest
+            .builder()
+            .destinationName(TEST_DESTINATION_INPUT)
+            .roleArn(TEST_ROLE_ARN)
+            .targetArn(TEST_TARGET_ARN)
+            .build();
+        assertThat(Translator.translateToPutDestinationRequest(resourceModel)).isEqualToComparingFieldByField(putDestinationRequest);
     }
 
     @Test
-    public void translateToPutDestinationPolicyRequest_Should_ReturnSuccess() {
-        PutDestinationPolicyRequest putDestinationPolicyRequest = PutDestinationPolicyRequest.builder()
-                .destinationName(TEST_DESTINATION_INPUT)
-                .accessPolicy(TEST_ACCESS_POLICY)
-                .build();
-        Assertions.assertThat(Translator.translateToPutDestinationPolicyRequest(resourceModel))
-                .isEqualToComparingFieldByField(putDestinationPolicyRequest);
+    void translateToPutDestinationPolicyRequest_Should_ReturnSuccess() {
+        PutDestinationPolicyRequest putDestinationPolicyRequest = PutDestinationPolicyRequest
+            .builder()
+            .destinationName(TEST_DESTINATION_INPUT)
+            .accessPolicy(TEST_ACCESS_POLICY)
+            .build();
+        assertThat(Translator.translateToPutDestinationPolicyRequest(resourceModel))
+            .isEqualToComparingFieldByField(putDestinationPolicyRequest);
     }
 
     @Test
-    public void translateToReadRequest_Should_ReturnSuccess() {
-        DescribeDestinationsRequest describeDestinationsRequest = DescribeDestinationsRequest.builder()
-                .destinationNamePrefix(TEST_DESTINATION_INPUT)
-                .build();
-        Assertions.assertThat(Translator.translateToReadRequest(resourceModel))
-                .isEqualToComparingFieldByField(describeDestinationsRequest);
+    void translateToReadRequest_Should_ReturnSuccess() {
+        DescribeDestinationsRequest describeDestinationsRequest = DescribeDestinationsRequest
+            .builder()
+            .destinationNamePrefix(TEST_DESTINATION_INPUT)
+            .build();
+        assertThat(Translator.translateToReadRequest(resourceModel)).isEqualToComparingFieldByField(describeDestinationsRequest);
     }
 
     @Test
-    public void translateToDeleteRequest_Should_ReturnSuccess() {
-        DeleteDestinationRequest deleteDestinationRequest = DeleteDestinationRequest.builder()
-                .destinationName(TEST_DESTINATION_INPUT)
-                .build();
-        Assertions.assertThat(Translator.translateToDeleteRequest(resourceModel))
-                .isEqualToComparingFieldByField(deleteDestinationRequest);
+    void translateToDeleteRequest_Should_ReturnSuccess() {
+        DeleteDestinationRequest deleteDestinationRequest = DeleteDestinationRequest
+            .builder()
+            .destinationName(TEST_DESTINATION_INPUT)
+            .build();
+        assertThat(Translator.translateToDeleteRequest(resourceModel)).isEqualToComparingFieldByField(deleteDestinationRequest);
     }
 
     @Test
-    public void translateToReadResponse_Should_ReturnSuccess() {
-        DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse.builder()
-                .destinations(getTestDestination())
-                .build();
-        Assertions.assertThat(Translator.translateFromReadResponse(describeDestinationsResponse))
-                .isEqualToComparingFieldByField(resourceModel);
+    void translateToReadResponse_Should_ReturnSuccess() {
+        DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse
+            .builder()
+            .destinations(getTestDestination())
+            .build();
+        assertThat(Translator.translateFromReadResponse(describeDestinationsResponse)).isEqualToComparingFieldByField(resourceModel);
     }
 
     @Test
-    public void translateToReadResponse_Should_ReturnNull_When_DestinationIsNull() {
-        DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse.builder()
-                .build();
-        Assertions.assertThat(Translator.translateFromReadResponse(describeDestinationsResponse))
-                .isNull();
+    void translateToReadResponse_Should_ReturnNull_When_DestinationIsNull() {
+        DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse.builder().build();
+        assertThat(Translator.translateFromReadResponse(describeDestinationsResponse)).isNull();
     }
 
     @Test
-    public void translateToReadResponse_Should_ReturnNull_When_DestinationIsEmpty() {
-        DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse.builder()
-                .destinations(Collections.emptyList())
-                .build();
-        Assertions.assertThat(Translator.translateFromReadResponse(describeDestinationsResponse))
-                .isNull();
+    void translateToReadResponse_Should_ReturnNull_When_DestinationIsEmpty() {
+        DescribeDestinationsResponse describeDestinationsResponse = DescribeDestinationsResponse
+            .builder()
+            .destinations(Collections.emptyList())
+            .build();
+        assertThat(Translator.translateFromReadResponse(describeDestinationsResponse)).isNull();
     }
 
     @Test
-    public void translateFromListResponse_Should_ReturnSuccess() {
-        final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
-                .destinations(Collections.singletonList(getTestDestination()))
-                .nextToken(TOKEN)
-                .build();
+    void translateFromListResponse_Should_ReturnSuccess() {
+        final DescribeDestinationsResponse response = DescribeDestinationsResponse
+            .builder()
+            .destinations(Collections.singletonList(getTestDestination()))
+            .nextToken(TOKEN)
+            .build();
         final List<ResourceModel> expectedModels = Collections.singletonList(getTestResourceModel());
-        Assertions.assertThat(Translator.translateFromListResponse(response))
-                .isEqualTo(expectedModels);
+        assertThat(Translator.translateFromListResponse(response)).isEqualTo(expectedModels);
     }
 
     @Test
-    public void translateFromListResponse_Should_ReturnEmptyList_WhenDestinationsIsEmpty() {
-        final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
-                .destinations(Collections.emptyList())
-                .nextToken(TOKEN)
-                .build();
+    void translateFromListResponse_Should_ReturnEmptyList_WhenDestinationsIsEmpty() {
+        final DescribeDestinationsResponse response = DescribeDestinationsResponse
+            .builder()
+            .destinations(Collections.emptyList())
+            .nextToken(TOKEN)
+            .build();
         final List<ResourceModel> expectedModels = Collections.emptyList();
-        Assertions.assertThat(Translator.translateFromListResponse(response))
-                .isEqualTo(expectedModels);
+        assertThat(Translator.translateFromListResponse(response)).isEqualTo(expectedModels);
     }
 
     @Test
-    public void translateFromListResponse_Should_ReturnEmptyList_WhenDestinationsIsNull() {
-        final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder()
-                .nextToken(TOKEN)
-                .build();
+    void translateFromListResponse_Should_ReturnEmptyList_WhenDestinationsIsNull() {
+        final DescribeDestinationsResponse response = DescribeDestinationsResponse.builder().nextToken(TOKEN).build();
         final List<ResourceModel> expectedModels = Collections.emptyList();
-        Assertions.assertThat(Translator.translateFromListResponse(response))
-                .isEqualTo(expectedModels);
+        assertThat(Translator.translateFromListResponse(response)).isEqualTo(expectedModels);
     }
 
     @Test
-    public void translateToListRequest_Should_ReturnSuccess() {
-        final DescribeDestinationsRequest request = DescribeDestinationsRequest.builder()
-                .build();
-        Assertions.assertThat(Translator.translateToListRequest(ResourceModel.builder().build()))
-                .isEqualToComparingFieldByField(request);
+    void translateToListRequest_Should_ReturnSuccess() {
+        final DescribeDestinationsRequest request = DescribeDestinationsRequest.builder().build();
+        assertThat(Translator.translateToListRequest(ResourceModel.builder().build())).isEqualToComparingFieldByField(request);
     }
 
     @Test
-    public void translateException_Should_ThrowCfnInvalidRequestException() {
+    void translateException_Should_ThrowCfnInvalidRequestException() {
         InvalidParameterException exception = InvalidParameterException.builder().build();
-        assertThrows(CfnInvalidRequestException.class, () -> Translator.translateException(exception));
+        assertThat(Translator.translateException(exception)).isInstanceOf(CfnInvalidRequestException.class);
     }
 
     @Test
-    public void translateException_Should_ThrowCfnServiceInternalErrorException() {
+    void translateException_Should_ThrowCfnServiceInternalErrorException() {
         ServiceUnavailableException exception = ServiceUnavailableException.builder().build();
-        assertThrows(CfnServiceInternalErrorException.class, () -> Translator.translateException(exception));
+        assertThat(Translator.translateException(exception)).isInstanceOf(CfnServiceInternalErrorException.class);
     }
 
     @Test
-    public void translateException_Should_ThrowCfnNotFoundException() {
+    void translateException_Should_ThrowCfnNotFoundException() {
         ResourceNotFoundException exception = ResourceNotFoundException.builder().build();
-        assertThrows(CfnNotFoundException.class, () -> Translator.translateException(exception));
+        assertThat(Translator.translateException(exception)).isInstanceOf(CfnNotFoundException.class);
     }
 
     @Test
-    public void translateException_Should_ThrowCfnGeneralServiceException() {
+    void translateException_Should_ThrowCfnGeneralServiceException() {
         CloudWatchLogsException exception = (CloudWatchLogsException) CloudWatchLogsException.builder().build();
-        assertThrows(CfnGeneralServiceException.class, () -> Translator.translateException(exception));
+        assertThat(Translator.translateException(exception)).isInstanceOf(CfnGeneralServiceException.class);
     }
 }

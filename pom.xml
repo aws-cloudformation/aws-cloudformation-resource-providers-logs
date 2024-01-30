@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>software.amazon.rds</groupId>
+    <artifactId>aws-rds-handlers</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0</version>
+    <name>The CloudFormation Resource Provider Package For Amazon Relational Database Service</name>
+
+    <modules>
+        <module>common</module>
+        <module>aws-logs-destination</module>
+<!--        <module>aws-logs-loganomalydetector</module>-->
+<!--        <module>aws-logs-loggroup</module>-->
+<!--        <module>aws-logs-logstream</module>-->
+        <module>aws-logs-metricfilter</module>
+<!--        <module>aws-logs-querydefinition</module>-->
+<!--        <module>aws-logs-resourcepolicy</module>-->
+        <module>aws-logs-subscriptionfilter</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
