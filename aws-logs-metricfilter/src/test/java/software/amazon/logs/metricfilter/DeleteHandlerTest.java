@@ -1,7 +1,23 @@
 package software.amazon.logs.metricfilter;
 
-import java.time.Duration;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
+import java.time.Duration;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteMetricFilterResponse;
@@ -14,23 +30,7 @@ import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import software.amazon.cloudwatchlogs.emf.logger.MetricsLogger;
 
 @ExtendWith(MockitoExtension.class)
 public class DeleteHandlerTest extends AbstractTestBase {
@@ -46,11 +46,15 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     final DeleteHandler handler = new DeleteHandler();
 
+    @Mock
+    private MetricsLogger metrics;
+
     @BeforeEach
     public void setup() {
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
         sdkClient = mock(CloudWatchLogsClient.class);
         proxyClient = MOCK_PROXY(proxy, sdkClient);
+        metrics = mock(MetricsLogger.class);
     }
 
     @AfterEach
@@ -64,13 +68,21 @@ public class DeleteHandlerTest extends AbstractTestBase {
         final ResourceModel model = buildDefaultModel();
 
         when(proxyClient.client().deleteMetricFilter(ArgumentMatchers.any(DeleteMetricFilterRequest.class)))
-                .thenReturn(DeleteMetricFilterResponse.builder().build());
+            .thenReturn(DeleteMetricFilterResponse.builder().build());
 
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest
+            .<ResourceModel>builder()
             .desiredResourceState(model)
             .build();
 
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(
+            proxy,
+            request,
+            new CallbackContext(),
+            proxyClient,
+            logger,
+            metrics
+        );
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -87,14 +99,15 @@ public class DeleteHandlerTest extends AbstractTestBase {
         final ResourceModel model = buildDefaultModel();
 
         when(proxyClient.client().deleteMetricFilter(ArgumentMatchers.any(DeleteMetricFilterRequest.class)))
-                .thenThrow(ResourceNotFoundException.class);
+            .thenThrow(ResourceNotFoundException.class);
 
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest
+            .<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnNotFoundException.class);
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger, metrics))
+            .isInstanceOf(CfnNotFoundException.class);
     }
 
     @Test
@@ -102,13 +115,14 @@ public class DeleteHandlerTest extends AbstractTestBase {
         final ResourceModel model = buildDefaultModel();
 
         when(proxyClient.client().deleteMetricFilter(ArgumentMatchers.any(DeleteMetricFilterRequest.class)))
-                .thenThrow(InvalidParameterException.class);
+            .thenThrow(InvalidParameterException.class);
 
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest
+            .<ResourceModel>builder()
+            .desiredResourceState(model)
+            .build();
 
-        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
-                .isInstanceOf(CfnInvalidRequestException.class);
+        assertThatThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger, metrics))
+            .isInstanceOf(CfnInvalidRequestException.class);
     }
 }

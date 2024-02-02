@@ -1,67 +1,44 @@
 package software.amazon.logs.subscriptionfilter;
 
-import com.google.common.annotations.VisibleForTesting;
-import software.amazon.awssdk.core.exception.RetryableException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.Action;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
-import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.Logger;
-import software.amazon.cloudformation.proxy.HandlerErrorCode;
+import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ProxyClient;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudwatchlogs.emf.logger.MetricsLogger;
+import software.amazon.logs.common.MetricsConstants;
+import software.amazon.logs.common.MetricsHelper;
 
 public class UpdateHandler extends BaseHandlerStd {
-    private Logger logger;
-    private static final String CALL_GRAPH_STRING = "AWS-Logs-SubscriptionFilter::Update";
-    private final ReadHandler readHandler;
+
+    private static final String CALL_GRAPH = "AWS-Logs-SubscriptionFilter::Update";
 
     public UpdateHandler() {
         super();
-        readHandler = new ReadHandler();
-    }
-
-    @VisibleForTesting
-    protected UpdateHandler(CloudWatchLogsClient cloudWatchLogsClient, ReadHandler readHandler) {
-        super(cloudWatchLogsClient);
-        this.readHandler = readHandler;
     }
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-            final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request,
-            final CallbackContext callbackContext,
-            final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final Logger logger) {
+        final AmazonWebServicesClientProxy proxy,
+        final ResourceHandlerRequest<ResourceModel> request,
+        final CallbackContext callbackContext,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
+        final Logger logger,
+        final MetricsLogger metrics
+    ) {
+        MetricsHelper.putProperty(metrics, MetricsConstants.OPERATION, CALL_GRAPH);
 
-        this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
 
-        return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
-                .then(progress -> {
-                    try {
-                        return readHandler.handleRequest(proxy, request, callbackContext, proxyClient, logger);
-                    } catch (CfnNotFoundException e) {
-                        return ProgressEvent.defaultFailureHandler(e, HandlerErrorCode.NotFound);
-                    }
-                })
-                .onSuccess(progress ->
-                        proxy.initiate(CALL_GRAPH_STRING, proxyClient, model, callbackContext)
-                                .translateToServiceRequest(Translator::translateToUpdateRequest)
-                                .makeServiceCall((putSubscriptionFilterRequest, client) -> client
-                                        .injectCredentialsAndInvokeV2(putSubscriptionFilterRequest,
-                                                client.client()::putSubscriptionFilter))
-                                .handleError((cloudWatchLogsRequest, e, proxyClient1, model1, context) -> {
-                                    if (shouldThrowRetryException(e)) {
-                                        throw RetryableException.builder().cause(e).build();
-                                    }
-
-                                    final HandlerErrorCode handlerErrorCode = getExceptionDetails(e, logger, request.getStackId());
-                                    return ProgressEvent.defaultFailureHandler(e, handlerErrorCode);
-                                })
-                                .progress()
-                )
-                .then(progress -> readHandler
-                        .handleRequest(proxy, request, callbackContext, proxyClient, logger));
+        return proxy
+            .initiate(CALL_GRAPH, proxyClient, model, callbackContext)
+            .translateToServiceRequest(Translator::translateToUpdateRequest)
+            .backoffDelay(getBackOffStrategy())
+            .makeServiceCall((putSubscriptionFilterRequest, client) ->
+                putResource(model, putSubscriptionFilterRequest, client, Action.UPDATE, logger, metrics)
+            )
+            .retryErrorFilter((_request, exception, _proxyClient, _model, _context) -> isRetryableException(exception))
+            .success();
     }
 }

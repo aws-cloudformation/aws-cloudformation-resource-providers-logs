@@ -1,53 +1,94 @@
 package software.amazon.logs.subscriptionfilter;
 
+import static software.amazon.logs.common.MetricsConstants.CFN;
+import static software.amazon.logs.common.MetricsConstants.SERVICE;
+import static software.amazon.logs.subscriptionfilter.MetricsHelper.putSubscriptionFilterRequestMetrics;
+
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.CloudWatchLogsException;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteSubscriptionFilterRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DeleteSubscriptionFilterResponse;
+import software.amazon.cloudformation.exceptions.BaseHandlerException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudwatchlogs.emf.logger.MetricsLogger;
+import software.amazon.logs.common.MetricsConstants;
+import software.amazon.logs.common.MetricsHelper;
 
 public class DeleteHandler extends BaseHandlerStd {
-    private final String CALL_GRAPH_STRING = "AWS-Logs-SubscriptionFilter::Delete";
 
-    private Logger logger;
+    private static final String CALL_GRAPH = "AWS-Logs-SubscriptionFilter::Delete";
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-            final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request,
-            final CallbackContext callbackContext,
-            final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final Logger logger) {
+        final AmazonWebServicesClientProxy proxy,
+        final ResourceHandlerRequest<ResourceModel> request,
+        final CallbackContext callbackContext,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
+        final Logger logger,
+        final MetricsLogger metrics
+    ) {
+        MetricsHelper.putProperty(metrics, MetricsConstants.OPERATION, CALL_GRAPH);
 
-        this.logger = logger;
         final ResourceModel model = request.getDesiredResourceState();
-        final String stackId = request.getStackId() == null ? "" : request.getStackId();
 
-        logger.log(String.format("Invoking %s request for model: %s with StackID: %s", CALL_GRAPH_STRING, model, stackId));
-
-        return proxy.initiate(CALL_GRAPH_STRING, proxyClient, model, callbackContext)
-                .translateToServiceRequest(Translator::translateToDeleteRequest)
-                .makeServiceCall((_request, _callbackContext) -> deleteResource(_request, proxyClient, stackId))
-                .done(awsResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder()
-                        .status(OperationStatus.SUCCESS)
-                        .build());
+        return proxy
+            .initiate(CALL_GRAPH, proxyClient, model, callbackContext)
+            .translateToServiceRequest(Translator::translateToDeleteRequest)
+            .backoffDelay(getBackOffStrategy())
+            .makeServiceCall((_request, _callbackContext) -> deleteResource(_request, proxyClient, logger, metrics))
+            .done(_deleteResponse -> ProgressEvent.<ResourceModel, CallbackContext>builder().status(OperationStatus.SUCCESS).build());
     }
 
+    /**
+     * Deletes a Subscription Filter.
+     *
+     * @param awsRequest  The request for deleting the resource.
+     * @param proxyClient The proxy client used to execute API calls.
+     * @param logger      The logger.
+     * @param metrics     The metrics logger.
+     * @return The response from the AWS service after deleting the resource.
+     * @throws BaseHandlerException If an exception occurs while deleting the resource.
+     */
     private DeleteSubscriptionFilterResponse deleteResource(
-            final DeleteSubscriptionFilterRequest awsRequest,
-            final ProxyClient<CloudWatchLogsClient> proxyClient,
-            final String stackId) {
-        DeleteSubscriptionFilterResponse deleteSubscriptionFilterResponse = null;
+        final DeleteSubscriptionFilterRequest awsRequest,
+        final ProxyClient<CloudWatchLogsClient> proxyClient,
+        final Logger logger,
+        final MetricsLogger metrics
+    ) {
+        DeleteSubscriptionFilterResponse awsResponse;
+        putSubscriptionFilterRequestMetrics(metrics, awsRequest);
+
+        final String filterName = awsRequest.filterName();
+        final String logGroupName = awsRequest.logGroupName();
+
         try {
-            deleteSubscriptionFilterResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteSubscriptionFilter);
-        } catch (Exception e) {
-            handleException(e, logger, stackId);
+            awsResponse = proxyClient.injectCredentialsAndInvokeV2(awsRequest, proxyClient.client()::deleteSubscriptionFilter);
+        } catch (final CloudWatchLogsException serviceException) {
+            final BaseHandlerException handlerException = Translator.translateException(serviceException);
+
+            logger.log(
+                String.format(
+                    "[DELETE][EXCEPTION] Encountered exception with subscription filter %s in log group %s: %s: %s",
+                    filterName,
+                    logGroupName,
+                    serviceException.getClass().getSimpleName(),
+                    serviceException.getMessage()
+                )
+            );
+
+            MetricsHelper.putExceptionProperty(metrics, serviceException, SERVICE);
+            MetricsHelper.putExceptionProperty(metrics, handlerException, CFN);
+
+            throw handlerException;
         }
 
-        logger.log(String.format("%s successfully deleted.", ResourceModel.TYPE_NAME));
-        return deleteSubscriptionFilterResponse;
+        MetricsHelper.putServiceMetrics(metrics, awsResponse);
+        logger.log(String.format("[DELETE][SUCCESS] Deleted subscription filter %s in log group %s", filterName, logGroupName));
+
+        return awsResponse;
     }
 }
