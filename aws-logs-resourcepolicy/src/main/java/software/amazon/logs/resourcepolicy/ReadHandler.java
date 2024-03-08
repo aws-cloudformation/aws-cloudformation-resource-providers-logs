@@ -37,8 +37,9 @@ public class ReadHandler extends BaseHandler<CallbackContext> {
                         .filter(rp -> rp.policyName().equals(model.getPolicyName()))
                         .findAny();
                 if (resourcePolicy.isPresent()) {
+                    ResourcePolicy outputPolicy = resourcePolicy.get();
                     return ProgressEvent.<ResourceModel, CallbackContext>builder()
-                            .resourceModel(model)
+                            .resourceModel(ResourceModel.builder().policyDocument(outputPolicy.policyDocument()).policyName(outputPolicy.policyName()).build())
                             .status(OperationStatus.SUCCESS)
                             .build();
                 }
